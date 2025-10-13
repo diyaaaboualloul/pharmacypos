@@ -1,5 +1,7 @@
 import { useState } from "react";
 import axios from "axios";
+import "../App.css";   // ✅ Import global styles here
+
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -32,11 +34,11 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="login-container" style={styles.container}>
-      <form onSubmit={handleSubmit} style={styles.form}>
-        <h2 style={styles.title}>🔐 Pharmacy POS Login</h2>
+    <div className="login-container">
+      <form onSubmit={handleSubmit} className="login-form">
+        <h2 className="login-title">🔐 Pharmacy POS Login</h2>
 
-        {error && <p style={styles.error}>{error}</p>}
+        {error && <p className="login-error">{error}</p>}
 
         <input
           type="email"
@@ -44,7 +46,7 @@ export default function LoginPage() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          style={styles.input}
+          className="login-input"
         />
 
         <input
@@ -53,57 +55,13 @@ export default function LoginPage() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
-          style={styles.input}
+          className="login-input"
         />
 
-        <button type="submit" disabled={loading} style={styles.button}>
+        <button type="submit" disabled={loading} className="login-button">
           {loading ? "Logging in..." : "Login"}
         </button>
       </form>
     </div>
   );
 }
-
-const styles = {
-  container: {
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    height: "100vh",
-    background: "#f4f6f8",
-  },
-  form: {
-    background: "#fff",
-    padding: "2rem",
-    borderRadius: "8px",
-    boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
-    width: "300px",
-    display: "flex",
-    flexDirection: "column",
-  },
-  title: {
-    textAlign: "center",
-    marginBottom: "1rem",
-  },
-  input: {
-    marginBottom: "1rem",
-    padding: "0.5rem",
-    fontSize: "1rem",
-    border: "1px solid #ccc",
-    borderRadius: "4px",
-  },
-  button: {
-    padding: "0.7rem",
-    background: "#007bff",
-    color: "#fff",
-    fontWeight: "bold",
-    border: "none",
-    borderRadius: "4px",
-    cursor: "pointer",
-  },
-  error: {
-    color: "red",
-    marginBottom: "1rem",
-    textAlign: "center",
-  },
-};

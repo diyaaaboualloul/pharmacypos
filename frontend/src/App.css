@@ -1,3 +1,6 @@
+/* =============================
+   🌐 Global App Layout (Vite default)
+   ============================= */
 #root {
   max-width: 1280px;
   margin: 0 auto;
@@ -9,11 +12,13 @@
   height: 6em;
   padding: 1.5em;
   will-change: filter;
-  transition: filter 300ms;
+  transition: filter var(--transition);
 }
+
 .logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
+  filter: drop-shadow(0 0 2em var(--color-primary));
 }
+
 .logo.react:hover {
   filter: drop-shadow(0 0 2em #61dafbaa);
 }
@@ -39,4 +44,132 @@
 
 .read-the-docs {
   color: #888;
+}
+
+/* =============================
+   🔐 LOGIN PAGE
+   ============================= */
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: var(--color-light-bg);
+}
+
+.login-form {
+  background: #fff;
+  padding: 2rem;
+  border-radius: var(--border-radius);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  width: 300px;
+  display: flex;
+  flex-direction: column;
+}
+
+.login-title {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.login-input {
+  margin-bottom: 1rem;
+  padding: 0.5rem;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-family: var(--font-main);
+}
+
+.login-button {
+  padding: 0.7rem;
+  background: var(--color-primary);
+  color: #fff;
+  font-weight: 600;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background var(--transition);
+}
+
+.login-button:hover {
+  background: var(--color-primary-hover);
+}
+
+.login-button:disabled {
+  background: #9cc9f3;
+  cursor: not-allowed;
+}
+
+.login-error {
+  color: var(--color-danger);
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+/* =============================
+   📝 REGISTER PAGE
+   ============================= */
+.register-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: var(--color-light-bg);
+}
+
+.register-form {
+  background: #fff;
+  padding: 2rem;
+  border-radius: var(--border-radius);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  width: 300px;
+  display: flex;
+  flex-direction: column;
+}
+
+.register-title {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.register-input {
+  margin-bottom: 1rem;
+  padding: 0.5rem;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-family: var(--font-main);
+}
+
+.register-button {
+  padding: 0.7rem;
+  background: var(--color-success);
+  color: #fff;
+  font-weight: 600;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background var(--transition);
+}
+
+.register-button:hover {
+  background: #208d38; /* Could also define a success-hover var if you want */
+}
+
+.register-button:disabled {
+  background: #9bd5af;
+  cursor: not-allowed;
+}
+
+.register-error {
+  color: var(--color-danger);
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.register-success {
+  color: var(--color-success);
+  text-align: center;
+  margin-bottom: 1rem;
 }

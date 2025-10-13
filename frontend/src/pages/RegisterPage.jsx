@@ -1,5 +1,6 @@
 import { useState } from "react";
 import axios from "axios";
+import "../App.css";   // ✅ Import global styles here
 
 export default function RegisterPage() {
   const [name, setName] = useState("");
@@ -37,12 +38,12 @@ export default function RegisterPage() {
   };
 
   return (
-    <div style={styles.container}>
-      <form onSubmit={handleSubmit} style={styles.form}>
-        <h2 style={styles.title}>📝 Register</h2>
+    <div className="register-container">
+      <form onSubmit={handleSubmit} className="register-form">
+        <h2 className="register-title">📝 Register</h2>
 
-        {error && <p style={styles.error}>{error}</p>}
-        {success && <p style={styles.success}>{success}</p>}
+        {error && <p className="register-error">{error}</p>}
+        {success && <p className="register-success">{success}</p>}
 
         <input
           type="text"
@@ -50,7 +51,7 @@ export default function RegisterPage() {
           value={name}
           onChange={(e) => setName(e.target.value)}
           required
-          style={styles.input}
+          className="register-input"
         />
         <input
           type="email"
@@ -58,7 +59,7 @@ export default function RegisterPage() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          style={styles.input}
+          className="register-input"
         />
         <input
           type="password"
@@ -66,72 +67,23 @@ export default function RegisterPage() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
-          style={styles.input}
+          className="register-input"
         />
 
         <select
           value={role}
           onChange={(e) => setRole(e.target.value)}
-          style={styles.input}
+          className="register-input"
         >
           <option value="admin">Admin</option>
           <option value="cashier">Cashier</option>
           <option value="accounting">Accounting</option>
         </select>
 
-        <button type="submit" disabled={loading} style={styles.button}>
+        <button type="submit" disabled={loading} className="register-button">
           {loading ? "Registering..." : "Register"}
         </button>
       </form>
     </div>
   );
 }
-
-const styles = {
-  container: {
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    height: "100vh",
-    background: "#f4f6f8",
-  },
-  form: {
-    background: "#fff",
-    padding: "2rem",
-    borderRadius: "8px",
-    boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
-    width: "300px",
-    display: "flex",
-    flexDirection: "column",
-  },
-  title: {
-    textAlign: "center",
-    marginBottom: "1rem",
-  },
-  input: {
-    marginBottom: "1rem",
-    padding: "0.5rem",
-    fontSize: "1rem",
-    border: "1px solid #ccc",
-    borderRadius: "4px",
-  },
-  button: {
-    padding: "0.7rem",
-    background: "#28a745",
-    color: "#fff",
-    fontWeight: "bold",
-    border: "none",
-    borderRadius: "4px",
-    cursor: "pointer",
-  },
-  error: {
-    color: "red",
-    textAlign: "center",
-    marginBottom: "1rem",
-  },
-  success: {
-    color: "green",
-    textAlign: "center",
-    marginBottom: "1rem",
-  },
-};
