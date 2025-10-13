@@ -1,43 +1,57 @@
 import { useState } from "react";
 import axios from "axios";
 
-export default function LoginPage() {
+export default function RegisterPage() {
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [role, setRole] = useState("cashier");
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setSuccess("");
     setLoading(true);
 
     try {
-      const { data } = await axios.post(
-        "http://localhost:5000/api/auth/login",
-        { email, password }
-      );
+      const { data } = await axios.post("http://localhost:5000/api/auth/register", {
+        name,
+        email,
+        password,
+        role,
+      });
 
-      // Save token to localStorage
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
-
-      // Redirect to dashboard
-      window.location.href = "/dashboard";
+      setSuccess(data.message);
+      setName("");
+      setEmail("");
+      setPassword("");
+      setRole("cashier");
     } catch (err) {
-      setError(err.response?.data?.message || "Login failed");
+      setError(err.response?.data?.message || "Registration failed");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="login-container" style={styles.container}>
+    <div style={styles.container}>
       <form onSubmit={handleSubmit} style={styles.form}>
-        <h2 style={styles.title}>🔐 Pharmacy POS Login</h2>
+        <h2 style={styles.title}>📝 Register</h2>
 
         {error && <p style={styles.error}>{error}</p>}
+        {success && <p style={styles.success}>{success}</p>}
 
+        <input
+          type="text"
+          placeholder="Name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          required
+          style={styles.input}
+        />
         <input
           type="email"
           placeholder="Email"
@@ -46,7 +60,6 @@ export default function LoginPage() {
           required
           style={styles.input}
         />
-
         <input
           type="password"
           placeholder="Password"
@@ -56,8 +69,18 @@ export default function LoginPage() {
           style={styles.input}
         />
 
+        <select
+          value={role}
+          onChange={(e) => setRole(e.target.value)}
+          style={styles.input}
+        >
+          <option value="admin">Admin</option>
+          <option value="cashier">Cashier</option>
+          <option value="accounting">Accounting</option>
+        </select>
+
         <button type="submit" disabled={loading} style={styles.button}>
-          {loading ? "Logging in..." : "Login"}
+          {loading ? "Registering..." : "Register"}
         </button>
       </form>
     </div>
@@ -94,7 +117,7 @@ const styles = {
   },
   button: {
     padding: "0.7rem",
-    background: "#007bff",
+    background: "#28a745",
     color: "#fff",
     fontWeight: "bold",
     border: "none",
@@ -103,7 +126,12 @@ const styles = {
   },
   error: {
     color: "red",
-    marginBottom: "1rem",
     textAlign: "center",
+    marginBottom: "1rem",
+  },
+  success: {
+    color: "green",
+    textAlign: "center",
+    marginBottom: "1rem",
   },
 };
