@@ -7,12 +7,14 @@ import FinanceDashboardPage from "./pages/FinanceDashboardPage";
 import GuestRoute from "./components/GuestRoute";
 import RoleProtectedRoute from "./components/RoleProtectedRoute";
 import UserManagementPage from "./pages/UserManagementPage";
+import UnauthorizedPage from "./pages/UnauthorizedPage";
+import NotFoundPage from "./pages/NotFoundPage";
 
 function App() {
   return (
     <Router>
       <Routes>
-        {/* Public Routes */}
+        {/* Public */}
         <Route
           path="/login"
           element={
@@ -29,8 +31,9 @@ function App() {
             </GuestRoute>
           }
         />
+        <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
-        {/* Admin Dashboard */}
+        {/* Admin */}
         <Route
           path="/dashboard"
           element={
@@ -39,8 +42,16 @@ function App() {
             </RoleProtectedRoute>
           }
         />
+        <Route
+          path="/admin/users"
+          element={
+            <RoleProtectedRoute allowedRoles={["admin"]}>
+              <UserManagementPage />
+            </RoleProtectedRoute>
+          }
+        />
 
-        {/* Cashier Dashboard */}
+        {/* Cashier */}
         <Route
           path="/cashier-dashboard"
           element={
@@ -50,7 +61,7 @@ function App() {
           }
         />
 
-        {/* Finance Dashboard */}
+        {/* Finance */}
         <Route
           path="/finance-dashboard"
           element={
@@ -60,15 +71,8 @@ function App() {
           }
         />
 
-        {/* Admin user management */}
-        <Route
-          path="/admin/users"
-          element={
-            <RoleProtectedRoute allowedRoles={["admin"]}>
-              <UserManagementPage />
-            </RoleProtectedRoute>
-          }
-        />
+        {/* 404 Page - Catch All */}
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </Router>
   );

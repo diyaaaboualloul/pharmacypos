@@ -1,27 +1,19 @@
 import { Navigate } from "react-router-dom";
 import { getUser, getToken } from "../utils/auth";
 
-/**
- * Protects a route by user role.
- * Example:
- * <RoleProtectedRoute allowedRoles={['admin']}>
- *   <AdminDashboardPage />
- * </RoleProtectedRoute>
- */
 export default function RoleProtectedRoute({ children, allowedRoles }) {
   const token = getToken();
   const user = getUser();
 
-  // Not authenticated
+  // Not logged in → go to login
   if (!token || !user) {
     return <Navigate to="/login" replace />;
   }
 
-  // Authenticated but not authorized
+  // Logged in but not allowed → go to Unauthorized
   if (!allowedRoles.includes(user.role)) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/unauthorized" replace />;
   }
 
-  // Authorized
   return children;
 }
