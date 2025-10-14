@@ -4,6 +4,7 @@ import { getToken } from "../utils/auth";
 import { useNavigate } from "react-router-dom";
 import TopHeader from "../components/TopHeader";
 import Sidebar from "../components/Sidebar";
+import "../css/UserManagementPage.css";
 
 export default function UserManagementPage() {
   const [users, setUsers] = useState([]);
@@ -68,15 +69,16 @@ export default function UserManagementPage() {
   return (
     <>
       <TopHeader />
-      <div className="d-flex">
+      <div className="d-flex flex-wrap">
         <Sidebar />
 
-        <div className="container-fluid mt-4" style={{ marginLeft: "220px" }}>
+        <div className="container-fluid mt-4 user-management-container">
           <div className="card shadow-sm">
             <div className="card-body">
-              <div className="d-flex justify-content-between align-items-center mb-3">
-                <h3>👤 Manage Users</h3>
+              <div className="d-flex flex-wrap justify-content-between align-items-center mb-3">
+                <h3 className="page-title mb-3 mb-md-0">👤 Manage Users</h3>
                 <button
+                  id="backBtn"
                   className="btn btn-secondary"
                   onClick={() => navigate("/dashboard")}
                 >
@@ -85,12 +87,18 @@ export default function UserManagementPage() {
               </div>
 
               {message && (
-                <div className="alert alert-info py-2 text-center">{message}</div>
+                <div id="messageBox" className="alert alert-info py-2 text-center">
+                  {message}
+                </div>
               )}
 
               {/* Create User Form */}
-              <form onSubmit={handleCreateUser} className="row g-3 mb-4">
-                <div className="col-md-3">
+              <form
+                id="createUserForm"
+                onSubmit={handleCreateUser}
+                className="row g-2 g-md-3 mb-4"
+              >
+                <div className="col-12 col-md-3">
                   <input
                     type="text"
                     className="form-control"
@@ -100,7 +108,7 @@ export default function UserManagementPage() {
                     required
                   />
                 </div>
-                <div className="col-md-3">
+                <div className="col-12 col-md-3">
                   <input
                     type="email"
                     className="form-control"
@@ -110,7 +118,7 @@ export default function UserManagementPage() {
                     required
                   />
                 </div>
-                <div className="col-md-3">
+                <div className="col-12 col-md-3">
                   <input
                     type="password"
                     className="form-control"
@@ -120,7 +128,7 @@ export default function UserManagementPage() {
                     required
                   />
                 </div>
-                <div className="col-md-2">
+                <div className="col-12 col-md-2">
                   <select
                     className="form-select"
                     value={role}
@@ -131,15 +139,15 @@ export default function UserManagementPage() {
                     <option value="finance">Finance</option>
                   </select>
                 </div>
-                <div className="col-md-1 d-grid">
-                  <button type="submit" className="btn btn-success">
+                <div className="col-12 col-md-1 d-grid">
+                  <button type="submit" className="btn btn-success w-100">
                     Create
                   </button>
                 </div>
               </form>
 
               {/* Users Table */}
-              <div className="table-responsive">
+              <div className="table-responsive user-table">
                 <table className="table table-striped table-bordered align-middle">
                   <thead className="table-dark">
                     <tr>
