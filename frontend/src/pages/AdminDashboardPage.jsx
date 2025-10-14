@@ -1,45 +1,17 @@
-import { useState } from "react";
-import { getUser, logout } from "../utils/auth";
-import { useNavigate } from "react-router-dom";
+import TopHeader from "../components/TopHeader";
+import Sidebar from "../components/Sidebar";
 
-export default function DashboardPage() {
-  const [user] = useState(getUser());
-  const navigate = useNavigate();
-
+export default function AdminDashboardPage() {
   return (
-    <div style={styles.container}>
-      <h1>📊 Dashboard</h1>
-      {user && <p>Welcome, <strong>{user.name}</strong> ({user.role})</p>}
-
-      <button onClick={logout} style={styles.logoutBtn}>🚪 Logout</button>
-
-      {user?.role === "admin" && (
-        <button onClick={() => navigate("/admin/users")} style={styles.createBtn}>
-          ➕ Manage Users
-        </button>
-      )}
-    </div>
+    <>
+      <TopHeader />
+      <Sidebar />
+      <div className="container-fluid" style={{ marginTop: "56px", marginLeft: "20px" }}>
+        <div className="p-4">
+          <h1 className="fw-bold">📊 Admin Dashboard</h1>
+          <p className="text-muted">Welcome to the admin panel.</p>
+        </div>
+      </div>
+    </>
   );
 }
-
-const styles = {
-  container: { maxWidth: "600px", margin: "2rem auto", textAlign: "center" },
-  logoutBtn: {
-    marginTop: "1rem",
-    background: "red",
-    color: "#fff",
-    padding: "0.5rem 1rem",
-    border: "none",
-    borderRadius: "4px",
-    cursor: "pointer",
-  },
-  createBtn: {
-    marginTop: "1rem",
-    background: "#007bff",
-    color: "#fff",
-    padding: "0.5rem 1rem",
-    border: "none",
-    borderRadius: "4px",
-    cursor: "pointer",
-  },
-};

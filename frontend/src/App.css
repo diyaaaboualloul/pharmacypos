@@ -173,3 +173,7 @@
   text-align: center;
   margin-bottom: 1rem;
 }
+
+.sidebar-custom {
+  margin-left: -33px !important;
+}
