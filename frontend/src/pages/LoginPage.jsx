@@ -9,29 +9,38 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setError("");
+  setLoading(true);
 
-    try {
-      const { data } = await axios.post(
-        "http://localhost:5000/api/auth/login",
-        { email, password }
-      );
+  try {
+    const { data } = await axios.post(
+      "http://localhost:5000/api/auth/login",
+      { email, password }
+    );
 
-      // Save token to localStorage
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
+    localStorage.setItem("token", data.token);
+    localStorage.setItem("user", JSON.stringify(data.user));
 
-      // Redirect to dashboard
+    // ✅ Redirect based on role
+    if (data.user.role === "admin") {
       window.location.href = "/dashboard";
-    } catch (err) {
-      setError(err.response?.data?.message || "Login failed");
-    } finally {
-      setLoading(false);
+    } else if (data.user.role === "cashier") {
+      window.location.href = "/cashier-dashboard";
+    } else if (data.user.role === "accounting" || data.user.role === "finance") {
+      window.location.href = "/finance-dashboard";
+    } else {
+      window.location.href = "/";
     }
-  };
+
+  } catch (err) {
+    setError(err.response?.data?.message || "Login failed");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   return (
     <div className="login-container">

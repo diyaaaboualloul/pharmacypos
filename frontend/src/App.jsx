@@ -1,19 +1,17 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
-import DashboardPage from "./pages/DashboardPage";
-import HomePage from "./pages/HomePage";
+import AdminDashboardPage from "./pages/AdminDashboardPage";
+import CashierDashboardPage from "./pages/CashierDashboardPage";
+import FinanceDashboardPage from "./pages/FinanceDashboardPage";
 import ProtectedRoute from "./components/ProtectedRoute";
-import RoleProtectedRoute from "./components/RoleProtectedRoute";
 import GuestRoute from "./components/GuestRoute";
+import UserManagementPage from "./pages/UserManagementPage.jsx";  // ✅ import this
 
 function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<HomePage />} />
-
-        {/* 🚫 Guests only */}
         <Route
           path="/login"
           element={
@@ -31,23 +29,30 @@ function App() {
           }
         />
 
-        {/* ✅ Protected route */}
+        {/* Protected routes for each role */}
         <Route
           path="/dashboard"
           element={
             <ProtectedRoute>
-              <DashboardPage />
+              <AdminDashboardPage />
             </ProtectedRoute>
           }
         />
-
-        {/* Example role-based */}
         <Route
-          path="/admin"
+          path="/cashier-dashboard"
           element={
-            <RoleProtectedRoute allowedRoles={["admin"]}>
-              <h1>Admin Panel</h1>
-            </RoleProtectedRoute>
+            <ProtectedRoute>
+              <CashierDashboardPage />
+            </ProtectedRoute>
+          }
+        />
+                <Route path="/admin/users" element={<UserManagementPage />} />  {/* ✅ must match the URL */}
+        <Route
+          path="/finance-dashboard"
+          element={
+            <ProtectedRoute>
+              <FinanceDashboardPage />
+            </ProtectedRoute>
           }
         />
       </Routes>

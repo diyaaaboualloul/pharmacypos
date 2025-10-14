@@ -1,46 +1,33 @@
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 
-/**
- * Require a valid JWT. Expects "Authorization: Bearer <token>"
- * Attaches the full user doc to req.user (id, name, email, role).
- */
 export const requireAuth = async (req, res, next) => {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({ message: "No token provided" });
+  }
+
+  const token = authHeader.split(" ")[1];
+
   try {
-    const authHeader = req.headers.authorization || "";
-    const token = authHeader.startsWith("Bearer ")
-      ? authHeader.slice(7)
-      : null;
-
-    if (!token) {
-      return res.status(401).json({ message: "No token provided" });
-    }
-
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.id).select("_id name email role");
+    const user = await User.findById(decoded.id).select("-password");
 
     if (!user) {
-      return res.status(401).json({ message: "Invalid token (user not found)" });
+      return res.status(401).json({ message: "User not found" });
     }
 
-    req.user = user; // { _id, name, email, role }
+    req.user = user;
     next();
-  } catch (err) {
-    return res.status(401).json({ message: "Invalid or expired token" });
+  } catch (error) {
+    return res.status(401).json({ message: "Invalid token" });
   }
 };
 
-/**
- * Role-based authorization. Example: authorize("admin", "accounting")
- */
-export const authorize = (...allowedRoles) => {
-  return (req, res, next) => {
-    if (!req.user) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-    if (!allowedRoles.includes(req.user.role)) {
-      return res.status(403).json({ message: "Forbidden: insufficient role" });
-    }
-    next();
-  };
+export const requireAdmin = (req, res, next) => {
+  if (!req.user || req.user.role !== "admin") {
+    return res.status(403).json({ message: "Admin access required" });
+  }
+  next();
 };
