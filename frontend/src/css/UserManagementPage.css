@@ -1,0 +1,215 @@
+/* =========================================
+   User Management Page - Clean Modern Design
+   ========================================= */
+
+/* ======= Layout Container ======= */
+.user-management-container {
+  margin-left: 220px !important;
+  padding: 2rem !important;
+  background-color: #f9fafb !important; /* lighter neutral background */
+  min-height: 100vh !important;
+  transition: margin-left 0.3s ease !important;
+}
+
+@media (max-width: 992px) {
+  .user-management-container {
+    margin-left: 0 !important;
+    padding: 1.2rem !important;
+  }
+}
+
+/* ======= Card ======= */
+.card {
+  border: none !important;
+  border-radius: 14px !important;
+  background: #ffffff !important;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.05) !important;
+  overflow: hidden !important;
+}
+
+.card-body {
+  padding: 2rem !important;
+}
+
+/* ======= Page Title ======= */
+.page-title {
+  font-weight: 700 !important;
+  color: #111827 !important;
+  font-size: 1.6rem !important;
+  margin-bottom: 1.5rem !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.6rem !important;
+}
+
+.page-title i {
+  color: #2563eb !important;
+  font-size: 1.8rem !important;
+}
+
+/* ======= Buttons ======= */
+.btn {
+  border-radius: 8px !important;
+  font-weight: 600 !important;
+  transition: all 0.2s ease !important;
+  letter-spacing: 0.3px !important;
+}
+
+.btn-success {
+  background-color: #16a34a !important;
+  border: none !important;
+  color: #fff !important;
+}
+
+.btn-success:hover {
+  background-color: #15803d !important;
+  transform: translateY(-1px) !important;
+}
+
+.btn-secondary {
+  background-color: #475569 !important;
+  border: none !important;
+  color: #fff !important;
+}
+
+.btn-secondary:hover {
+  background-color: #334155 !important;
+  transform: translateY(-1px) !important;
+}
+
+.btn-danger.btn-sm {
+  padding: 5px 10px !important;
+  border-radius: 6px !important;
+  font-size: 0.85rem !important;
+  background-color: #dc2626 !important;
+  border: none !important;
+  color: #fff !important;
+}
+
+.btn-danger.btn-sm:hover {
+  background-color: #b91c1c !important;
+}
+
+/* ======= Message Alert ======= */
+#messageBox {
+  margin-top: 1rem !important;
+  border-radius: 8px !important;
+  background-color: #e0f2fe !important;
+  border: 1px solid #bae6fd !important;
+  color: #0369a1 !important;
+  font-weight: 500 !important;
+  padding: 0.75rem 1rem !important;
+}
+
+/* ======= Create User Form ======= */
+#createUserForm {
+  background: #f8fafc !important;
+  border-radius: 12px !important;
+  padding: 1.2rem !important;
+  margin-bottom: 1.8rem !important;
+  box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.05) !important;
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 1rem !important;
+}
+
+#createUserForm input,
+#createUserForm select {
+  border-radius: 8px !important;
+  border: 1px solid #d1d5db !important;
+  font-size: 0.95rem !important;
+  padding: 0.6rem 0.8rem !important;
+  height: 42px !important;
+  transition: all 0.2s !important;
+  flex: 1 !important;
+  min-width: 180px !important;
+}
+
+#createUserForm input:focus,
+#createUserForm select:focus {
+  border-color: #2563eb !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2) !important;
+  outline: none !important;
+}
+
+/* ======= Table ======= */
+.user-table {
+  overflow-x: auto !important;
+}
+
+.user-table table {
+  width: 100% !important;
+  border-collapse: collapse !important;
+  background-color: #fff !important;
+  border-radius: 10px !important;
+  overflow: hidden !important;
+  font-size: 0.95rem !important;
+}
+
+.user-table thead {
+  background-color: #1e293b !important;
+  color: #ffffff !important;
+}
+
+.user-table th,
+.user-table td {
+  padding: 0.9rem 1rem !important;
+  text-align: left !important;
+  border-bottom: 1px solid #e5e7eb !important;
+}
+
+.user-table th {
+  font-weight: 600 !important;
+  letter-spacing: 0.2px !important;
+}
+
+.user-table tbody tr:hover {
+  background-color: #f1f5f9 !important;
+  transition: background 0.2s ease !important;
+}
+
+/* ======= Mobile Responsiveness ======= */
+@media (max-width: 768px) {
+  .page-title {
+    text-align: center !important;
+    width: 100% !important;
+    font-size: 1.3rem !important;
+  }
+
+  #backBtn {
+    width: 100% !important;
+    margin-top: 0.5rem !important;
+  }
+
+  #createUserForm {
+    padding: 0.8rem !important;
+    flex-direction: column !important;
+  }
+
+  #createUserForm input,
+  #createUserForm select {
+    width: 100% !important;
+  }
+
+  .card-body {
+    padding: 1.2rem !important;
+  }
+
+  .user-table table th,
+  .user-table table td {
+    font-size: 0.85rem !important;
+    white-space: nowrap !important;
+  }
+}
+
+/* ======= Smooth Scrollbar ======= */
+.user-table::-webkit-scrollbar {
+  height: 8px !important;
+}
+.user-table::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1 !important;
+  border-radius: 10px !important;
+}
+.user-table::-webkit-scrollbar-thumb:hover {
+  background-color: #94a3b8 !important;
+}
