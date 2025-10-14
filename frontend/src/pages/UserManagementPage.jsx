@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { getToken } from "../utils/auth";
 import { useNavigate } from "react-router-dom";
+import TopHeader from "../components/TopHeader";
+import Sidebar from "../components/Sidebar";
 
 export default function UserManagementPage() {
   const [users, setUsers] = useState([]);
@@ -13,11 +15,15 @@ export default function UserManagementPage() {
   const navigate = useNavigate();
 
   const fetchUsers = async () => {
-    const token = getToken();
-    const { data } = await axios.get("http://localhost:5000/api/admin/users", {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    setUsers(data);
+    try {
+      const token = getToken();
+      const { data } = await axios.get("http://localhost:5000/api/admin/users", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setUsers(data);
+    } catch (err) {
+      console.error("Failed to fetch users", err);
+    }
   };
 
   useEffect(() => {
@@ -34,7 +40,10 @@ export default function UserManagementPage() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setMessage(data.message);
-      setName(""); setEmail(""); setPassword(""); setRole("cashier");
+      setName("");
+      setEmail("");
+      setPassword("");
+      setRole("cashier");
       fetchUsers();
     } catch (err) {
       setMessage(err.response?.data?.message || "Failed to create user");
@@ -43,63 +52,136 @@ export default function UserManagementPage() {
 
   const handleDeleteUser = async (id) => {
     if (!window.confirm("Are you sure?")) return;
-    const token = getToken();
-    await axios.delete(`http://localhost:5000/api/admin/users/${id}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    fetchUsers();
+    try {
+      const token = getToken();
+      await axios.delete(`http://localhost:5000/api/admin/users/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      fetchUsers();
+    } catch (err) {
+      console.error("Failed to delete user", err);
+    }
   };
 
-  const adminCount = users.filter(u => u.role === "admin").length;
+  const adminCount = users.filter((u) => u.role === "admin").length;
 
   return (
-    <div style={styles.container}>
-      <h1>👤 Manage Users</h1>
-      <button onClick={() => navigate("/dashboard")} style={styles.backBtn}>
-        ← Back
-      </button>
+    <>
+      <TopHeader />
+      <div className="d-flex">
+        <Sidebar />
 
-      <form onSubmit={handleCreateUser} style={styles.form}>
-        {message && <p>{message}</p>}
-        <input value={name} onChange={e=>setName(e.target.value)} placeholder="Name" required/>
-        <input value={email} onChange={e=>setEmail(e.target.value)} placeholder="Email" type="email" required/>
-        <input value={password} onChange={e=>setPassword(e.target.value)} placeholder="Password" type="password" required/>
-        <select value={role} onChange={e=>setRole(e.target.value)}>
-          <option value="admin">Admin</option>
-          <option value="cashier">Cashier</option>
-          <option value="finance">Finance</option>
-        </select>
-        <button type="submit" style={styles.submitBtn}>Create</button>
-      </form>
+        <div className="container-fluid mt-4" style={{ marginLeft: "220px" }}>
+          <div className="card shadow-sm">
+            <div className="card-body">
+              <div className="d-flex justify-content-between align-items-center mb-3">
+                <h3>👤 Manage Users</h3>
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => navigate("/dashboard")}
+                >
+                  ← Back
+                </button>
+              </div>
 
-      <table style={styles.table}>
-        <thead>
-          <tr><th>Name</th><th>Email</th><th>Role</th><th>Action</th></tr>
-        </thead>
-        <tbody>
-          {users.map(u => (
-            <tr key={u._id}>
-              <td>{u.name}</td>
-              <td>{u.email}</td>
-              <td>{u.role}</td>
-              <td>
-                {!(u.role === "admin" && adminCount === 1) && (
-                  <button onClick={()=>handleDeleteUser(u._id)} style={styles.deleteBtn}>🗑️</button>
-                )}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+              {message && (
+                <div className="alert alert-info py-2 text-center">{message}</div>
+              )}
+
+              {/* Create User Form */}
+              <form onSubmit={handleCreateUser} className="row g-3 mb-4">
+                <div className="col-md-3">
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="Name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="col-md-3">
+                  <input
+                    type="email"
+                    className="form-control"
+                    placeholder="Email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="col-md-3">
+                  <input
+                    type="password"
+                    className="form-control"
+                    placeholder="Password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="col-md-2">
+                  <select
+                    className="form-select"
+                    value={role}
+                    onChange={(e) => setRole(e.target.value)}
+                  >
+                    <option value="admin">Admin</option>
+                    <option value="cashier">Cashier</option>
+                    <option value="finance">Finance</option>
+                  </select>
+                </div>
+                <div className="col-md-1 d-grid">
+                  <button type="submit" className="btn btn-success">
+                    Create
+                  </button>
+                </div>
+              </form>
+
+              {/* Users Table */}
+              <div className="table-responsive">
+                <table className="table table-striped table-bordered align-middle">
+                  <thead className="table-dark">
+                    <tr>
+                      <th>Name</th>
+                      <th>Email</th>
+                      <th>Role</th>
+                      <th style={{ width: "80px" }}>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {users.length === 0 ? (
+                      <tr>
+                        <td colSpan="4" className="text-center">
+                          No users found
+                        </td>
+                      </tr>
+                    ) : (
+                      users.map((u) => (
+                        <tr key={u._id}>
+                          <td>{u.name}</td>
+                          <td>{u.email}</td>
+                          <td className="text-capitalize">{u.role}</td>
+                          <td>
+                            {!(u.role === "admin" && adminCount === 1) && (
+                              <button
+                                className="btn btn-danger btn-sm"
+                                onClick={() => handleDeleteUser(u._id)}
+                              >
+                                🗑️
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
   );
 }
-
-const styles = {
-  container: { maxWidth: "800px", margin: "2rem auto", textAlign: "center" },
-  form: { display: "flex", flexDirection: "column", gap: "0.5rem", marginBottom: "2rem" },
-  submitBtn: { background: "green", color: "#fff", padding: "0.5rem", cursor: "pointer" },
-  table: { width: "100%", borderCollapse: "collapse" },
-  deleteBtn: { background: "red", color: "#fff", border: "none", padding: "0.3rem 0.6rem", cursor: "pointer" },
-  backBtn: { background: "#007bff", color: "#fff", padding: "0.5rem", marginBottom: "1rem", cursor: "pointer" },
-};

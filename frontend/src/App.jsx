@@ -4,14 +4,15 @@ import RegisterPage from "./pages/RegisterPage";
 import AdminDashboardPage from "./pages/AdminDashboardPage";
 import CashierDashboardPage from "./pages/CashierDashboardPage";
 import FinanceDashboardPage from "./pages/FinanceDashboardPage";
-import ProtectedRoute from "./components/ProtectedRoute";
 import GuestRoute from "./components/GuestRoute";
-import UserManagementPage from "./pages/UserManagementPage.jsx";  // ✅ import this
+import RoleProtectedRoute from "./components/RoleProtectedRoute";
+import UserManagementPage from "./pages/UserManagementPage";
 
 function App() {
   return (
     <Router>
       <Routes>
+        {/* Public Routes */}
         <Route
           path="/login"
           element={
@@ -29,30 +30,43 @@ function App() {
           }
         />
 
-        {/* Protected routes for each role */}
+        {/* Admin Dashboard */}
         <Route
           path="/dashboard"
           element={
-            <ProtectedRoute>
+            <RoleProtectedRoute allowedRoles={["admin"]}>
               <AdminDashboardPage />
-            </ProtectedRoute>
+            </RoleProtectedRoute>
           }
         />
+
+        {/* Cashier Dashboard */}
         <Route
           path="/cashier-dashboard"
           element={
-            <ProtectedRoute>
+            <RoleProtectedRoute allowedRoles={["cashier"]}>
               <CashierDashboardPage />
-            </ProtectedRoute>
+            </RoleProtectedRoute>
           }
         />
-                <Route path="/admin/users" element={<UserManagementPage />} />  {/* ✅ must match the URL */}
+
+        {/* Finance Dashboard */}
         <Route
           path="/finance-dashboard"
           element={
-            <ProtectedRoute>
+            <RoleProtectedRoute allowedRoles={["finance"]}>
               <FinanceDashboardPage />
-            </ProtectedRoute>
+            </RoleProtectedRoute>
+          }
+        />
+
+        {/* Admin user management */}
+        <Route
+          path="/admin/users"
+          element={
+            <RoleProtectedRoute allowedRoles={["admin"]}>
+              <UserManagementPage />
+            </RoleProtectedRoute>
           }
         />
       </Routes>
