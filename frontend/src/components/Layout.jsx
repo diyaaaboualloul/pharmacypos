@@ -1,5 +1,6 @@
 import Sidebar from "./Sidebar";
 import TopHeader from "./TopHeader";
+import "../css/Layout.css";
 
 export default function Layout({ children }) {
   return (
@@ -7,7 +8,7 @@ export default function Layout({ children }) {
       <TopHeader />
       <div className="d-flex flex-wrap">
         <Sidebar />
-        <div className="container-fluid mt-4" style={{ marginLeft: "220px" }}>
+        <div className="container-fluid mt-4 bigcont">
           {children}
         </div>
       </div>
