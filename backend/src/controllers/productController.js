@@ -52,3 +52,21 @@ export const deleteProduct = async (req, res) => {
     res.status(500).json({ message: "Failed to delete product", error: err.message });
   }
 };
+export const searchProducts = async (req, res) => {
+  try {
+    const q = req.query.q?.trim();
+    if (!q) return res.json([]);
+
+    // Case-insensitive partial match on product name or category
+    const products = await Product.find({
+      $or: [
+        { name: { $regex: q, $options: "i" } },
+        { category: { $regex: q, $options: "i" } },
+      ],
+    });
+
+    res.json(products);
+  } catch (err) {
+    res.status(500).json({ message: "Search failed", error: err.message });
+  }
+};

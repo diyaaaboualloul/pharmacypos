@@ -13,6 +13,7 @@ import ProductManagementPage from "./pages/ProductManagementPage";
 import CategoryManagementPage from "./pages/CategoryManagementPage";
 import CategoryProductsPage from "./pages/CategoryProductsPage";
 import AlertsPage from "./pages/AlertPage";
+import SearchResultsPage from "./pages/SearchResultsPage";
 
 
 
@@ -55,6 +56,8 @@ function App() {
             </RoleProtectedRoute>
           }
         />
+        <Route path="/admin/search" element={<SearchResultsPage />} />
+
         <Route
           path="/admin/users"
           element={

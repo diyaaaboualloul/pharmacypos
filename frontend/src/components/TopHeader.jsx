@@ -1,24 +1,57 @@
+import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { getUser, logout } from "../utils/auth";
 
 export default function TopHeader() {
   const user = getUser();
+  const navigate = useNavigate();
+  const [query, setQuery] = useState("");
+
+  const debounceRef = useRef(null);
+  const firstRender = useRef(true);
+
+  useEffect(() => {
+    // 🛑 Skip effect on first render to avoid unwanted navigation
+    if (firstRender.current) {
+      firstRender.current = false;
+      return;
+    }
+
+    // 🧹 Clear any previous debounce timers
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+
+    // ⏳ Set new debounce timer
+    debounceRef.current = setTimeout(() => {
+      const trimmed = query.trim();
+      if (trimmed.length >= 2) {
+        navigate(`/admin/search?q=${encodeURIComponent(trimmed)}`);
+      }
+      // When empty: do nothing, stay on current page
+    }, 300);
+
+    return () => clearTimeout(debounceRef.current);
+  }, [query, navigate]);
 
   return (
     <nav className="navbar navbar-expand-lg navbar-light bg-light fixed-top shadow-sm">
       <div className="container-fluid">
-        {/* Mobile toggle button */}
-        <button
-          className="btn btn-outline-primary d-lg-none me-2"
-          type="button"
-          data-bs-toggle="offcanvas"
-          data-bs-target="#sidebarMenu"
-          aria-controls="sidebarMenu"
-        >
-          ☰
-        </button>
-
+        {/* 🏷 Brand */}
         <span className="navbar-brand fw-bold">💊 Pharmacy POS</span>
 
+        {/* 🔍 Search input */}
+        <div className="d-flex mx-auto" style={{ maxWidth: "300px", width: "100%" }}>
+          <input
+            type="search"
+            className="form-control rounded-pill px-3"
+            placeholder="Search products..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+        </div>
+
+        {/* 👤 User info & Logout */}
         <div className="d-flex align-items-center ms-auto">
           <span className="me-3 d-none d-sm-inline">
             👤 <strong>{user?.name}</strong> ({user?.role})
