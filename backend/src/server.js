@@ -7,6 +7,7 @@ import authRoutes from "./routes/authRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import batchRoutes from "./routes/batchRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
+import categoryRoutes from "./routes/categoryRoutes.js";
 
 
 
@@ -25,6 +26,7 @@ app.use("/api/admin", adminRoutes);  // ✅ Add this line
 app.use("/api/products", productRoutes);
 app.use("/api/batches", batchRoutes);
 app.use("/api/admin/products", productRoutes);
+app.use("/api/admin/categories", categoryRoutes);
 
 connectDB();
 

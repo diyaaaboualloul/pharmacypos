@@ -4,6 +4,7 @@ import { getUser } from "../utils/auth";
 export default function Sidebar() {
   const user = getUser();
 
+
   const menuItems = [
     { to: "/dashboard", label: "🏠 Dashboard" },
     ...(user?.role === "admin"
@@ -11,6 +12,7 @@ export default function Sidebar() {
           { to: "/admin/users", label: "👥 Manage Users" },
           { to: "/reports", label: "📊 Reports" },
           { to: "/admin/products", label: "📦 Product Management" },
+          { to: "/admin/categories", label: "📦Categories" },
 
         ]
       : []),

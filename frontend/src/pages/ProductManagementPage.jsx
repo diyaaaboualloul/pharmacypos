@@ -10,6 +10,7 @@ export default function ProductManagementPage() {
   const [price, setPrice] = useState("");
   const [description, setDescription] = useState("");
   const [message, setMessage] = useState("");
+const [categories, setCategories] = useState([]);
 
   const fetchProducts = async () => {
     try {
@@ -22,6 +23,21 @@ export default function ProductManagementPage() {
       console.error("Failed to fetch products", err);
     }
   };
+const fetchCategories = async () => {
+  try {
+    const token = getToken();
+    const { data } = await axios.get("http://localhost:5000/api/admin/categories", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    setCategories(data);
+  } catch (err) {
+    console.error("Failed to fetch categories", err);
+  }
+};
+useEffect(() => {
+  fetchProducts();
+  fetchCategories();
+}, []);
 
   useEffect(() => {
     fetchProducts();
@@ -86,16 +102,22 @@ export default function ProductManagementPage() {
                 required
               />
             </div>
-            <div className="col-12 col-md-3">
-              <input
-                type="text"
-                className="form-control"
-                placeholder="Category"
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                required
-              />
-            </div>
+          <div className="col-12 col-md-3">
+  <select
+    className="form-select"
+    value={category}
+    onChange={(e) => setCategory(e.target.value)}
+    required
+  >
+    <option value="">Select category</option>
+    {categories.map((c) => (
+      <option key={c._id} value={c.name}>
+        {c.name}
+      </option>
+    ))}
+  </select>
+</div>
+
             <div className="col-12 col-md-2">
               <input
                 type="number"

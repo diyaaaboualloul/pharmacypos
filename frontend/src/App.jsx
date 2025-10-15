@@ -10,6 +10,9 @@ import UserManagementPage from "./pages/UserManagementPage";
 import UnauthorizedPage from "./pages/UnauthorizedPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import ProductManagementPage from "./pages/ProductManagementPage";
+import CategoryManagementPage from "./pages/CategoryManagementPage";
+
+
 
 
 
@@ -54,6 +57,10 @@ function App() {
             </RoleProtectedRoute>
           }
         />
+        <Route
+  path="/admin/categories"
+  element={<CategoryManagementPage />}
+/>
 <Route
   path="/admin/products"
   element={
