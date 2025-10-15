@@ -18,13 +18,13 @@ function computeExpiryStatus(expiryDate, thresholdDays = 30) {
  */
 export const createBatch = async (req, res) => {
   try {
-    const { productId, supplier, expiryDate, quantity, costPrice } = req.body;
+    const { product, supplier, expiryDate, quantity, costPrice } = req.body;
 
-    const product = await Product.findById(productId);
-    if (!product) return res.status(404).json({ message: "Product not found" });
+    const foundProduct = await Product.findById(product); // ✅ expects ObjectId
+    if (!foundProduct) return res.status(404).json({ message: "Product not found" });
 
     const batch = await Batch.create({
-      product: productId,
+      product,
       supplier,
       expiryDate,
       quantity,
@@ -33,9 +33,12 @@ export const createBatch = async (req, res) => {
 
     res.json({ message: "Batch created successfully", batch });
   } catch (err) {
-    res.status(500).json({ message: "Failed to create batch", error: err.message });
-  }
+  console.error("❌ Batch creation error:", err);
+  res.status(500).json({ message: "Failed to create batch", error: err.message, stack: err.stack });
+}
+
 };
+
 
 /** GET /api/admin/batches/product/:productId
  * Returns batches for a product, each with {status, daysLeft}

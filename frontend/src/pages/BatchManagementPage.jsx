@@ -6,7 +6,7 @@ import Layout from "../components/Layout";
 import { getToken } from "../utils/auth";
 
 export default function BatchManagementPage() {
-  const { productId } = useParams();
+  const { productId } = useParams(); // this is the MongoDB _id from URL
   const navigate = useNavigate();
 
   const [batches, setBatches] = useState([]);
@@ -17,10 +17,15 @@ export default function BatchManagementPage() {
   const [costPrice, setCostPrice] = useState("");
   const [message, setMessage] = useState("");
 
-  // 🟡 Fetch batches for this product
+  // 🟡 Fetch batches for the current product
   const fetchBatches = async () => {
     try {
       const token = getToken();
+      if (!token) {
+        setMessage("No token found. Please log in again.");
+        return;
+      }
+
       const { data } = await axios.get(
         `http://localhost:5000/api/admin/batches/product/${productId}`,
         { headers: { Authorization: `Bearer ${token}` } }
@@ -31,10 +36,12 @@ export default function BatchManagementPage() {
     }
   };
 
-  // 🟡 Fetch product details for header
+  // 🟡 Fetch product details (header display)
   const fetchProduct = async () => {
     try {
       const token = getToken();
+      if (!token) return;
+
       const { data } = await axios.get(
         `http://localhost:5000/api/admin/products/${productId}`,
         { headers: { Authorization: `Bearer ${token}` } }
@@ -50,16 +57,28 @@ export default function BatchManagementPage() {
     fetchProduct();
   }, [productId]);
 
-  // 🟢 Create batch (batchNumber is auto on backend)
+  // 🟢 Create a new batch
   const handleCreateBatch = async (e) => {
     e.preventDefault();
     try {
       const token = getToken();
+      if (!token) {
+        setMessage("No token found. Please log in again.");
+        return;
+      }
+
       const { data } = await axios.post(
         "http://localhost:5000/api/admin/batches",
-        { productId, supplier, expiryDate, quantity, costPrice },
+        {
+          product: productId, // ✅ use MongoDB _id
+          supplier,
+          expiryDate,
+          quantity,
+          costPrice,
+        },
         { headers: { Authorization: `Bearer ${token}` } }
       );
+
       setMessage(data.message);
       setSupplier("");
       setExpiryDate("");
@@ -67,15 +86,19 @@ export default function BatchManagementPage() {
       setCostPrice("");
       fetchBatches();
     } catch (err) {
-      setMessage(err.response?.data?.message || "Failed to create batch");
-    }
+  console.error("Create batch error", err);
+  setMessage(err.response?.data?.error || err.response?.data?.message || "Failed to create batch");
+}
+
   };
 
-  // 🔴 Delete batch
+  // 🔴 Delete a batch
   const handleDeleteBatch = async (id) => {
     if (!window.confirm("Are you sure?")) return;
     try {
       const token = getToken();
+      if (!token) return;
+
       await axios.delete(`http://localhost:5000/api/admin/batches/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -85,10 +108,11 @@ export default function BatchManagementPage() {
     }
   };
 
-  // 🟠 Badge for expiry status
+  // 🟠 Expiry badge UI
   const getStatusBadge = (status) => {
     if (status === "expired") return <span className="badge bg-danger">Expired</span>;
-    if (status === "expiringSoon") return <span className="badge bg-warning text-dark">Expiring Soon</span>;
+    if (status === "expiringSoon")
+      return <span className="badge bg-warning text-dark">Expiring Soon</span>;
     return <span className="badge bg-success">Valid</span>;
   };
 
@@ -99,7 +123,12 @@ export default function BatchManagementPage() {
           {/* Header */}
           <div className="d-flex justify-content-between align-items-center mb-3">
             <h3 className="page-title mb-0">
-              🧪 Manage Batches {product && <>for <strong>{product.name}</strong></>}
+              🧪 Manage Batches{" "}
+              {product && (
+                <>
+                  for <strong>{product.name}</strong>
+                </>
+              )}
             </h3>
             <button className="btn btn-secondary" onClick={() => navigate(-1)}>
               ← Back

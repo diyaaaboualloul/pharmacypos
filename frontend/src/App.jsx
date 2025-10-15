@@ -12,6 +12,7 @@ import NotFoundPage from "./pages/NotFoundPage";
 import ProductManagementPage from "./pages/ProductManagementPage";
 import CategoryManagementPage from "./pages/CategoryManagementPage";
 import CategoryProductsPage from "./pages/CategoryProductsPage";
+import AlertsPage from "./pages/AlertPage";
 
 
 
@@ -62,6 +63,8 @@ function App() {
             </RoleProtectedRoute>
           }
         />
+        <Route path="/admin/alerts" element={<AlertsPage />} />
+
         <Route
   path="/admin/categories"
   element={<CategoryManagementPage />}
