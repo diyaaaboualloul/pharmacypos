@@ -2,8 +2,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { getToken } from "../utils/auth";
 import { useNavigate } from "react-router-dom";
-import TopHeader from "../components/TopHeader";
-import Sidebar from "../components/Sidebar";
+import Layout from "../components/Layout";  // ✅ use Layout instead
 import "../css/UserManagementPage.css";
 
 export default function UserManagementPage() {
@@ -67,129 +66,120 @@ export default function UserManagementPage() {
   const adminCount = users.filter((u) => u.role === "admin").length;
 
   return (
-    <>
-      <TopHeader />
-      <div className="d-flex flex-wrap">
-        <Sidebar />
+    <Layout>
+      <div className="card shadow-sm">
+        <div className="card-body">
+          <div className="d-flex flex-wrap justify-content-between align-items-center mb-3">
+            <h3 className="page-title mb-3 mb-md-0">👤 Manage Users</h3>
+            <button
+              id="backBtn"
+              className="btn btn-secondary"
+              onClick={() => navigate("/dashboard")}
+            >
+              ← Back
+            </button>
+          </div>
 
-        <div className="container-fluid mt-4 user-management-container">
-          <div className="card shadow-sm">
-            <div className="card-body">
-              <div className="d-flex flex-wrap justify-content-between align-items-center mb-3">
-                <h3 className="page-title mb-3 mb-md-0">👤 Manage Users</h3>
-                <button
-                  id="backBtn"
-                  className="btn btn-secondary"
-                  onClick={() => navigate("/dashboard")}
-                >
-                  ← Back
-                </button>
-              </div>
-
-              {message && (
-                <div id="messageBox" className="alert alert-info py-2 text-center">
-                  {message}
-                </div>
-              )}
-
-              {/* Create User Form */}
-              <form
-                id="createUserForm"
-                onSubmit={handleCreateUser}
-                className="row g-2 g-md-3 mb-4"
-              >
-                <div className="col-12 col-md-3">
-                  <input
-                    type="text"
-                    className="form-control"
-                    placeholder="Name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="col-12 col-md-3">
-                  <input
-                    type="email"
-                    className="form-control"
-                    placeholder="Email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="col-12 col-md-3">
-                  <input
-                    type="password"
-                    className="form-control"
-                    placeholder="Password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="col-12 col-md-2">
-                  <select
-                    className="form-select"
-                    value={role}
-                    onChange={(e) => setRole(e.target.value)}
-                  >
-                    <option value="admin">Admin</option>
-                    <option value="cashier">Cashier</option>
-                    <option value="finance">Finance</option>
-                  </select>
-                </div>
-                <div className="col-12 col-md-1 d-grid">
-                  <button type="submit" className="btn btn-success w-100">
-                    Create
-                  </button>
-                </div>
-              </form>
-
-              {/* Users Table */}
-              <div className="table-responsive user-table">
-                <table className="table table-striped table-bordered align-middle">
-                  <thead className="table-dark">
-                    <tr>
-                      <th>Name</th>
-                      <th>Email</th>
-                      <th>Role</th>
-                      <th style={{ width: "80px" }}>Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {users.length === 0 ? (
-                      <tr>
-                        <td colSpan="4" className="text-center">
-                          No users found
-                        </td>
-                      </tr>
-                    ) : (
-                      users.map((u) => (
-                        <tr key={u._id}>
-                          <td>{u.name}</td>
-                          <td>{u.email}</td>
-                          <td className="text-capitalize">{u.role}</td>
-                          <td>
-                            {!(u.role === "admin" && adminCount === 1) && (
-                              <button
-                                className="btn btn-danger btn-sm"
-                                onClick={() => handleDeleteUser(u._id)}
-                              >
-                                🗑️
-                              </button>
-                            )}
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
+          {message && (
+            <div id="messageBox" className="alert alert-info py-2 text-center">
+              {message}
             </div>
+          )}
+
+          <form
+            id="createUserForm"
+            onSubmit={handleCreateUser}
+            className="row g-2 g-md-3 mb-4"
+          >
+            <div className="col-12 col-md-3">
+              <input
+                type="text"
+                className="form-control"
+                placeholder="Name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+              />
+            </div>
+            <div className="col-12 col-md-3">
+              <input
+                type="email"
+                className="form-control"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+            <div className="col-12 col-md-3">
+              <input
+                type="password"
+                className="form-control"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+            <div className="col-12 col-md-2">
+              <select
+                className="form-select"
+                value={role}
+                onChange={(e) => setRole(e.target.value)}
+              >
+                <option value="admin">Admin</option>
+                <option value="cashier">Cashier</option>
+                <option value="finance">Finance</option>
+              </select>
+            </div>
+            <div className="col-12 col-md-1 d-grid">
+              <button type="submit" className="btn btn-success w-100">
+                Create
+              </button>
+            </div>
+          </form>
+
+          <div className="table-responsive user-table">
+            <table className="table table-striped table-bordered align-middle">
+              <thead className="table-dark">
+                <tr>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Role</th>
+                  <th style={{ width: "80px" }}>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {users.length === 0 ? (
+                  <tr>
+                    <td colSpan="4" className="text-center">
+                      No users found
+                    </td>
+                  </tr>
+                ) : (
+                  users.map((u) => (
+                    <tr key={u._id}>
+                      <td>{u.name}</td>
+                      <td>{u.email}</td>
+                      <td className="text-capitalize">{u.role}</td>
+                      <td>
+                        {!(u.role === "admin" && adminCount === 1) && (
+                          <button
+                            className="btn btn-danger btn-sm"
+                            onClick={() => handleDeleteUser(u._id)}
+                          >
+                            🗑️
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
-    </>
+    </Layout>
   );
 }

@@ -10,6 +10,8 @@ export default function Sidebar() {
       ? [
           { to: "/admin/users", label: "👥 Manage Users" },
           { to: "/reports", label: "📊 Reports" },
+          { to: "/admin/products", label: "📦 Product Management" },
+
         ]
       : []),
     ...(user?.role === "cashier"

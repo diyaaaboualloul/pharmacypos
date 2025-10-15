@@ -5,6 +5,10 @@ import morgan from "morgan";
 import { connectDB } from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
+import batchRoutes from "./routes/batchRoutes.js";
+import productRoutes from "./routes/productRoutes.js";
+
+
 
 dotenv.config();
 const app = express();
@@ -17,6 +21,10 @@ app.get("/", (req, res) => res.send("Pharmacy POS API 🚀"));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);  // ✅ Add this line
+
+app.use("/api/products", productRoutes);
+app.use("/api/batches", batchRoutes);
+app.use("/api/admin/products", productRoutes);
 
 connectDB();
 

@@ -9,6 +9,10 @@ import RoleProtectedRoute from "./components/RoleProtectedRoute";
 import UserManagementPage from "./pages/UserManagementPage";
 import UnauthorizedPage from "./pages/UnauthorizedPage";
 import NotFoundPage from "./pages/NotFoundPage";
+import ProductManagementPage from "./pages/ProductManagementPage";
+
+
+
 
 function App() {
   return (
@@ -50,6 +54,14 @@ function App() {
             </RoleProtectedRoute>
           }
         />
+<Route
+  path="/admin/products"
+  element={
+    <RoleProtectedRoute allowedRoles={["admin"]}>
+      <ProductManagementPage />
+    </RoleProtectedRoute>
+  }
+/>
 
         {/* Cashier */}
         <Route
