@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import Layout from "../components/Layout";
 import { getToken } from "../utils/auth";
@@ -8,14 +9,16 @@ export default function CategoryManagementPage() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [message, setMessage] = useState("");
+  const navigate = useNavigate();
 
   // ✅ Fetch all categories with product counts
   const fetchCategories = async () => {
     try {
       const token = getToken();
-      const { data } = await axios.get("http://localhost:5000/api/admin/categories", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const { data } = await axios.get(
+        "http://localhost:5000/api/admin/categories",
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
       setCategories(data);
     } catch (err) {
       console.error("Failed to fetch categories", err);
@@ -110,7 +113,7 @@ export default function CategoryManagementPage() {
                 <tr>
                   <th>Name</th>
                   <th>Description</th>
-                  <th>Products</th> {/* 🆕 Product Count Column */}
+                  <th>Products</th>
                   <th style={{ width: "100px" }}>Action</th>
                 </tr>
               </thead>
@@ -124,9 +127,18 @@ export default function CategoryManagementPage() {
                 ) : (
                   categories.map((c) => (
                     <tr key={c._id}>
-                      <td>{c.name}</td>
+                      <td>
+                        <button
+                          className="btn btn-link p-0"
+                          onClick={() =>
+                            navigate(`/admin/categories/${c.name}/products`)
+                          }
+                        >
+                          {c.name}
+                        </button>
+                      </td>
                       <td>{c.description}</td>
-                      <td>{c.productCount || 0}</td> {/* 🆕 Display product count */}
+                      <td>{c.productCount || 0}</td>
                       <td>
                         <button
                           className="btn btn-danger btn-sm"

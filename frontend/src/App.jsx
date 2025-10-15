@@ -11,6 +11,9 @@ import UnauthorizedPage from "./pages/UnauthorizedPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import ProductManagementPage from "./pages/ProductManagementPage";
 import CategoryManagementPage from "./pages/CategoryManagementPage";
+import CategoryProductsPage from "./pages/CategoryProductsPage";
+
+
 
 
 
@@ -68,6 +71,12 @@ function App() {
       <ProductManagementPage />
     </RoleProtectedRoute>
   }
+  
+/>
+// ...
+<Route
+  path="/admin/categories/:categoryName/products"
+  element={<CategoryProductsPage />}
 />
 
         {/* Cashier */}

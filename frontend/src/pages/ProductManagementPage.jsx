@@ -10,8 +10,10 @@ export default function ProductManagementPage() {
   const [price, setPrice] = useState("");
   const [description, setDescription] = useState("");
   const [message, setMessage] = useState("");
-const [categories, setCategories] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [editingProductId, setEditingProductId] = useState(null); // ✏️ Track editing product
 
+  // ✅ Fetch all products
   const fetchProducts = async () => {
     try {
       const token = getToken();
@@ -23,26 +25,26 @@ const [categories, setCategories] = useState([]);
       console.error("Failed to fetch products", err);
     }
   };
-const fetchCategories = async () => {
-  try {
-    const token = getToken();
-    const { data } = await axios.get("http://localhost:5000/api/admin/categories", {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    setCategories(data);
-  } catch (err) {
-    console.error("Failed to fetch categories", err);
-  }
-};
-useEffect(() => {
-  fetchProducts();
-  fetchCategories();
-}, []);
+
+  // ✅ Fetch categories for select dropdown
+  const fetchCategories = async () => {
+    try {
+      const token = getToken();
+      const { data } = await axios.get("http://localhost:5000/api/admin/categories", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setCategories(data);
+    } catch (err) {
+      console.error("Failed to fetch categories", err);
+    }
+  };
 
   useEffect(() => {
     fetchProducts();
+    fetchCategories();
   }, []);
 
+  // ✅ Create new product
   const handleCreateProduct = async (e) => {
     e.preventDefault();
     try {
@@ -53,23 +55,59 @@ useEffect(() => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setMessage(data.message);
-      setName("");
-      setCategory("");
-      setPrice("");
-      setDescription("");
+      resetForm();
       fetchProducts();
     } catch (err) {
       setMessage(err.response?.data?.message || "Failed to create product");
     }
   };
 
+  // ✅ Update existing product
+  const handleUpdateProduct = async (e) => {
+    e.preventDefault();
+    try {
+      const token = getToken();
+      const { data } = await axios.put(
+        `http://localhost:5000/api/admin/products/${editingProductId}`,
+        { name, category, price, description },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setMessage(data.message);
+      resetForm();
+      fetchProducts();
+    } catch (err) {
+      setMessage(err.response?.data?.message || "Failed to update product");
+    }
+  };
+
+  // ✏️ Fill form with selected product for editing
+  const handleEditProduct = (product) => {
+    setEditingProductId(product._id);
+    setName(product.name);
+    setCategory(product.category);
+    setPrice(product.price);
+    setDescription(product.description || "");
+  };
+
+  // 🧼 Reset form to initial state
+  const resetForm = () => {
+    setEditingProductId(null);
+    setName("");
+    setCategory("");
+    setPrice("");
+    setDescription("");
+  };
+
+  // 🗑️ Delete product
   const handleDeleteProduct = async (id) => {
     if (!window.confirm("Are you sure?")) return;
     try {
       const token = getToken();
-      await axios.delete(`http://localhost:5000/api/admin/products/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const { data } = await axios.delete(
+        `http://localhost:5000/api/admin/products/${id}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setMessage(data.message);
       fetchProducts();
     } catch (err) {
       console.error("Failed to delete product", err);
@@ -80,43 +118,47 @@ useEffect(() => {
     <Layout>
       <div className="card shadow-sm">
         <div className="card-body">
+          {/* 🔸 Header */}
           <div className="d-flex flex-wrap justify-content-between align-items-center mb-3">
             <h3 className="page-title mb-3 mb-md-0">📦 Product & Inventory Management</h3>
           </div>
 
+          {/* 🔸 Messages */}
           {message && (
-            <div className="alert alert-info py-2 text-center">
-              {message}
-            </div>
+            <div className="alert alert-info py-2 text-center">{message}</div>
           )}
 
-          {/* Create Product Form */}
-          <form onSubmit={handleCreateProduct} className="row g-2 g-md-3 mb-4">
+          {/* 📝 Create / Update Product Form */}
+          <form
+            onSubmit={editingProductId ? handleUpdateProduct : handleCreateProduct}
+            className="row g-2 g-md-3 mb-4"
+          >
             <div className="col-12 col-md-3">
               <input
                 type="text"
                 className="form-control"
-                placeholder="Name"
+                placeholder="Product Name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
               />
             </div>
-          <div className="col-12 col-md-3">
-  <select
-    className="form-select"
-    value={category}
-    onChange={(e) => setCategory(e.target.value)}
-    required
-  >
-    <option value="">Select category</option>
-    {categories.map((c) => (
-      <option key={c._id} value={c.name}>
-        {c.name}
-      </option>
-    ))}
-  </select>
-</div>
+
+            <div className="col-12 col-md-3">
+              <select
+                className="form-select"
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                required
+              >
+                <option value="">Select Category</option>
+                {categories.map((c) => (
+                  <option key={c._id} value={c.name}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
 
             <div className="col-12 col-md-2">
               <input
@@ -128,6 +170,7 @@ useEffect(() => {
                 required
               />
             </div>
+
             <div className="col-12 col-md-3">
               <input
                 type="text"
@@ -137,14 +180,15 @@ useEffect(() => {
                 onChange={(e) => setDescription(e.target.value)}
               />
             </div>
+
             <div className="col-12 col-md-1 d-grid">
-              <button type="submit" className="btn btn-primary w-100">
-                Create
+              <button type="submit" className={`btn ${editingProductId ? "btn-warning" : "btn-primary"} w-100`}>
+                {editingProductId ? "Update" : "Create"}
               </button>
             </div>
           </form>
 
-          {/* Products Table */}
+          {/* 📋 Products Table */}
           <div className="table-responsive">
             <table className="table table-striped table-bordered align-middle">
               <thead className="table-dark">
@@ -154,7 +198,7 @@ useEffect(() => {
                   <th>Price</th>
                   <th>Description</th>
                   <th>Batches</th>
-                  <th style={{ width: "80px" }}>Action</th>
+                  <th style={{ width: "100px" }}>Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -174,7 +218,13 @@ useEffect(() => {
                       <td>{p.batches?.length || 0}</td>
                       <td>
                         <button
-                          className="btn btn-danger btn-sm"
+                          className="btn btn-sm btn-warning me-2"
+                          onClick={() => handleEditProduct(p)}
+                        >
+                          ✏️
+                        </button>
+                        <button
+                          className="btn btn-sm btn-danger"
                           onClick={() => handleDeleteProduct(p._id)}
                         >
                           🗑️
