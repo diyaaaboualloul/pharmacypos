@@ -18,31 +18,22 @@ function computeExpiryStatus(expiryDate, thresholdDays = 30) {
  */
 export const createBatch = async (req, res) => {
   try {
-    const { productId, batchNumber, expiryDate, quantity, costPrice } = req.body;
+    const { productId, supplier, expiryDate, quantity, costPrice } = req.body;
 
-    if (!productId || !batchNumber || !expiryDate || quantity == null || costPrice == null) {
-      return res.status(400).json({ message: "All fields are required" });
-    }
-
-    // ensure product exists
     const product = await Product.findById(productId);
     if (!product) return res.status(404).json({ message: "Product not found" });
 
-    // ensure unique batch number
-    const exists = await Batch.findOne({ batchNumber });
-    if (exists) return res.status(400).json({ message: "Batch number already exists" });
-
     const batch = await Batch.create({
       product: productId,
-      batchNumber,
+      supplier,
       expiryDate,
       quantity,
       costPrice,
     });
 
-    res.status(201).json({ message: "Batch created successfully", batch });
+    res.json({ message: "Batch created successfully", batch });
   } catch (err) {
-    res.status(500).json({ message: "Server error", error: err.message });
+    res.status(500).json({ message: "Failed to create batch", error: err.message });
   }
 };
 

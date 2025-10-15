@@ -1,3 +1,4 @@
+// frontend/src/pages/BatchManagementPage.jsx
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -10,7 +11,7 @@ export default function BatchManagementPage() {
 
   const [batches, setBatches] = useState([]);
   const [product, setProduct] = useState(null);
-  const [batchNumber, setBatchNumber] = useState("");
+  const [supplier, setSupplier] = useState("");
   const [expiryDate, setExpiryDate] = useState("");
   const [quantity, setQuantity] = useState("");
   const [costPrice, setCostPrice] = useState("");
@@ -49,18 +50,18 @@ export default function BatchManagementPage() {
     fetchProduct();
   }, [productId]);
 
-  // 🟢 Create batch
+  // 🟢 Create batch (batchNumber is auto on backend)
   const handleCreateBatch = async (e) => {
     e.preventDefault();
     try {
       const token = getToken();
       const { data } = await axios.post(
         "http://localhost:5000/api/admin/batches",
-        { productId, batchNumber, expiryDate, quantity, costPrice },
+        { productId, supplier, expiryDate, quantity, costPrice },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setMessage(data.message);
-      setBatchNumber("");
+      setSupplier("");
       setExpiryDate("");
       setQuantity("");
       setCostPrice("");
@@ -84,6 +85,7 @@ export default function BatchManagementPage() {
     }
   };
 
+  // 🟠 Badge for expiry status
   const getStatusBadge = (status) => {
     if (status === "expired") return <span className="badge bg-danger">Expired</span>;
     if (status === "expiringSoon") return <span className="badge bg-warning text-dark">Expiring Soon</span>;
@@ -112,9 +114,9 @@ export default function BatchManagementPage() {
               <input
                 type="text"
                 className="form-control"
-                placeholder="Batch Number"
-                value={batchNumber}
-                onChange={(e) => setBatchNumber(e.target.value)}
+                placeholder="Supplier Name"
+                value={supplier}
+                onChange={(e) => setSupplier(e.target.value)}
                 required
               />
             </div>
@@ -149,7 +151,9 @@ export default function BatchManagementPage() {
               />
             </div>
             <div className="col-12 col-md-2 d-grid">
-              <button type="submit" className="btn btn-primary w-100">Create</button>
+              <button type="submit" className="btn btn-primary w-100">
+                Create
+              </button>
             </div>
           </form>
 
@@ -158,7 +162,8 @@ export default function BatchManagementPage() {
             <table className="table table-striped table-bordered align-middle">
               <thead className="table-dark">
                 <tr>
-                  <th>Batch Number</th>
+                  <th>Batch #</th>
+                  <th>Supplier</th>
                   <th>Expiry Date</th>
                   <th>Quantity</th>
                   <th>Cost Price</th>
@@ -169,12 +174,15 @@ export default function BatchManagementPage() {
               <tbody>
                 {batches.length === 0 ? (
                   <tr>
-                    <td colSpan="6" className="text-center">No batches found</td>
+                    <td colSpan="7" className="text-center">
+                      No batches found
+                    </td>
                   </tr>
                 ) : (
                   batches.map((b) => (
                     <tr key={b._id}>
                       <td>{b.batchNumber}</td>
+                      <td>{b.supplier}</td>
                       <td>{new Date(b.expiryDate).toLocaleDateString()}</td>
                       <td>{b.quantity}</td>
                       <td>{b.costPrice}</td>
