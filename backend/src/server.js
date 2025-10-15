@@ -27,6 +27,7 @@ app.use("/api/products", productRoutes);
 app.use("/api/batches", batchRoutes);
 app.use("/api/admin/products", productRoutes);
 app.use("/api/admin/categories", categoryRoutes);
+app.use("/api/admin/batches", batchRoutes);
 
 connectDB();
 

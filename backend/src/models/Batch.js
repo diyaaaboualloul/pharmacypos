@@ -6,11 +6,13 @@ const batchSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Product",
       required: true,
+      index: true,
     },
     batchNumber: {
       type: String,
       required: true,
-      unique: true,
+      unique: true, // each batch number must be globally unique
+      trim: true,
     },
     expiryDate: {
       type: Date,
@@ -24,6 +26,7 @@ const batchSchema = new mongoose.Schema(
     costPrice: {
       type: Number,
       required: true,
+      min: 0,
     },
   },
   { timestamps: true }

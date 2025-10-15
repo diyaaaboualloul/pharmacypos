@@ -16,6 +16,8 @@ import CategoryProductsPage from "./pages/CategoryProductsPage";
 
 
 
+import BatchManagementPage from "./pages/BatchManagementPage.jsx";
+
 
 
 
@@ -64,6 +66,11 @@ function App() {
   path="/admin/categories"
   element={<CategoryManagementPage />}
 />
+<Route
+  path="/admin/products/:productId/batches"
+  element={<BatchManagementPage />}
+/>
+
 <Route
   path="/admin/products"
   element={

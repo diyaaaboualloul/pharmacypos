@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { getToken } from "../utils/auth";
 import Layout from "../components/Layout";
+import { useNavigate } from "react-router-dom";
 
 export default function ProductManagementPage() {
   const [products, setProducts] = useState([]);
@@ -12,6 +13,7 @@ export default function ProductManagementPage() {
   const [message, setMessage] = useState("");
   const [categories, setCategories] = useState([]);
   const [editingProductId, setEditingProductId] = useState(null); // ✏️ Track editing product
+const navigate = useNavigate();
 
   // ✅ Fetch all products
   const fetchProducts = async () => {
@@ -215,7 +217,14 @@ export default function ProductManagementPage() {
                       <td>{p.category}</td>
                       <td>{p.price}</td>
                       <td>{p.description}</td>
-                      <td>{p.batches?.length || 0}</td>
+<td>
+  <button
+    className="btn btn-link p-0"
+    onClick={() => navigate(`/admin/products/${p._id}/batches`)}
+  >
+    {p.batches?.length || 0}
+  </button>
+</td>
                       <td>
                         <button
                           className="btn btn-sm btn-warning me-2"
