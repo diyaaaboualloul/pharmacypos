@@ -9,6 +9,10 @@ import batchRoutes from "./routes/batchRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
 import categoryRoutes from "./routes/categoryRoutes.js";
 import alertRoutes from "./routes/alertRoutes.js";
+// ✅ Add this import at the top
+import posRoutes from "./routes/posRoutes.js";
+
+// ✅ Mount this after auth routes
 
 
 
@@ -30,6 +34,7 @@ app.use("/api/admin/products", productRoutes);
 app.use("/api/admin/categories", categoryRoutes);
 app.use("/api/admin/batches", batchRoutes);
 app.use("/api/admin/alerts", alertRoutes);
+app.use("/api/pos", posRoutes);
 
 connectDB();
 

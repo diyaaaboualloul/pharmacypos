@@ -15,6 +15,10 @@ import CategoryProductsPage from "./pages/CategoryProductsPage";
 import AlertsPage from "./pages/AlertPage";
 import SearchResultsPage from "./pages/SearchResultsPage";
 import BatchManagementPage from "./pages/BatchManagementPage.jsx";
+// ✅ 1. Import the PosPage component at the top
+import PosPage from "./pages/PosPage";
+
+
 
 function App() {
   return (
@@ -78,16 +82,15 @@ function App() {
           path="/admin/categories/:categoryName/products"
           element={<CategoryProductsPage />}
         />
-
-        {/* Cashier */}
-        <Route
-          path="/cashier-dashboard"
-          element={
-            <RoleProtectedRoute allowedRoles={["cashier"]}>
-              <CashierDashboardPage />
-            </RoleProtectedRoute>
-          }
-        />
+<Route
+  path="/cashier/pos"
+  element={
+    <RoleProtectedRoute allowedRoles={["cashier"]}>
+      <PosPage />
+    </RoleProtectedRoute>
+  }
+/>
+       
 
         {/* Finance */}
         <Route

@@ -18,11 +18,6 @@ export const createCategory = async (req, res) => {
   }
 };
 
-// ✅ Get Categories with product count
-// backend/controllers/categoryController.js (example)
-
-// ✅ backend/controllers/categoryController.js
-
 
 // ✅ Get all categories with product counts
 export const getCategories = async (req, res) => {
