@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { getToken } from "../utils/auth";
+import { useNavigate } from "react-router-dom";
 import CheckoutModal from "../components/CheckoutModal";
 import InvoiceModal from "../components/InvoiceModal";
 
@@ -12,7 +13,16 @@ export default function PosPage() {
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const [lastSale, setLastSale] = useState(null);
 
-  // ✅ Fetch products when search changes
+  const user = JSON.parse(localStorage.getItem("user"));
+  const navigate = useNavigate();
+
+  const logout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    navigate("/login");
+  };
+
+  // ✅ Fetch products...
   useEffect(() => {
     const fetchProducts = async () => {
       try {
@@ -33,6 +43,7 @@ export default function PosPage() {
       setProducts([]);
     }
   }, [search]);
+
 
   // ➕ Add product to cart
   const handleAddToCart = (product) => {
@@ -101,8 +112,14 @@ export default function PosPage() {
 
   return (
     <div className="container p-4">
-      <h2 className="fw-bold mb-3">🧾 Point of Sale</h2>
-
+ <div className="d-flex align-items-center ms-auto">
+          <span className="me-3 d-none d-sm-inline">
+            👤 <strong>{user?.name}</strong> ({user?.role})
+          </span>
+          <button onClick={logout} className="btn btn-danger btn-sm">
+            Logout
+          </button>
+        </div>
       {/* 🔍 Search bar */}
       <input
         type="text"
@@ -146,41 +163,61 @@ export default function PosPage() {
       )}
 
       {/* 🛒 Cart Table */}
-      {cart.length > 0 && (
-        <div className="mt-4">
-          <h5>🛒 Cart</h5>
-          <table className="table table-bordered">
-            <thead>
-              <tr>
-                <th>Item</th>
-                <th>Qty</th>
-                <th>Price</th>
-                <th>Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              {cart.map((item) => (
-                <tr key={item._id}>
-                  <td>{item.name}</td>
-                  <td>{item.quantity}</td>
-                  <td>${item.price.toFixed(2)}</td>
-                  <td>${(item.price * item.quantity).toFixed(2)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+    {/* 🛒 Cart Table */}
+{cart.length > 0 && (
+  <div className="mt-4">
+    <h5>🛒 Cart</h5>
+    <table className="table table-bordered">
+      <thead>
+        <tr>
+          <th>Item</th>
+          <th style={{ width: "100px" }}>Qty</th>
+          <th>Price</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        {cart.map((item) => (
+          <tr key={item._id}>
+            <td>{item.name}</td>
 
-          <div className="text-end mt-3">
-            <h5>Total: ${cartTotal.toFixed(2)}</h5>
-            <button
-              className="btn btn-primary btn-lg mt-2"
-              onClick={() => setShowCheckoutModal(true)}
-            >
-              Proceed to Checkout 💰
-            </button>
-          </div>
-        </div>
-      )}
+            {/* 🔸 Editable quantity */}
+            <td>
+              <input
+                type="number"
+                min="1"
+                className="form-control form-control-sm text-center"
+                value={item.quantity}
+                onChange={(e) => {
+                  const newQty = parseInt(e.target.value) || 1;
+                  setCart((prev) =>
+                    prev.map((p) =>
+                      p._id === item._id ? { ...p, quantity: newQty } : p
+                    )
+                  );
+                }}
+              />
+            </td>
+
+            <td>${item.price.toFixed(2)}</td>
+            <td>${(item.price * item.quantity).toFixed(2)}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+
+    <div className="text-end mt-3">
+      <h5>Total: ${cartTotal.toFixed(2)}</h5>
+      <button
+        className="btn btn-primary btn-lg mt-2"
+        onClick={() => setShowCheckoutModal(true)}
+      >
+        Proceed to Checkout 💰
+      </button>
+    </div>
+  </div>
+)}
+
 
       {/* 🧾 Checkout Modal */}
       <CheckoutModal
