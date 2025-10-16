@@ -1,6 +1,6 @@
 import Category from "../models/Category.js";
 import Product from "../models/Product.js";
-
+import Batch from "../models/Batch.js";
 // ✅ Create Category
 export const createCategory = async (req, res) => {
   try {
@@ -19,25 +19,59 @@ export const createCategory = async (req, res) => {
 };
 
 // ✅ Get Categories with product count
+// backend/controllers/categoryController.js (example)
+
+// ✅ backend/controllers/categoryController.js
+
+
+// ✅ Get all categories with product counts
 export const getCategories = async (req, res) => {
   try {
-    const categories = await Category.find();
+    const categories = await Category.find().lean();
 
+    // Attach product counts to each category
     const categoriesWithCounts = await Promise.all(
       categories.map(async (cat) => {
-        const count = await Product.countDocuments({ category: cat.name });
-        return { ...cat.toObject(), productCount: count };
+        const productCount = await Product.countDocuments({ category: cat.name });
+        return { ...cat, productCount };
       })
     );
 
     res.json(categoriesWithCounts);
-  } catch (error) {
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch categories", error: err.message });
+  }
+};
+
+// ✅ Get products by category with batch counts
+export const getProductsByCategory = async (req, res) => {
+  try {
+    const { categoryName } = req.params;
+
+    // 1️⃣ Get all products in the category
+    const products = await Product.find({ category: categoryName }).lean();
+
+    // 2️⃣ Attach batch counts to each product
+    const productsWithBatchCounts = await Promise.all(
+      products.map(async (product) => {
+        const batchCount = await Batch.countDocuments({ product: product._id });
+        return {
+          ...product,
+          batches: Array(batchCount).fill({}), // 👈 so .length works on frontend
+        };
+      })
+    );
+
+    // 3️⃣ Return
+    res.json(productsWithBatchCounts);
+  } catch (err) {
     res.status(500).json({
-      message: "Failed to fetch categories",
-      error: error.message,
+      message: "Failed to load products",
+      error: err.message,
     });
   }
 };
+
 
 // ✅ Update Category
 export const updateCategory = async (req, res) => {
