@@ -12,7 +12,7 @@ export const createProduct = async (req, res) => {
   }
 };
 
-// ✅ Get all products (with their batches)
+// ✅ Get all products (with their bbatches)
 export const getProducts = async (req, res) => {
   try {
     const products = await Product.find().lean();
