@@ -55,7 +55,14 @@ function App() {
             </RoleProtectedRoute>
           }
         />
-        <Route path="/admin/search" element={<SearchResultsPage />} />
+<Route
+  path="/admin/search"
+  element={
+    <RoleProtectedRoute allowedRoles={["admin"]}>
+      <SearchResultsPage />
+    </RoleProtectedRoute>
+  }
+/>
         <Route
           path="/admin/users"
           element={

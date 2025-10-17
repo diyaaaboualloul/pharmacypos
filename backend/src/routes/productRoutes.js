@@ -14,7 +14,7 @@ const router = express.Router();
 router.use(requireAuth); // must be logged in
 
 // 🔍 Search must come BEFORE any :id routes to avoid conflicts
-router.get("/search", requireAdmin, searchProducts);
+router.get("/search", requireAuth, searchProducts);
 
 // 🧾 Product CRUD
 router.get("/", getProducts);
