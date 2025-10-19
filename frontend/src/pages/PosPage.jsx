@@ -4,6 +4,7 @@ import { getToken } from "../utils/auth";
 import { useNavigate } from "react-router-dom";
 import CheckoutModal from "../components/CheckoutModal";
 import InvoiceModal from "../components/InvoiceModal";
+import "../css/pospage.css";
 
 export default function PosPage() {
   const [products, setProducts] = useState([]);
@@ -44,6 +45,9 @@ export default function PosPage() {
     }
   }, [search]);
 
+const handleRemoveFromCart = (id) => {
+  setCart((prev) => prev.filter((item) => item._id !== id));
+};
 
   // ➕ Add product to cart
   const handleAddToCart = (product) => {
@@ -128,95 +132,129 @@ export default function PosPage() {
         value={search}
         onChange={(e) => setSearch(e.target.value)}
       />
-
-      {/* 📋 Product Table */}
-      {products.length > 0 && (
-        <table className="table table-bordered align-middle">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Category</th>
-              <th>Price</th>
-              <th>Available Qty</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {products.map((product) => (
-              <tr key={product._id}>
-                <td>{product.name}</td>
-                <td>{product.category}</td>
-                <td>${product.price.toFixed(2)}</td>
-                <td>{product.totalSellableQty}</td>
-                <td>
-                  <button
-                    className="btn btn-success btn-sm"
-                    onClick={() => handleAddToCart(product)}
-                  >
-                    + Add
-                  </button>
-                </td>
+<div className="d-flex flex-column flex-md-row gap-3">
+  {/* LEFT: Products Table (60%) */}
+  <div style={{ flex: "0 0 60%" }}>
+    <div className="card mb-3">
+      <div className="card-header bg-primary text-white">
+        <h5 className="mb-0">🛍️ Products</h5>
+      </div>
+      <div className="card-body">
+        {products.length > 0 ? (
+          <table className="table table-bordered table-hover align-middle">
+            <thead className="table-secondary">
+              <tr>
+                <th>Name</th>
+                <th>Category</th>
+                <th>Price</th>
+                <th>Available Qty</th>
+                <th></th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-
-      {/* 🛒 Cart Table */}
-    {/* 🛒 Cart Table */}
-{cart.length > 0 && (
-  <div className="mt-4">
-    <h5>🛒 Cart</h5>
-    <table className="table table-bordered">
-      <thead>
-        <tr>
-          <th>Item</th>
-          <th style={{ width: "100px" }}>Qty</th>
-          <th>Price</th>
-          <th>Total</th>
-        </tr>
-      </thead>
-      <tbody>
-        {cart.map((item) => (
-          <tr key={item._id}>
-            <td>{item.name}</td>
-
-            {/* 🔸 Editable quantity */}
-            <td>
-              <input
-                type="number"
-                min="1"
-                className="form-control form-control-sm text-center"
-                value={item.quantity}
-                onChange={(e) => {
-                  const newQty = parseInt(e.target.value) || 1;
-                  setCart((prev) =>
-                    prev.map((p) =>
-                      p._id === item._id ? { ...p, quantity: newQty } : p
-                    )
-                  );
-                }}
-              />
-            </td>
-
-            <td>${item.price.toFixed(2)}</td>
-            <td>${(item.price * item.quantity).toFixed(2)}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-
-    <div className="text-end mt-3">
-      <h5>Total: ${cartTotal.toFixed(2)}</h5>
-      <button
-        className="btn btn-primary btn-lg mt-2"
-        onClick={() => setShowCheckoutModal(true)}
-      >
-        Proceed to Checkout 💰
-      </button>
+            </thead>
+            <tbody>
+              {products.map((product) => (
+                <tr key={product._id}>
+                  <td>{product.name}</td>
+                  <td>{product.category}</td>
+                  <td>${product.price.toFixed(2)}</td>
+                  <td>{product.totalSellableQty}</td>
+                  <td>
+                    <button
+                      className="btn btn-success btn-sm"
+                      onClick={() => handleAddToCart(product)}
+                    >
+                      + Add
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <p className="text-center text-muted">No products found.</p>
+        )}
+      </div>
     </div>
   </div>
-)}
+
+  {/* RIGHT: Cart Table (50%) */}
+  <div style={{ flex: "0 0 50%" }}>
+    <div className="card " style={{ top: "20px" }}>
+      <div className="card-header bg-warning text-dark">
+        <h5 className="mb-0">🛒 Your Cart</h5>
+      </div>
+      <div className="card-body">
+        {cart.length > 0 ? (
+          <>
+            <table className="table table-sm table-bordered mb-3">
+             <thead className="table-light">
+  <tr>
+    <th>Item</th>
+    <th style={{ width: "70px" }}>Qty</th>
+    <th>Price</th>
+    <th>Total</th>
+    <th>Action</th> {/* 🆕 New column */}
+  </tr>
+</thead>
+
+              <tbody>
+  {cart.map((item) => (
+    <tr key={item._id}>
+      <td>{item.name}</td>
+      <td>
+        <input
+          type="number"
+          min="1"
+          className="form-control form-control-sm text-center"
+          value={item.quantity}
+          onChange={(e) => {
+            const newQty = parseInt(e.target.value) || 1;
+            setCart((prev) =>
+              prev.map((p) =>
+                p._id === item._id ? { ...p, quantity: newQty } : p
+              )
+            );
+          }}
+        />
+      </td>
+      <td>${item.price.toFixed(2)}</td>
+      <td>${(item.price * item.quantity).toFixed(2)}</td>
+
+      {/* 🗑️ Delete Button */}
+      <td className="text-center">
+<button
+  className="btn btn-outline-danger btn-sm"
+  title="Remove item"
+  onClick={() => handleRemoveFromCart(item._id)}
+>
+  ✖
+</button>
+
+      </td>
+    </tr>
+  ))}
+</tbody>
+
+            </table>
+
+            <div className="text-end">
+              <h6 className="fw-bold">Total: ${cartTotal.toFixed(2)}</h6>
+              <button
+                className="btn btn-primary btn-block mt-2"
+                style={{ width: "100%" }}
+                onClick={() => setShowCheckoutModal(true)}
+              >
+                Checkout 💰
+              </button>
+            </div>
+          </>
+        ) : (
+          <p className="text-center text-muted">Cart is empty.</p>
+        )}
+      </div>
+    </div>
+  </div>
+</div>
 
 
       {/* 🧾 Checkout Modal */}
