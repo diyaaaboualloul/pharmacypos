@@ -26,16 +26,32 @@ export default function CashierInvoices() {
     fetchSales();
   }, []);
 
+  const handleRefund = async (id) => {
+    if (!window.confirm("Are you sure you want to refund this invoice?")) return;
+    try {
+      const token = getToken();
+      await axios.post(`http://localhost:5000/api/pos/refund/${id}`, {}, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      alert("Refund processed successfully!");
+      window.location.reload();
+    } catch (err) {
+      console.error(err);
+      alert("Refund failed: " + (err.response?.data?.message || err.message));
+    }
+  };
+
   if (loading) return <p className="text-center mt-5">Loading your invoices...</p>;
 
   return (
+    <Layout>
       <div className="container mt-4">
         <h3>🧾 My Invoices</h3>
         {sales.length === 0 ? (
           <p className="text-center text-muted">No invoices yet.</p>
         ) : (
           <table className="table table-bordered mt-3">
-            <thead className="table-light">
+            <thead className="table-warning">
               <tr>
                 <th>Invoice #</th>
                 <th>Date</th>
@@ -50,7 +66,9 @@ export default function CashierInvoices() {
                   <td>{s.invoiceNumber}</td>
                   <td>{new Date(s.createdAt).toLocaleString()}</td>
                   <td>${s.total.toFixed(2)}</td>
-                  <td>{s.isEdited ? "Edited" : "Original"}</td>
+                  <td className={s.total < 0 ? "text-danger" : "text-success"}>
+                    {s.total < 0 ? "Refunded" : "Original"}
+                  </td>
                   <td>
                     <button
                       className="btn btn-sm btn-outline-primary me-2"
@@ -58,12 +76,14 @@ export default function CashierInvoices() {
                     >
                       View
                     </button>
-                    <button
-                      className="btn btn-sm btn-warning"
-                      onClick={() => navigate(`/cashier/invoices/${s._id}/edit`)}
-                    >
-                      Edit
-                    </button>
+                    {s.total > 0 && (
+                      <button
+                        className="btn btn-sm btn-danger"
+                        onClick={() => handleRefund(s._id)}
+                      >
+                        Refund
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -71,5 +91,6 @@ export default function CashierInvoices() {
           </table>
         )}
       </div>
+    </Layout>
   );
 }
