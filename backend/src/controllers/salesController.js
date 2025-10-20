@@ -1,9 +1,10 @@
 import Sale from "../models/Sale.js";
 
 // 👨‍💼 Cashier: view own invoices
+// 👨‍💼 Cashier: view own invoices
 export const listMySales = async (req, res) => {
   try {
-    const sales = await Sale.find({ cashier: req.user._id })
+    const sales = await Sale.find({ cashier: req.user._id }) // ✅ FIXED HERE
       .populate("cashier", "name email")
       .populate("items.product", "name category price")
       .sort({ createdAt: -1 });
@@ -12,6 +13,7 @@ export const listMySales = async (req, res) => {
     res.status(500).json({ message: "Failed to fetch your invoices", error: err.message });
   }
 };
+
 
 // 🧾 Admin/Finance: view all invoices
 export const listAllSales = async (req, res) => {

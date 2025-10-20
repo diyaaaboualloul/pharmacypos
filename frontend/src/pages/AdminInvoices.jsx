@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { getToken } from "../utils/auth";
 import { useNavigate } from "react-router-dom";
-import Layout from "../components/Layout"; // ✅ Important import
+import Layout from "../components/Layout";
 
 export default function AdminInvoices() {
   const [sales, setSales] = useState([]);
@@ -32,7 +32,6 @@ export default function AdminInvoices() {
     fetchSales();
   }, []);
 
-  // Filter by cashier name
   const filteredSales = sales.filter((sale) =>
     sale.cashier?.name?.toLowerCase().includes(filter.toLowerCase())
   );
@@ -41,61 +40,72 @@ export default function AdminInvoices() {
   if (error) return <p className="text-danger text-center mt-5">{error}</p>;
 
   return (
-        <Layout>
-    
-    <div className="container mt-4">
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <h3>📄 Invoices (All Cashiers)</h3>
-        <input
-          type="text"
-          className="form-control"
-          placeholder="Search by cashier name..."
-          style={{ maxWidth: "300px" }}
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-        />
-      </div>
-
-      {filteredSales.length === 0 ? (
-        <p className="text-center text-muted">No invoices found.</p>
-      ) : (
-        <div className="table-responsive">
-          <table className="table table-bordered table-striped align-middle">
-            <thead className="table-warning">
-              <tr>
-                <th>Invoice #</th>
-                <th>Date</th>
-                <th>Cashier</th>
-                <th>Payment Type</th>
-                <th>Total</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredSales.map((sale) => (
-                <tr key={sale._id}>
-                  <td>{sale.invoiceNumber}</td>
-                  <td>{new Date(sale.createdAt).toLocaleString()}</td>
-                  <td>{sale.cashier?.name || "Unknown"}</td>
-                  <td>{sale.payment?.type}</td>
-                  <td>${sale.total.toFixed(2)}</td>
-                <td>
-  <button
-    className="btn btn-sm btn-outline-primary"
-    onClick={() => navigate(`/admin/invoices/${sale._id}`)}
-  >
-    View
-  </button>
-</td>
-
-                </tr>
-              ))}
-            </tbody>
-          </table>
+    <Layout>
+      <div className="container mt-4">
+        <div className="d-flex justify-content-between align-items-center mb-3">
+          <h3>📄 Invoices (All Cashiers)</h3>
+          <input
+            type="text"
+            className="form-control"
+            placeholder="Search by cashier name..."
+            style={{ maxWidth: "300px" }}
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+          />
         </div>
-      )}
-    </div>
-        </Layout>
-    
+
+        {filteredSales.length === 0 ? (
+          <p className="text-center text-muted">No invoices found.</p>
+        ) : (
+          <div className="table-responsive">
+            <table className="table table-bordered table-striped align-middle">
+              <thead className="table-warning">
+                <tr>
+                  <th>Invoice #</th>
+                  <th>Date</th>
+                  <th>Cashier</th>
+                  <th>Payment Type</th>
+                  <th>Total</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredSales.map((sale) => (
+                  <tr key={sale._id}>
+                    <td>{sale.invoiceNumber}</td>
+                    <td>{new Date(sale.createdAt).toLocaleString()}</td>
+                    <td>{sale.cashier?.name || "Unknown"}</td>
+                    <td>{sale.payment?.type}</td>
+                    <td>${sale.total.toFixed(2)}</td>
+                    <td>
+                      {sale.isEdited ? (
+                        <span className="badge bg-warning text-dark">Edited</span>
+                      ) : (
+                        <span className="badge bg-success">Original</span>
+                      )}
+                    </td>
+                    <td className="d-flex gap-2">
+                      <button
+                        className="btn btn-primary btn-sm"
+                        onClick={() => navigate(`/admin/invoices/${sale._id}`)}
+                      >
+                        View
+                      </button>
+                      <button
+                        className="btn btn-warning btn-sm"
+                        onClick={() => navigate(`/admin/invoices/${sale._id}/edit`)}
+                      >
+                        Edit
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </Layout>
   );
 }
