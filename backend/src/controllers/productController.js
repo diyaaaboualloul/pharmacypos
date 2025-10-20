@@ -12,7 +12,7 @@ export const createProduct = async (req, res) => {
   }
 };
 
-// ✅ Get all products (with their batches)
+// ✅ Get all products (with their bbatches)
 export const getProducts = async (req, res) => {
   try {
     const products = await Product.find().lean();
@@ -50,5 +50,23 @@ export const deleteProduct = async (req, res) => {
     res.json({ message: "Product and related batches deleted" });
   } catch (err) {
     res.status(500).json({ message: "Failed to delete product", error: err.message });
+  }
+};
+export const searchProducts = async (req, res) => {
+  try {
+    const q = req.query.q?.trim();
+    if (!q) return res.json([]);
+
+    // Case-insensitive partial match on product name or category
+    const products = await Product.find({
+      $or: [
+        { name: { $regex: q, $options: "i" } },
+        { category: { $regex: q, $options: "i" } },
+      ],
+    });
+
+    res.json(products);
+  } catch (err) {
+    res.status(500).json({ message: "Search failed", error: err.message });
   }
 };

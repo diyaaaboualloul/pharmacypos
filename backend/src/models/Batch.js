@@ -8,9 +8,14 @@ const batchSchema = new mongoose.Schema(
       required: true,
     },
     batchNumber: {
+      type: Number,
+      unique: true,
+      required: true,
+    },
+    supplier: {
       type: String,
       required: true,
-      unique: true,
+      trim: true,
     },
     expiryDate: {
       type: Date,
@@ -28,5 +33,14 @@ const batchSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+// ✅ Auto-increment batchNumber before saving
+batchSchema.pre("validate", async function (next) {
+  if (this.isNew) {
+    const lastBatch = await this.constructor.findOne().sort({ batchNumber: -1 });
+    this.batchNumber = lastBatch ? lastBatch.batchNumber + 1 : 1;
+  }
+  next();
+});
 
 export default mongoose.model("Batch", batchSchema);

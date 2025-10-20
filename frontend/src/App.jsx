@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import AdminDashboardPage from "./pages/AdminDashboardPage";
@@ -12,11 +12,11 @@ import NotFoundPage from "./pages/NotFoundPage";
 import ProductManagementPage from "./pages/ProductManagementPage";
 import CategoryManagementPage from "./pages/CategoryManagementPage";
 import CategoryProductsPage from "./pages/CategoryProductsPage";
-
-
-
-
-
+import AlertsPage from "./pages/AlertPage";
+import SearchResultsPage from "./pages/SearchResultsPage";
+import BatchManagementPage from "./pages/BatchManagementPage.jsx";
+// ✅ 1. Import the PosPage component at the top
+import PosPage from "./pages/PosPage";
 
 
 
@@ -24,6 +24,9 @@ function App() {
   return (
     <Router>
       <Routes>
+        {/* ✅ Redirect root to /login */}
+        <Route path="/" element={<Navigate to="/login" replace />} />
+
         {/* Public */}
         <Route
           path="/login"
@@ -52,6 +55,14 @@ function App() {
             </RoleProtectedRoute>
           }
         />
+<Route
+  path="/admin/search"
+  element={
+    <RoleProtectedRoute allowedRoles={["admin"]}>
+      <SearchResultsPage />
+    </RoleProtectedRoute>
+  }
+/>
         <Route
           path="/admin/users"
           element={
@@ -60,34 +71,33 @@ function App() {
             </RoleProtectedRoute>
           }
         />
+        <Route path="/admin/alerts" element={<AlertsPage />} />
+        <Route path="/admin/categories" element={<CategoryManagementPage />} />
         <Route
-  path="/admin/categories"
-  element={<CategoryManagementPage />}
-/>
-<Route
-  path="/admin/products"
-  element={
-    <RoleProtectedRoute allowedRoles={["admin"]}>
-      <ProductManagementPage />
-    </RoleProtectedRoute>
-  }
-  
-/>
-// ...
-<Route
-  path="/admin/categories/:categoryName/products"
-  element={<CategoryProductsPage />}
-/>
-
-        {/* Cashier */}
+          path="/admin/products/:productId/batches"
+          element={<BatchManagementPage />}
+        />
         <Route
-          path="/cashier-dashboard"
+          path="/admin/products"
           element={
-            <RoleProtectedRoute allowedRoles={["cashier"]}>
-              <CashierDashboardPage />
+            <RoleProtectedRoute allowedRoles={["admin"]}>
+              <ProductManagementPage />
             </RoleProtectedRoute>
           }
         />
+        <Route
+          path="/admin/categories/:categoryName/products"
+          element={<CategoryProductsPage />}
+        />
+<Route
+  path="/cashier/pos"
+  element={
+    <RoleProtectedRoute allowedRoles={["cashier"]}>
+      <PosPage />
+    </RoleProtectedRoute>
+  }
+/>
+       
 
         {/* Finance */}
         <Route
@@ -99,7 +109,7 @@ function App() {
           }
         />
 
-        {/* 4004 Page - Catch All */}
+        {/* 404 Page */}
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </Router>

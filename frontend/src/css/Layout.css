@@ -12,4 +12,7 @@
   .bigcont {
     margin-left: 0 !important;
   }
+  .card{
+  padding: 0px;
+}
 }

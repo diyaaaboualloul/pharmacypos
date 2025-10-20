@@ -2,16 +2,17 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { getToken } from "../utils/auth";
 import Layout from "../components/Layout";
+import { useNavigate } from "react-router-dom";
 
 export default function ProductManagementPage() {
   const [products, setProducts] = useState([]);
   const [name, setName] = useState("");
   const [category, setCategory] = useState("");
   const [price, setPrice] = useState("");
-  const [description, setDescription] = useState("");
   const [message, setMessage] = useState("");
   const [categories, setCategories] = useState([]);
-  const [editingProductId, setEditingProductId] = useState(null); // ✏️ Track editing product
+  const [editingProductId, setEditingProductId] = useState(null);
+  const navigate = useNavigate();
 
   // ✅ Fetch all products
   const fetchProducts = async () => {
@@ -51,7 +52,7 @@ export default function ProductManagementPage() {
       const token = getToken();
       const { data } = await axios.post(
         "http://localhost:5000/api/admin/products",
-        { name, category, price, description },
+        { name, category, price },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setMessage(data.message);
@@ -69,7 +70,7 @@ export default function ProductManagementPage() {
       const token = getToken();
       const { data } = await axios.put(
         `http://localhost:5000/api/admin/products/${editingProductId}`,
-        { name, category, price, description },
+        { name, category, price },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setMessage(data.message);
@@ -86,16 +87,14 @@ export default function ProductManagementPage() {
     setName(product.name);
     setCategory(product.category);
     setPrice(product.price);
-    setDescription(product.description || "");
   };
 
-  // 🧼 Reset form to initial state
+  // 🧼 Reset form
   const resetForm = () => {
     setEditingProductId(null);
     setName("");
     setCategory("");
     setPrice("");
-    setDescription("");
   };
 
   // 🗑️ Delete product
@@ -114,6 +113,12 @@ export default function ProductManagementPage() {
     }
   };
 
+  // 🧮 Helper to calculate total quantity of all batches
+  const getTotalQuantity = (product) => {
+    if (!product.batches || product.batches.length === 0) return 0;
+    return product.batches.reduce((total, batch) => total + (batch.quantity || 0), 0);
+  };
+
   return (
     <Layout>
       <div className="card shadow-sm">
@@ -124,16 +129,14 @@ export default function ProductManagementPage() {
           </div>
 
           {/* 🔸 Messages */}
-          {message && (
-            <div className="alert alert-info py-2 text-center">{message}</div>
-          )}
+          {message && <div className="alert alert-info py-2 text-center">{message}</div>}
 
           {/* 📝 Create / Update Product Form */}
           <form
             onSubmit={editingProductId ? handleUpdateProduct : handleCreateProduct}
             className="row g-2 g-md-3 mb-4"
           >
-            <div className="col-12 col-md-3">
+            <div className="col-12 col-md-4">
               <input
                 type="text"
                 className="form-control"
@@ -144,7 +147,7 @@ export default function ProductManagementPage() {
               />
             </div>
 
-            <div className="col-12 col-md-3">
+            <div className="col-12 col-md-4">
               <select
                 className="form-select"
                 value={category}
@@ -160,7 +163,7 @@ export default function ProductManagementPage() {
               </select>
             </div>
 
-            <div className="col-12 col-md-2">
+            <div className="col-12 col-md-3">
               <input
                 type="number"
                 className="form-control"
@@ -171,18 +174,11 @@ export default function ProductManagementPage() {
               />
             </div>
 
-            <div className="col-12 col-md-3">
-              <input
-                type="text"
-                className="form-control"
-                placeholder="Description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-              />
-            </div>
-
             <div className="col-12 col-md-1 d-grid">
-              <button type="submit" className={`btn ${editingProductId ? "btn-warning" : "btn-primary"} w-100`}>
+              <button
+                type="submit"
+                className={`btn ${editingProductId ? "btn-warning" : "btn-primary"} w-100`}
+              >
                 {editingProductId ? "Update" : "Create"}
               </button>
             </div>
@@ -193,10 +189,11 @@ export default function ProductManagementPage() {
             <table className="table table-striped table-bordered align-middle">
               <thead className="table-dark">
                 <tr>
+                  <th>ID</th>
                   <th>Name</th>
                   <th>Category</th>
                   <th>Price</th>
-                  <th>Description</th>
+                  <th>Quantity</th> {/* 🆕 New Column */}
                   <th>Batches</th>
                   <th style={{ width: "100px" }}>Action</th>
                 </tr>
@@ -204,18 +201,24 @@ export default function ProductManagementPage() {
               <tbody>
                 {products.length === 0 ? (
                   <tr>
-                    <td colSpan="6" className="text-center">
-                      No products found
-                    </td>
+                    <td colSpan="7" className="text-center">No products found</td>
                   </tr>
                 ) : (
                   products.map((p) => (
                     <tr key={p._id}>
+                      <td>{p.productId}</td>
                       <td>{p.name}</td>
                       <td>{p.category}</td>
                       <td>{p.price}</td>
-                      <td>{p.description}</td>
-                      <td>{p.batches?.length || 0}</td>
+                      <td>{getTotalQuantity(p)}</td>
+                      <td>
+                        <button
+                          className="btn btn-link p-0"
+                          onClick={() => navigate(`/admin/products/${p._id}/batches`)}
+                        >
+                          {p.batches?.length || 0}
+                        </button>
+                      </td>
                       <td>
                         <button
                           className="btn btn-sm btn-warning me-2"

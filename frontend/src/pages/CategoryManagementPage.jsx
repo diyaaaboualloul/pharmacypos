@@ -7,7 +7,6 @@ import { getToken } from "../utils/auth";
 export default function CategoryManagementPage() {
   const [categories, setCategories] = useState([]);
   const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
   const [message, setMessage] = useState("");
   const navigate = useNavigate();
 
@@ -36,12 +35,11 @@ export default function CategoryManagementPage() {
       const token = getToken();
       const { data } = await axios.post(
         "http://localhost:5000/api/admin/categories",
-        { name, description },
+        { name },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setMessage(data.message);
       setName("");
-      setDescription("");
       fetchCategories();
     } catch (err) {
       setMessage(err.response?.data?.message || "Failed to create category");
@@ -80,7 +78,7 @@ export default function CategoryManagementPage() {
 
           {/* 📝 Create Category Form */}
           <form onSubmit={handleCreateCategory} className="row g-2 g-md-3 mb-4">
-            <div className="col-12 col-md-4">
+            <div className="col-12 col-md-10">
               <input
                 type="text"
                 className="form-control"
@@ -88,15 +86,6 @@ export default function CategoryManagementPage() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
-              />
-            </div>
-            <div className="col-12 col-md-6">
-              <input
-                type="text"
-                className="form-control"
-                placeholder="Description (optional)"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
               />
             </div>
             <div className="col-12 col-md-2 d-grid">
@@ -112,15 +101,14 @@ export default function CategoryManagementPage() {
               <thead className="table-dark">
                 <tr>
                   <th>Name</th>
-                  <th>Description</th>
-                  <th>Products</th>
+                  <th>Number of Products</th>
                   <th style={{ width: "100px" }}>Action</th>
                 </tr>
               </thead>
               <tbody>
                 {categories.length === 0 ? (
                   <tr>
-                    <td colSpan="4" className="text-center">
+                    <td colSpan="3" className="text-center">
                       No categories found
                     </td>
                   </tr>
@@ -137,7 +125,6 @@ export default function CategoryManagementPage() {
                           {c.name}
                         </button>
                       </td>
-                      <td>{c.description}</td>
                       <td>{c.productCount || 0}</td>
                       <td>
                         <button

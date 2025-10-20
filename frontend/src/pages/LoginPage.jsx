@@ -27,7 +27,7 @@ const handleSubmit = async (e) => {
     if (data.user.role === "admin") {
       window.location.href = "/dashboard";
     } else if (data.user.role === "cashier") {
-      window.location.href = "/cashier-dashboard";
+  window.location.href = "/cashier/pos";  // ✅ redirect to POS page
     } else if (data.user.role === "accounting" || data.user.role === "finance") {
       window.location.href = "/finance-dashboard";
     } else {

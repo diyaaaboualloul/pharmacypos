@@ -35,7 +35,8 @@ export default function CategoryProductsPage() {
         <div className="card-body">
           <div className="d-flex flex-wrap justify-content-between align-items-center mb-3">
             <h3 className="page-title mb-3 mb-md-0">
-              📂 Products in Category: <span className="text-primary">{categoryName}</span>
+              📂 Products in Category:{" "}
+              <span className="text-primary">{categoryName}</span>
             </h3>
             <button onClick={() => navigate(-1)} className="btn btn-secondary">
               ← Back
@@ -50,14 +51,13 @@ export default function CategoryProductsPage() {
                 <tr>
                   <th>Name</th>
                   <th>Price</th>
-                  <th>Description</th>
                   <th>Batches</th>
                 </tr>
               </thead>
               <tbody>
                 {products.length === 0 ? (
                   <tr>
-                    <td colSpan="4" className="text-center">
+                    <td colSpan="3" className="text-center">
                       No products found in this category
                     </td>
                   </tr>
@@ -66,7 +66,6 @@ export default function CategoryProductsPage() {
                     <tr key={p._id}>
                       <td>{p.name}</td>
                       <td>{p.price}</td>
-                      <td>{p.description}</td>
                       <td>{p.batches?.length || 0}</td>
                     </tr>
                   ))
