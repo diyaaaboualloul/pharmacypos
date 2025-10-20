@@ -40,8 +40,11 @@ export default function Sidebar() {
           { to: "/reports", label: "📊 Reports" },
           { to: "/admin/products", label: "📦 Product Management" },
           { to: "/admin/categories", label: "📂 Categories" },
+                    { to: "/admin/invoices", label: "📂 Invoices" },
+
         ]
       : []),
+
 
     ...(user?.role === "cashier"
       ? [

@@ -1,3 +1,4 @@
+// backend/src/models/Sale.js
 import mongoose from "mongoose";
 
 const saleItemSchema = new mongoose.Schema(
@@ -14,8 +15,8 @@ const saleItemSchema = new mongoose.Schema(
 const paymentSchema = new mongoose.Schema(
   {
     type: { type: String, enum: ["cash", "card"], required: true },
-    cashReceived: { type: Number },
-    change: { type: Number },
+    cashReceived: Number,
+    change: Number,
   },
   { _id: false }
 );
@@ -28,7 +29,7 @@ const saleSchema = new mongoose.Schema(
     total: { type: Number, required: true },
     payment: { type: paymentSchema, required: true },
     cashier: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-    notes: { type: String },
+    notes: String,
   },
   { timestamps: true }
 );

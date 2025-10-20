@@ -17,6 +17,9 @@ import SearchResultsPage from "./pages/SearchResultsPage";
 import BatchManagementPage from "./pages/BatchManagementPage.jsx";
 // ✅ 1. Import the PosPage component at the top
 import PosPage from "./pages/PosPage";
+import AdminInvoices from "./pages/AdminInvoices";
+import InvoiceView from "./pages/InvoiceView";
+
 
 
 
@@ -98,6 +101,11 @@ function App() {
   }
 />
        
+<Route path="/admin/invoices/:id" element={<InvoiceView />} />
+
+
+<Route path="/admin/invoices" element={<AdminInvoices />} />
+
 
         {/* Finance */}
         <Route
