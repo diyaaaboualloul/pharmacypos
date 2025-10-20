@@ -99,7 +99,7 @@ function App() {
           }
         />
 
-        {/* 404 Page - Catch All */}
+        {/* 4004 Page - Catch All */}
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </Router>
