@@ -7,14 +7,13 @@ export default function Sidebar() {
   const user = getUser();
   const [alertCount, setAlertCount] = useState(0);
 
-  // 🔔 Fetch alert count from backend
+  // 🔔 Fetch alert count
   const fetchAlerts = async () => {
     try {
       const token = getToken();
       const { data } = await axios.get("http://localhost:5000/api/admin/alerts", {
         headers: { Authorization: `Bearer ${token}` },
       });
-
       const total = data.expiredCount + data.expiringSoonCount + data.lowStockCount;
       setAlertCount(total);
     } catch (err) {
@@ -25,7 +24,7 @@ export default function Sidebar() {
   useEffect(() => {
     if (user?.role === "admin") {
       fetchAlerts();
-      const interval = setInterval(fetchAlerts, 60000); // refresh every minute
+      const interval = setInterval(fetchAlerts, 60000);
       return () => clearInterval(interval);
     }
   }, [user]);
@@ -40,11 +39,10 @@ export default function Sidebar() {
           { to: "/reports", label: "📊 Reports" },
           { to: "/admin/products", label: "📦 Product Management" },
           { to: "/admin/categories", label: "📂 Categories" },
-                    { to: "/admin/invoices", label: "📂 Invoices" },
-
+          { to: "/admin/invoices", label: "🧾 Invoices" },
+          { to: "/admin/cashiers", label: "💼 Cashiers" }, // ✅ new
         ]
       : []),
-
 
     ...(user?.role === "cashier"
       ? [
@@ -54,7 +52,10 @@ export default function Sidebar() {
       : []),
 
     ...(user?.role === "finance"
-      ? [{ to: "/finance/reports", label: "💰 Finance Reports" }]
+      ? [
+          { to: "/finance/reports", label: "💰 Finance Reports" },
+          { to: "/admin/cashiers", label: "💼 Cashiers" }, // ✅ also for finance
+        ]
       : []),
   ];
 

@@ -14,7 +14,7 @@ export default function PosPage() {
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const [lastSale, setLastSale] = useState(null);
   const [todayTotal, setTodayTotal] = useState(0);
-  const [todayClosed, setTodayClosed] = useState(false);
+  const [cashierStatus, setCashierStatus] = useState("closed"); // 🟢 or 🔴
 
   const user = JSON.parse(localStorage.getItem("user"));
   const navigate = useNavigate();
@@ -25,22 +25,44 @@ export default function PosPage() {
     navigate("/login");
   };
 
-  // 💵 Fetch live cashier total + closed status
+  // 💵 Fetch live cashier total
   const fetchTodayTotal = async () => {
     try {
       const token = getToken();
-      const { data } = await axios.get("http://localhost:5000/api/pos/today-total", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const { data } = await axios.get(
+        "http://localhost:5000/api/pos/today-total",
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
       setTodayTotal(data.total || 0);
-      setTodayClosed(data.closed || false);
     } catch (err) {
       console.error("Failed to fetch today's total", err);
     }
   };
 
+  // 🧾 Fetch cashier's current status
+  const fetchCashierStatus = async () => {
+    try {
+      const token = getToken();
+      const { data } = await axios.get(
+        "http://localhost:5000/api/pos/cashiers-status",
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const me = data.find((c) => c.email === user.email);
+      if (me) setCashierStatus(me.status);
+    } catch (err) {
+      console.error("Failed to fetch cashier status", err);
+    }
+  };
+
+  // 🔁 Auto-refresh every 10 seconds
   useEffect(() => {
     fetchTodayTotal();
+    fetchCashierStatus();
+    const interval = setInterval(() => {
+      fetchTodayTotal();
+      fetchCashierStatus();
+    }, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   // 🔍 Fetch products
@@ -70,6 +92,11 @@ export default function PosPage() {
   };
 
   const handleAddToCart = (product) => {
+    if (cashierStatus === "closed") {
+      alert("❌ You cannot add items while your account is closed!");
+      return;
+    }
+
     setCart((prev) => {
       const existing = prev.find((item) => item._id === product._id);
       if (existing) {
@@ -85,6 +112,11 @@ export default function PosPage() {
 
   // ✅ Confirm Sale
   const handleConfirmSale = async (paymentData) => {
+    if (cashierStatus === "closed") {
+      alert("❌ You cannot checkout while your account is closed!");
+      return;
+    }
+
     try {
       const token = getToken();
       const payload = {
@@ -117,8 +149,9 @@ export default function PosPage() {
       setShowInvoiceModal(true);
       setCart([]);
 
-      // 🔄 Refresh total after sale
+      // 🔄 Refresh totals + status
       fetchTodayTotal();
+      fetchCashierStatus();
     } catch (err) {
       console.error("Checkout failed:", err);
       alert(err.response?.data?.message || "Checkout failed");
@@ -127,7 +160,7 @@ export default function PosPage() {
 
   const handleCloseInvoice = () => {
     setShowInvoiceModal(false);
-    fetchTodayTotal(); // Refresh again just in case
+    fetchTodayTotal();
   };
 
   const cartTotal = cart.reduce(
@@ -141,7 +174,12 @@ export default function PosPage() {
       <div className="d-flex align-items-center justify-content-between mb-3">
         <div>
           <span className="me-3 d-none d-sm-inline">
-            👤 <strong>{user?.name}</strong> ({user?.role})
+            👤 <strong>{user?.name}</strong> ({user?.role}){" "}
+            {cashierStatus === "open" ? (
+              <span className="badge bg-success ms-2">🟢 Open</span>
+            ) : (
+              <span className="badge bg-danger ms-2">🔴 Closed</span>
+            )}
           </span>
         </div>
 
@@ -159,11 +197,7 @@ export default function PosPage() {
             gap: "12px",
           }}
         >
-          {todayClosed ? (
-            <span>✅ End of Day Closed</span>
-          ) : (
-            <span>💵 Total Sales Today: ${todayTotal.toFixed(2)}</span>
-          )}
+          <span>💵 Total Sales Today: ${todayTotal.toFixed(2)}</span>
           <button
             className="btn btn-outline-light btn-sm"
             onClick={() => navigate("/cashier/invoices")}
@@ -183,6 +217,7 @@ export default function PosPage() {
         className="form-control mb-3"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
+        disabled={cashierStatus === "closed"}
       />
 
       <div className="d-flex flex-column flex-md-row gap-3">
@@ -215,7 +250,7 @@ export default function PosPage() {
                           <button
                             className="btn btn-success btn-sm"
                             onClick={() => handleAddToCart(product)}
-                            disabled={todayClosed} // prevent adding after EOD
+                            disabled={cashierStatus === "closed"}
                           >
                             + Add
                           </button>
@@ -270,7 +305,7 @@ export default function PosPage() {
                                   )
                                 );
                               }}
-                              disabled={todayClosed}
+                              disabled={cashierStatus === "closed"}
                             />
                           </td>
                           <td>${item.price.toFixed(2)}</td>
@@ -280,7 +315,7 @@ export default function PosPage() {
                               className="btn btn-outline-danger btn-sm"
                               title="Remove item"
                               onClick={() => handleRemoveFromCart(item._id)}
-                              disabled={todayClosed}
+                              disabled={cashierStatus === "closed"}
                             >
                               ✖
                             </button>
@@ -296,7 +331,7 @@ export default function PosPage() {
                       className="btn btn-primary btn-block mt-2"
                       style={{ width: "100%" }}
                       onClick={() => setShowCheckoutModal(true)}
-                      disabled={todayClosed}
+                      disabled={cashierStatus === "closed"}
                     >
                       Checkout 💰
                     </button>

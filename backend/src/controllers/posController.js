@@ -5,6 +5,8 @@ import Batch from "../models/Batch.js";
 import Sale from "../models/Sale.js";
 import Counter from "../models/Counter.js";
 import DayClose from "../models/DayClose.js";
+import User from "../models/User.js"; // make sure this is at the top of the file if not already
+
 // === Helper: today's date at UTC midnight ===
 function todayUtc() {
   const d = new Date();
@@ -52,6 +54,42 @@ export const getTodayTotalSales = async (req, res) => {
 };
 
 
+
+// ✅ Fetch all cashiers with their current day status
+export const getCashiersDayStatus = async (req, res) => {
+  try {
+    const cashiers = await User.find({ role: "cashier" }).select("name email");
+
+    const data = await Promise.all(
+      cashiers.map(async (c) => {
+        // ✅ get the latest record for this cashier
+        const record = await DayClose.findOne({ cashier: c._id })
+          .sort({ openedAt: -1, closedAt: -1 })
+          .lean();
+
+        const status = record?.status || "closed";
+
+        return {
+          _id: c._id,
+          name: c.name,
+          email: c.email,
+          status,
+        };
+      })
+    );
+
+    res.json(data);
+  } catch (err) {
+    console.error("getCashiersDayStatus error:", err);
+    res.status(500).json({
+      message: "Failed to fetch cashier day status",
+      error: err.message,
+    });
+  }
+};
+
+
+
 // === Helper: Asia/Beirut invoice prefix (YYYYMMDD) ===
 function beirutInvoicePrefix() {
   const fmt = new Intl.DateTimeFormat("en-GB", {
@@ -83,13 +121,12 @@ export const closeCashierDay = async (req, res) => {
   try {
     const { cashierId } = req.params;
 
-    // Define start/end of day
     const start = new Date();
     start.setHours(0, 0, 0, 0);
     const end = new Date();
     end.setHours(23, 59, 59, 999);
 
-    // Aggregate totals
+    // ✅ Calculate totals for today
     const result = await Sale.aggregate([
       {
         $match: {
@@ -109,25 +146,42 @@ export const closeCashierDay = async (req, res) => {
 
     const data = result[0] || { totalSales: 0, totalRefunds: 0, netTotal: 0 };
 
-    // Create a DayClose record
-    const dayClose = await DayClose.create(
-      [
-        {
-          cashier: cashierId,
-          totalSales: data.totalSales,
-          totalRefunds: Math.abs(data.totalRefunds),
-          netTotal: data.netTotal,
-        },
-      ],
-      { session }
-    );
+    // ✅ Close only the most recent open record
+    const latestOpen = await DayClose.findOne({
+      cashier: cashierId,
+      status: "open",
+    })
+      .sort({ openedAt: -1 })
+      .session(session);
 
-    // Mark all today's sales as "closed"
+    if (latestOpen) {
+      latestOpen.status = "closed";
+      latestOpen.closedAt = new Date();
+      latestOpen.totalSales = data.totalSales;
+      latestOpen.totalRefunds = Math.abs(data.totalRefunds);
+      latestOpen.netTotal = data.netTotal;
+      await latestOpen.save({ session });
+    } else {
+      // if none exists, create a new closed record for logging
+      await DayClose.create(
+        [
+          {
+            cashier: cashierId,
+            status: "closed",
+            closedAt: new Date(),
+            date: start,
+            totalSales: data.totalSales,
+            totalRefunds: Math.abs(data.totalRefunds),
+            netTotal: data.netTotal,
+          },
+        ],
+        { session }
+      );
+    }
+
+    // ✅ Mark all today's sales as day-closed
     await Sale.updateMany(
-      {
-        cashier: cashierId,
-        createdAt: { $gte: start, $lte: end },
-      },
+      { cashier: cashierId, createdAt: { $gte: start, $lte: end } },
       { $set: { isDayClosed: true } },
       { session }
     );
@@ -135,16 +189,16 @@ export const closeCashierDay = async (req, res) => {
     await session.commitTransaction();
     session.endSession();
 
-    res.json({
-      message: "End-of-day completed successfully.",
-      summary: dayClose[0],
-    });
+    res.json({ message: "Day closed successfully", data });
   } catch (err) {
     await session.abortTransaction();
     session.endSession();
     res.status(400).json({ message: err.message || "Failed to close day" });
   }
 };
+
+
+
 
 // === PUT /api/pos/sales/:id ===
 export const updateSale = async (req, res) => {
@@ -591,4 +645,29 @@ export const refundSale = async (req, res) => {
     res.status(400).json({ message: err.message || "Refund failed" });
   }
 };
+
+// === POST /api/pos/open-day/:cashierId ===
+export const openCashierDay = async (req, res) => {
+  try {
+    const { cashierId } = req.params;
+
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+
+    // ✅ Always create a new record — no restrictions
+    const record = await DayClose.create({
+      cashier: cashierId,
+      status: "open",
+      openedAt: new Date(),
+      date: start, // normalized start of day
+    });
+
+    res.json({ message: "Day opened successfully", record });
+  } catch (err) {
+    res.status(400).json({ message: err.message || "Failed to open day" });
+  }
+};
+
+
+
 

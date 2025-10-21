@@ -1,37 +1,78 @@
 import express from "express";
 import { requireAuth } from "../middleware/auth.js";
 import {
+  // 🛒 POS Core
   searchSellable,
   checkout,
   listSales,
   updateSale,
   listMySales,
+  getSaleById,
   refundItem,
   replaceItem,
-  getSaleById,
-  refundSale, // ✅ make sure this is imported
-} from "../controllers/posController.js";
-import { getTodayTotalSales } from "../controllers/posController.js";
-import { closeCashierDay } from "../controllers/posController.js";
+  refundSale,
 
-// Only admin/finance can call it:
+  // 💵 Day Management
+  getTodayTotalSales,
+  openCashierDay,
+  closeCashierDay,
+  getCashiersDayStatus,
+} from "../controllers/posController.js";
 
 const router = express.Router();
+
+// ✅ Require authentication for all POS routes
 router.use(requireAuth);
 
-// Routes
+/* ===========================
+   🔹 POS Functional Routes
+   =========================== */
+
+// 🔍 Search for sellable products
 router.get("/search", searchSellable);
+
+// 💰 Checkout and record new sale
 router.post("/checkout", checkout);
+
+// 🧾 List all sales (admin)
 router.get("/sales", listSales);
-router.get("/sales/:id", getSaleById); // ✅ for viewing a specific invoice
+
+// 🧾 Get specific sale / invoice by ID
+router.get("/sales/:id", getSaleById);
+
+// ✏️ Update a sale
 router.put("/sales/:id", updateSale);
+
+// 📜 List sales belonging to the logged-in cashier
 router.get("/my-sales", listMySales);
+
+/* ===========================
+   🔹 Day Open / Close Management
+   =========================== */
+
+// 📅 Get today’s total sales for cashier POS page
 router.get("/today-total", getTodayTotalSales);
+
+// 🔓 Open cashier workday (admin/finance only)
+router.post("/open-day/:cashierId", openCashierDay);
+
+// 🕓 Close cashier workday (admin/finance only)
 router.post("/end-day/:cashierId", closeCashierDay);
 
-// Refund and Replace routes
-router.post("/refund/:id", refundSale); // ✅ ADD THIS LINE
+// 📋 Get all cashiers with open/closed status
+router.get("/cashiers-status", getCashiersDayStatus);
+
+/* ===========================
+   🔹 Refunds & Item Replacement
+   =========================== */
+
+// 💸 Full invoice refund
+router.post("/refund/:id", refundSale);
+
+// 💸 Partial item refund
 router.post("/refund-item/:saleId", refundItem);
+
+// 🔁 Replace a product in a sale
 router.post("/replace-item/:saleId", replaceItem);
 
 export default router;

@@ -21,11 +21,17 @@ import InvoiceView from "./pages/InvoiceView";
 import InvoiceEdit from "./pages/InvoiceEdit";
 import CashierInvoices from "./pages/CashierInvoices";
 import CashierInvoiceDetails from "./pages/CashierInvoiceDetails.jsx";
+import AdminCashiers from "./pages/AdminCashiers";
+
+// Inside your <Routes>
 
 function App() {
   return (
     <Router>
+
       <Routes>
+              <Route path="/admin/cashiers" element={<AdminCashiers />} />
+
         {/* Redirect root to /login */}
         <Route path="/" element={<Navigate to="/login" replace />} />
 
