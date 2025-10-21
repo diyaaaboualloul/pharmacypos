@@ -20,22 +20,14 @@ export const getTodayTotalSales = async (req, res) => {
     const end = new Date();
     end.setHours(23, 59, 59, 999);
 
-    // Check if cashier has closed the day
-    const dayClosed = await DayClose.findOne({
-      cashier: userId,
-      closedAt: { $gte: start, $lte: end },
-    });
-
-    if (dayClosed) {
-      return res.json({ total: 0, closed: true });
-    }
-
+    // ✅ Sum all non-refunded sales for this cashier today
     const result = await Sale.aggregate([
       {
         $match: {
-          cashier: userId,
+          cashier: new mongoose.Types.ObjectId(userId),
           createdAt: { $gte: start, $lte: end },
-          isDayClosed: { $ne: true },
+          total: { $gt: 0 },
+          isRefunded: { $ne: true },
         },
       },
       {
@@ -47,11 +39,22 @@ export const getTodayTotalSales = async (req, res) => {
     ]);
 
     const total = result.length > 0 ? result[0].totalSales : 0;
-    res.json({ total, closed: false });
+
+    // ✅ Get cashier status (last open/close record)
+    const latestRecord = await DayClose.findOne({ cashier: userId })
+      .sort({ date: -1 })
+      .lean();
+    const status = latestRecord?.status || "closed";
+
+    res.json({ total, status });
   } catch (err) {
-    res.status(500).json({ message: "Failed to fetch daily total", error: err.message });
+    console.error("Error in getTodayTotalSales:", err);
+    res
+      .status(500)
+      .json({ message: "Failed to fetch daily total", error: err.message });
   }
 };
+
 
 
 
