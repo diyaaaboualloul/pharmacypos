@@ -1,82 +1,123 @@
-/* ===========================
-   📦 Sidebar Styles
-   =========================== */
-
+/* ===== Sidebar Layout ===== */
 .sidebar-custom {
-  width: 220px;
-  height: 100vh;
-  background-color: #212529; /* dark background */
-  color: #fff;
   position: fixed;
   top: 0;
   left: 0;
-  padding-top: 60px;
-  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.2);
-  transition: width 0.3s ease;
+  height: 100vh;
+  width: 230px;
+  background-color: #111827; /* Dark navy */
+  color: #f3f4f6;
+  padding-top: 1rem;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.4);
+  overflow-y: auto;
+  z-index: 1000;
 }
 
-/* Sidebar links */
-.sidebar-custom .nav-link {
-  color: #adb5bd;
-  font-weight: 500;
-  padding: 12px 20px;
-  border-radius: var(--border-radius);
-  transition: var(--transition);
-}
-
-.sidebar-custom .nav-link:hover,
-.sidebar-custom .nav-link.active {
-  background-color: var(--color-primary);
+/* ===== Logo / Title ===== */
+.sidebar-logo {
+  font-size: 1.25rem;
+  font-weight: 700;
   color: #fff;
+  padding: 1rem 1.5rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* Sidebar item container */
-.sidebar-custom .nav-item {
-  position: relative;
+/* ===== Menu Links ===== */
+.sidebar-menu .nav-link {
+  color: #cbd5e1;
+  font-size: 0.95rem;
+  padding: 0.8rem 1.5rem;
+  border-radius: 6px;
+  text-decoration: none;
+  transition: all 0.3s ease;
 }
 
-/* Badge styling */
-.sidebar-custom .badge {
-  font-size: 0.75rem;
-  padding: 4px 8px;
-  border-radius: 12px;
+.sidebar-menu .nav-link:hover {
+  background-color: #1f2937;
+  color: #fff;
+  transform: translateX(5px);
 }
 
-/* Dropdown menu styles */
+.sidebar-menu .nav-link.active {
+  background-color: #2563eb; /* blue highlight */
+  color: #fff;
+  font-weight: 600;
+}
+
+/* ===== Dropdown Section ===== */
 .sidebar-dropdown {
   display: none;
   flex-direction: column;
-  padding-left: 1.5rem;
-  transition: max-height 0.3s ease;
+  background-color: #1e293b;
+  margin: 0.3rem 1.2rem;
+  border-radius: 6px;
+  padding: 0.3rem 0;
+  transition: all 0.3s ease;
 }
 
 .sidebar-dropdown.show {
   display: flex;
+  animation: fadeIn 0.2s ease;
+}
+
+/* Dropdown links */
+.sidebar-dropdown .nav-link.sub-link {
+  padding: 0.6rem 1.5rem;
+  font-size: 0.9rem;
+  color: #cbd5e1;
+}
+
+.sidebar-dropdown .nav-link.sub-link:hover {
+  background-color: #334155;
+  color: #fff;
 }
 
 /* Dropdown toggle arrow */
-.dropdown-toggle::after {
+.nav-link.dropdown-toggle::after {
   content: "▼";
-  font-size: 0.7rem;
-  margin-left: 8px;
+  float: right;
+  font-size: 0.6rem;
+  margin-top: 5px;
   transition: transform 0.3s ease;
 }
 
-.dropdown-toggle.open::after {
-  transform: rotate(-180deg);
+.nav-link.dropdown-toggle.open::after {
+  transform: rotate(180deg);
 }
 
-/* Mobile sidebar (offcanvas) tweaks */
-.offcanvas {
-  background-color: #212529;
-  color: #fff;
+/* ===== Scrollbar ===== */
+.sidebar-custom::-webkit-scrollbar {
+  width: 6px;
+}
+.sidebar-custom::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
 }
 
-.offcanvas .nav-link {
-  color: #ccc;
+/* ===== Main Content Adjustment ===== */
+.main-content {
+  margin-left: 230px;
+  padding: 2rem;
 }
 
-.offcanvas .nav-link:hover {
-  background-color: var(--color-primary);
-  color: #fff;
+@media (max-width: 992px) {
+  .sidebar-custom {
+    display: none;
+  }
+  .main-content {
+    margin-left: 0;
+  }
+}
+
+/* ===== Animation ===== */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
