@@ -1,16 +1,17 @@
+// backend/src/controllers/posController.js
 import mongoose from "mongoose";
 import Product from "../models/Product.js";
 import Batch from "../models/Batch.js";
 import Sale from "../models/Sale.js";
 import Counter from "../models/Counter.js";
 
-// Helper: get today's date at UTC midnight
+// === Helper: today's date at UTC midnight ===
 function todayUtc() {
   const d = new Date();
   return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
 }
 
-// Helper: Asia/Beirut invoice prefix (YYYYMMDD)
+// === Helper: Asia/Beirut invoice prefix (YYYYMMDD) ===
 function beirutInvoicePrefix() {
   const fmt = new Intl.DateTimeFormat("en-GB", {
     timeZone: "Asia/Beirut",
@@ -22,7 +23,7 @@ function beirutInvoicePrefix() {
   return `${parts.year}${parts.month}${parts.day}`;
 }
 
-// Helper: get next invoice number
+// === Helper: get next invoice number ===
 async function nextInvoiceNumber(session) {
   const prefix = beirutInvoicePrefix();
   const ctr = await Counter.findOneAndUpdate(
@@ -32,7 +33,8 @@ async function nextInvoiceNumber(session) {
   );
   return `${prefix}-${String(ctr.seq).padStart(4, "0")}`;
 }
-// PUT /api/pos/sales/:id
+
+// === PUT /api/pos/sales/:id ===
 export const updateSale = async (req, res) => {
   try {
     const sale = await Sale.findById(req.params.id);
@@ -48,13 +50,16 @@ export const updateSale = async (req, res) => {
     // Deduct stock for new items
     const updatedItems = [];
     let newTotal = 0;
+
     for (const i of items) {
       const product = await Product.findById(i.productId);
       if (!product) throw new Error("Product not found");
+
       const batch = await Batch.findOne({ product: product._id, quantity: { $gt: 0 } });
       if (!batch) throw new Error("No available stock");
 
       await Batch.updateOne({ _id: batch._id }, { $inc: { quantity: -i.quantity } });
+
       const lineTotal = i.price * i.quantity;
       updatedItems.push({
         product: product._id,
@@ -85,7 +90,7 @@ export const updateSale = async (req, res) => {
   }
 };
 
-// GET /api/pos/search?q=...
+// === GET /api/pos/search?q=... ===
 export const searchSellable = async (req, res) => {
   try {
     const q = (req.query.q || "").trim();
@@ -133,7 +138,7 @@ export const searchSellable = async (req, res) => {
   }
 };
 
-// POST /api/pos/checkout
+// === POST /api/pos/checkout ===
 export const checkout = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -155,7 +160,9 @@ export const checkout = async (req, res) => {
         product: product._id,
         expiryDate: { $gte: today },
         quantity: { $gt: 0 },
-      }).sort({ expiryDate: 1, createdAt: 1 }).session(session);
+      })
+        .sort({ expiryDate: 1, createdAt: 1 })
+        .session(session);
 
       const totalAvailable = batches.reduce((sum, b) => sum + b.quantity, 0);
       if (totalAvailable < line.quantity) throw new Error(`Insufficient stock for ${product.name}`);
@@ -189,15 +196,17 @@ export const checkout = async (req, res) => {
     const invoiceNumber = await nextInvoiceNumber(session);
 
     const sale = await Sale.create(
-      [{
-        invoiceNumber,
-        items: saleItems,
-        subTotal: Number(subTotal.toFixed(2)),
-        total: Number(total.toFixed(2)),
-        payment: paymentRecord,
-        cashier: req.user?._id || req.user?.id,
-        notes,
-      }],
+      [
+        {
+          invoiceNumber,
+          items: saleItems,
+          subTotal: Number(subTotal.toFixed(2)),
+          total: Number(total.toFixed(2)),
+          payment: paymentRecord,
+          cashier: req.user?._id || req.user?.id,
+          notes,
+        },
+      ],
       { session }
     );
 
@@ -217,7 +226,20 @@ export const checkout = async (req, res) => {
   }
 };
 
-// GET /api/pos/sales
+// === GET /api/pos/my-sales ===
+export const listMySales = async (req, res) => {
+  try {
+    const sales = await Sale.find({ cashier: req.user._id })
+      .populate("cashier", "name email")
+      .populate("items.product", "name category price")
+      .sort({ createdAt: -1 });
+    res.json(sales);
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch your invoices", error: err.message });
+  }
+};
+
+// === GET /api/pos/sales ===
 export const listSales = async (req, res) => {
   try {
     const page = Math.max(1, parseInt(req.query.page || "1", 10));
@@ -243,4 +265,9 @@ export const listSales = async (req, res) => {
   } catch (err) {
     res.status(500).json({ message: "Failed to list sales", error: err.message });
   }
+};
+
+// === Temporary fix to prevent import error ===
+export const refundSale = async (req, res) => {
+  res.json({ message: "Refund sale endpoint placeholder (implement later)" });
 };

@@ -30,9 +30,11 @@ export default function CashierInvoices() {
     if (!window.confirm("Are you sure you want to refund this invoice?")) return;
     try {
       const token = getToken();
-      await axios.post(`http://localhost:5000/api/pos/refund/${id}`, {}, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await axios.post(
+        `http://localhost:5000/api/pos/refund/${id}`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
       alert("Refund processed successfully!");
       window.location.reload();
     } catch (err) {
@@ -41,12 +43,36 @@ export default function CashierInvoices() {
     }
   };
 
-  if (loading) return <p className="text-center mt-5">Loading your invoices...</p>;
+  if (loading)
+    return <p className="text-center mt-5">Loading your invoices...</p>;
 
   return (
-    <Layout>
       <div className="container mt-4">
-        <h3>🧾 My Invoices</h3>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "20px",
+          }}
+        >
+          <h3>🧾 My Invoices</h3>
+          <button
+            onClick={() => navigate("/cashier/pos")}
+            style={{
+              backgroundColor: "#0090E4",
+              color: "white",
+              border: "none",
+              borderRadius: "6px",
+              padding: "8px 16px",
+              fontWeight: "500",
+              cursor: "pointer",
+            }}
+          >
+            ← Back to POS
+          </button>
+        </div>
+
         {sales.length === 0 ? (
           <p className="text-center text-muted">No invoices yet.</p>
         ) : (
@@ -91,6 +117,5 @@ export default function CashierInvoices() {
           </table>
         )}
       </div>
-    </Layout>
   );
 }
