@@ -1,4 +1,4 @@
-// frontend/src/pages/AdminInvoices.jsx
+// froontend/src/pages/AdminInvoices.jsx
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { getToken } from "../utils/auth";
@@ -78,13 +78,9 @@ export default function AdminInvoices() {
                     <td>{sale.cashier?.name || "Unknown"}</td>
                     <td>{sale.payment?.type}</td>
                     <td>${sale.total.toFixed(2)}</td>
-                    <td>
-                      {sale.isEdited ? (
-                        <span className="badge bg-warning text-dark">Edited</span>
-                      ) : (
-                        <span className="badge bg-success">Original</span>
-                      )}
-                    </td>
+                   <td className={sale.total < 0 ? "text-danger" : "text-success"}>
+                  {sale.total < 0 ? "Refunded" : "Original"}
+                </td>
                     <td className="d-flex gap-2">
                       <button
                         className="btn btn-primary btn-sm"
