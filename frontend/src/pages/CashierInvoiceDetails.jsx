@@ -5,7 +5,7 @@ import { getToken } from "../utils/auth";
 import Layout from "../components/Layout";
 
 export default function CashierInvoiceDetails() {
-  const { id: invoiceId } = useParams(); // invoice _id
+  const { id: invoiceId } = useParams();
   const [invoice, setInvoice] = useState(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -31,7 +31,6 @@ export default function CashierInvoiceDetails() {
     fetchInvoice();
   }, [invoiceId]);
 
-  // ✅ Refund one item
   const handleRefundItem = async (productId) => {
     if (!window.confirm("Refund this product?")) return;
     try {
@@ -48,7 +47,6 @@ export default function CashierInvoiceDetails() {
     }
   };
 
-  // ✅ Replace one item
   const handleReplacePrompt = async (oldProductId) => {
     const newProductId = prompt("Enter NEW product ID to replace with:");
     const newQuantity = parseInt(prompt("Enter quantity for the new product:"), 10);
@@ -82,9 +80,11 @@ export default function CashierInvoiceDetails() {
   if (!invoice)
     return <p className="text-center text-danger">Invoice not found.</p>;
 
+  const isRefundedInvoice = invoice.total < 0 || invoice.isRefunded;
+
   return (
       <div className="container mt-4">
-        {/* Header with Back Button */}
+        {/* Header */}
         <div
           style={{
             display: "flex",
@@ -122,7 +122,7 @@ export default function CashierInvoiceDetails() {
           </p>
           <p>
             <strong>Status:</strong>{" "}
-            {invoice.total < 0 ? (
+            {isRefundedInvoice ? (
               <span className="text-danger">Refunded</span>
             ) : (
               <span className="text-success">Original</span>
@@ -141,7 +141,8 @@ export default function CashierInvoiceDetails() {
               <th>Unit Price</th>
               <th>Line Total</th>
               <th>Status</th>
-              <th>Action</th>
+              {/* 🟡 Hide Action column if invoice is refunded */}
+              {!isRefundedInvoice && <th>Action</th>}
             </tr>
           </thead>
           <tbody>
@@ -160,24 +161,27 @@ export default function CashierInvoiceDetails() {
                     <span className="text-success">Sold</span>
                   )}
                 </td>
-                <td>
-                  {!item.isRefunded && (
-                    <div className="d-flex gap-2">
-                      <button
-                        className="btn btn-sm btn-danger"
-                        onClick={() => handleRefundItem(item.product._id)}
-                      >
-                        Refund Item
-                      </button>
-                      <button
-                        className="btn btn-sm btn-warning"
-                        onClick={() => handleReplacePrompt(item.product._id)}
-                      >
-                        Replace
-                      </button>
-                    </div>
-                  )}
-                </td>
+                {/* 🟡 Hide entire Action cell if invoice is refunded */}
+                {!isRefundedInvoice && (
+                  <td>
+                    {!item.isRefunded && (
+                      <div className="d-flex gap-2">
+                        <button
+                          className="btn btn-sm btn-danger"
+                          onClick={() => handleRefundItem(item.product._id)}
+                        >
+                          Refund Item
+                        </button>
+                        <button
+                          className="btn btn-sm btn-warning"
+                          onClick={() => handleReplacePrompt(item.product._id)}
+                        >
+                          Replace
+                        </button>
+                      </div>
+                    )}
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>
