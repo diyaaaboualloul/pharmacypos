@@ -10,6 +10,36 @@ function todayUtc() {
   const d = new Date();
   return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
 }
+// === GET /api/pos/today-total ===
+export const getTodayTotalSales = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+    const end = new Date();
+    end.setHours(23, 59, 59, 999);
+
+    const result = await Sale.aggregate([
+      {
+        $match: {
+          cashier: userId,
+          createdAt: { $gte: start, $lte: end },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalSales: { $sum: "$total" },
+        },
+      },
+    ]);
+
+    const total = result.length > 0 ? result[0].totalSales : 0;
+    res.json({ total });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch daily total", error: err.message });
+  }
+};
 
 // === Helper: Asia/Beirut invoice prefix (YYYYMMDD) ===
 function beirutInvoicePrefix() {

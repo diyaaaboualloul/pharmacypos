@@ -11,6 +11,7 @@ import {
   getSaleById,
   refundSale, // ✅ make sure this is imported
 } from "../controllers/posController.js";
+import { getTodayTotalSales } from "../controllers/posController.js";
 
 const router = express.Router();
 router.use(requireAuth);
@@ -22,6 +23,7 @@ router.get("/sales", listSales);
 router.get("/sales/:id", getSaleById); // ✅ for viewing a specific invoice
 router.put("/sales/:id", updateSale);
 router.get("/my-sales", listMySales);
+router.get("/today-total", getTodayTotalSales);
 
 // Refund and Replace routes
 router.post("/refund/:id", refundSale); // ✅ ADD THIS LINE

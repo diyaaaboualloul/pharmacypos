@@ -1,4 +1,3 @@
-// frontend/src/pages/PosPage.jsx
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { getToken } from "../utils/auth";
@@ -14,6 +13,7 @@ export default function PosPage() {
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const [lastSale, setLastSale] = useState(null);
+  const [todayTotal, setTodayTotal] = useState(0); // 💵 Added
 
   const user = JSON.parse(localStorage.getItem("user"));
   const navigate = useNavigate();
@@ -23,6 +23,23 @@ export default function PosPage() {
     localStorage.removeItem("user");
     navigate("/login");
   };
+
+  // 🔁 Fetch live cashier total
+  const fetchTodayTotal = async () => {
+    try {
+      const token = getToken();
+      const { data } = await axios.get("http://localhost:5000/api/pos/today-total", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setTodayTotal(data.total || 0);
+    } catch (err) {
+      console.error("Failed to fetch today's total", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchTodayTotal();
+  }, []);
 
   // 🔍 Fetch products
   useEffect(() => {
@@ -97,6 +114,9 @@ export default function PosPage() {
       setShowCheckoutModal(false);
       setShowInvoiceModal(true);
       setCart([]);
+
+      // 🔄 Refresh total after sale
+      fetchTodayTotal();
     } catch (err) {
       console.error("Checkout failed:", err);
       alert(err.response?.data?.message || "Checkout failed");
@@ -105,7 +125,7 @@ export default function PosPage() {
 
   const handleCloseInvoice = () => {
     setShowInvoiceModal(false);
-    window.location.href = "/cashier/pos";
+    fetchTodayTotal(); // Refresh again just in case
   };
 
   const cartTotal = cart.reduce(
@@ -115,20 +135,38 @@ export default function PosPage() {
 
   return (
     <div className="container p-4">
-      <div className="d-flex align-items-center ms-auto">
-        <span className="me-3 d-none d-sm-inline">
-          👤 <strong>{user?.name}</strong> ({user?.role})
-        </span>
-        <button onClick={logout} className="btn btn-danger btn-sm">
-          Logout
-        </button>
-        <button
-  className="btn btn-outline-secondary btn-sm me-2"
-  onClick={() => navigate("/cashier/invoices")}
->
-  My Invoices
-</button>
+      <div className="d-flex align-items-center justify-content-between mb-3">
+        <div>
+          <span className="me-3 d-none d-sm-inline">
+            👤 <strong>{user?.name}</strong> ({user?.role})
+          </span>
+        </div>
 
+        {/* 💰 Sales Summary Box */}
+        <div
+          style={{
+            background: "#0090E4",
+            color: "white",
+            borderRadius: "10px",
+            padding: "10px 20px",
+            fontWeight: "600",
+            boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
+          }}
+        >
+          💵 Total Sales Today: ${todayTotal.toFixed(2)}
+        </div>
+
+        <div>
+          <button
+            className="btn btn-outline-secondary btn-sm me-2"
+            onClick={() => navigate("/cashier/invoices")}
+          >
+            My Invoices
+          </button>
+          <button onClick={logout} className="btn btn-danger btn-sm">
+            Logout
+          </button>
+        </div>
       </div>
 
       {/* 🔍 Search */}
