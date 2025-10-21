@@ -86,10 +86,35 @@ export default function PosPage() {
       setProducts([]);
     }
   }, [search]);
+useEffect(() => {
+  fetchTodayTotal();
+  fetchCashierStatus();
+  fetchSessionTotal();
+  const interval = setInterval(() => {
+    fetchTodayTotal();
+    fetchCashierStatus();
+    fetchSessionTotal();
+  }, 5000);
+  return () => clearInterval(interval);
+}, []);
 
   const handleRemoveFromCart = (id) => {
     setCart((prev) => prev.filter((item) => item._id !== id));
   };
+const [sessionTotal, setSessionTotal] = useState(0);
+// 🧾 Fetch current open session total
+const fetchSessionTotal = async () => {
+  try {
+    const token = getToken();
+    const { data } = await axios.get(
+      "http://localhost:5000/api/pos/current-session-total",
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    setSessionTotal(data.sessionTotal || 0);
+  } catch (err) {
+    console.error("Failed to fetch session total", err);
+  }
+};
 
   const handleAddToCart = (product) => {
     if (cashierStatus === "closed") {
@@ -197,7 +222,12 @@ export default function PosPage() {
             gap: "12px",
           }}
         >
-          <span>💵 Total Sales Today: ${todayTotal.toFixed(2)}</span>
+<div className="d-flex flex-column text-white">
+  <span>
+    🕓 Current Session Total:{" "}
+    <strong>${sessionTotal.toFixed(2)}</strong>
+  </span>
+</div>
           <button
             className="btn btn-outline-light btn-sm"
             onClick={() => navigate("/cashier/invoices")}

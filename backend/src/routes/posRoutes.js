@@ -18,6 +18,8 @@ import {
   closeCashierDay,
   getCashiersDayStatus,
 } from "../controllers/posController.js";
+import { getCashierSessions } from "../controllers/posController.js";
+import { getCurrentSessionTotal } from "../controllers/posController.js";
 
 const router = express.Router();
 
@@ -61,6 +63,7 @@ router.post("/end-day/:cashierId", closeCashierDay);
 
 // 📋 Get all cashiers with open/closed status
 router.get("/cashiers-status", getCashiersDayStatus);
+router.get("/cashier-sessions/:cashierId", getCashierSessions);
 
 /* ===========================
    🔹 Refunds & Item Replacement
@@ -74,5 +77,7 @@ router.post("/refund-item/:saleId", refundItem);
 
 // 🔁 Replace a product in a sale
 router.post("/replace-item/:saleId", replaceItem);
+
+router.get("/current-session-total", getCurrentSessionTotal);
 
 export default router;

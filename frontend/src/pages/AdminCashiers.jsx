@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { getToken } from "../utils/auth";
+import { Link } from "react-router-dom";
 import Layout from "../components/Layout";
 
 export default function AdminCashiers() {
@@ -8,25 +9,30 @@ export default function AdminCashiers() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
-  // 🔹 Fetch cashiers + their day status
+  // 🔹 Fetch cashiers + their current day status
   const fetchCashiers = async () => {
     try {
       const token = getToken();
-      const { data } = await axios.get("http://localhost:5000/api/pos/cashiers-status", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const { data } = await axios.get(
+        "http://localhost:5000/api/pos/cashiers-status",
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
       setCashiers(data);
     } catch (err) {
       console.error("Failed to fetch cashiers", err);
     }
   };
 
+  // 🔁 Auto refresh every 10 seconds
   useEffect(() => {
     fetchCashiers();
+    const interval = setInterval(fetchCashiers, 10000);
+    return () => clearInterval(interval);
   }, []);
 
+  // 🟢🔴 Open or Close Day
   const handleAction = async (cashierId, action) => {
-    if (!window.confirm(`Confirm to ${action} day for this cashier?`)) return;
+    if (!window.confirm(`Are you sure you want to ${action} day for this cashier?`)) return;
 
     setLoading(true);
     setMessage("");
@@ -39,8 +45,8 @@ export default function AdminCashiers() {
           : `http://localhost:5000/api/pos/end-day/${cashierId}`;
 
       const { data } = await axios.post(url, {}, { headers: { Authorization: `Bearer ${token}` } });
-      setMessage(data.message);
-      fetchCashiers(); // refresh table
+      setMessage(data.message || `Cashier day ${action}ed successfully.`);
+      fetchCashiers();
     } catch (err) {
       setMessage("❌ " + (err.response?.data?.message || err.message));
     } finally {
@@ -62,7 +68,7 @@ export default function AdminCashiers() {
                 <th>Name</th>
                 <th>Email</th>
                 <th>Status</th>
-                <th style={{ width: "160px" }}>Action</th>
+                <th style={{ width: "240px" }}>Action</th>
               </tr>
             </thead>
             <tbody>
@@ -87,7 +93,7 @@ export default function AdminCashiers() {
                     <td>
                       {c.status === "open" ? (
                         <button
-                          className="btn btn-sm btn-danger"
+                          className="btn btn-sm btn-danger me-2"
                           onClick={() => handleAction(c._id, "close")}
                           disabled={loading}
                         >
@@ -95,13 +101,19 @@ export default function AdminCashiers() {
                         </button>
                       ) : (
                         <button
-                          className="btn btn-sm btn-success"
+                          className="btn btn-sm btn-success me-2"
                           onClick={() => handleAction(c._id, "open")}
                           disabled={loading}
                         >
                           🔓 Open Day
                         </button>
                       )}
+                      <Link
+                        to={`/admin/cashiers/${c._id}/sessions`}
+                        className="btn btn-sm btn-outline-primary"
+                      >
+                        📜 View Sessions
+                      </Link>
                     </td>
                   </tr>
                 ))

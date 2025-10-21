@@ -670,6 +670,123 @@ export const openCashierDay = async (req, res) => {
     res.status(400).json({ message: err.message || "Failed to open day" });
   }
 };
+// === GET /api/pos/cashier-sessions/:cashierId ===
+// ✅ Get sessions with sales & refund totals between open/close times
+export const getCashierSessions = async (req, res) => {
+  try {
+    const { cashierId } = req.params;
+
+    // Find all DayClose (open/close) sessions for this cashier
+    const sessions = await DayClose.find({ cashier: cashierId })
+      .sort({ openedAt: -1 })
+      .lean();
+
+    // Compute totals per session dynamically
+    const results = await Promise.all(
+      sessions.map(async (session) => {
+        // define time range
+        const start = session.openedAt;
+        const end = session.closedAt || new Date();
+
+        // total sales in that session
+        const salesAgg = await Sale.aggregate([
+          {
+            $match: {
+              cashier: session.cashier,
+              createdAt: { $gte: start, $lte: end },
+              total: { $gt: 0 },
+            },
+          },
+          { $group: { _id: null, totalSales: { $sum: "$total" } } },
+        ]);
+
+        // total refunds in that session
+        const refundsAgg = await Sale.aggregate([
+          {
+            $match: {
+              cashier: session.cashier,
+              createdAt: { $gte: start, $lte: end },
+              total: { $lt: 0 },
+            },
+          },
+          { $group: { _id: null, totalRefunds: { $sum: "$total" } } },
+        ]);
+
+        const totalSales = salesAgg[0]?.totalSales || 0;
+        const totalRefunds = Math.abs(refundsAgg[0]?.totalRefunds || 0);
+        const netTotal = totalSales - totalRefunds;
+
+        return {
+          ...session,
+          totalSales,
+          totalRefunds,
+          netTotal,
+        };
+      })
+    );
+
+    res.json(results);
+  } catch (err) {
+    console.error("Error fetching cashier sessions:", err);
+    res.status(500).json({ message: "Failed to fetch cashier sessions" });
+  }
+};
+
+// ✅ Get current session total for the logged-in cashier
+export const getCurrentSessionTotal = async (req, res) => {
+  try {
+    const cashierId = req.user._id; // from JWT
+
+    // find the latest open session for this cashier
+    const currentSession = await DayClose.findOne({
+      cashier: cashierId,
+      status: "open",
+    }).sort({ openedAt: -1 });
+
+    if (!currentSession)
+      return res.json({ sessionTotal: 0, message: "No active session" });
+
+    const start = currentSession.openedAt;
+    const end = new Date();
+
+    // calculate total sales in current session
+    const salesAgg = await Sale.aggregate([
+      {
+        $match: {
+          cashier: cashierId,
+          createdAt: { $gte: start, $lte: end },
+          total: { $gt: 0 },
+        },
+      },
+      { $group: { _id: null, totalSales: { $sum: "$total" } } },
+    ]);
+
+    const refundsAgg = await Sale.aggregate([
+      {
+        $match: {
+          cashier: cashierId,
+          createdAt: { $gte: start, $lte: end },
+          total: { $lt: 0 },
+        },
+      },
+      { $group: { _id: null, totalRefunds: { $sum: "$total" } } },
+    ]);
+
+    const totalSales = salesAgg[0]?.totalSales || 0;
+    const totalRefunds = Math.abs(refundsAgg[0]?.totalRefunds || 0);
+    const netTotal = totalSales - totalRefunds;
+
+    res.json({
+      sessionTotal: netTotal,
+      totalSales,
+      totalRefunds,
+      openedAt: currentSession.openedAt,
+    });
+  } catch (err) {
+    console.error("Error fetching current session total:", err);
+    res.status(500).json({ message: "Failed to fetch session total" });
+  }
+};
 
 
 
