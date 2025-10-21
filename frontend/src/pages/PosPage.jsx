@@ -13,7 +13,8 @@ export default function PosPage() {
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const [lastSale, setLastSale] = useState(null);
-  const [todayTotal, setTodayTotal] = useState(0); // 💵 Added
+  const [todayTotal, setTodayTotal] = useState(0);
+  const [todayClosed, setTodayClosed] = useState(false);
 
   const user = JSON.parse(localStorage.getItem("user"));
   const navigate = useNavigate();
@@ -24,7 +25,7 @@ export default function PosPage() {
     navigate("/login");
   };
 
-  // 🔁 Fetch live cashier total
+  // 💵 Fetch live cashier total + closed status
   const fetchTodayTotal = async () => {
     try {
       const token = getToken();
@@ -32,6 +33,7 @@ export default function PosPage() {
         headers: { Authorization: `Bearer ${token}` },
       });
       setTodayTotal(data.total || 0);
+      setTodayClosed(data.closed || false);
     } catch (err) {
       console.error("Failed to fetch today's total", err);
     }
@@ -135,6 +137,7 @@ export default function PosPage() {
 
   return (
     <div className="container p-4">
+      {/* Header Row */}
       <div className="d-flex align-items-center justify-content-between mb-3">
         <div>
           <span className="me-3 d-none d-sm-inline">
@@ -151,14 +154,18 @@ export default function PosPage() {
             padding: "10px 20px",
             fontWeight: "600",
             boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
+            display: "flex",
+            alignItems: "center",
+            gap: "12px",
           }}
         >
-          💵 Total Sales Today: ${todayTotal.toFixed(2)}
-        </div>
-
-        <div>
+          {todayClosed ? (
+            <span>✅ End of Day Closed</span>
+          ) : (
+            <span>💵 Total Sales Today: ${todayTotal.toFixed(2)}</span>
+          )}
           <button
-            className="btn btn-outline-secondary btn-sm me-2"
+            className="btn btn-outline-light btn-sm"
             onClick={() => navigate("/cashier/invoices")}
           >
             My Invoices
@@ -208,6 +215,7 @@ export default function PosPage() {
                           <button
                             className="btn btn-success btn-sm"
                             onClick={() => handleAddToCart(product)}
+                            disabled={todayClosed} // prevent adding after EOD
                           >
                             + Add
                           </button>
@@ -262,6 +270,7 @@ export default function PosPage() {
                                   )
                                 );
                               }}
+                              disabled={todayClosed}
                             />
                           </td>
                           <td>${item.price.toFixed(2)}</td>
@@ -271,6 +280,7 @@ export default function PosPage() {
                               className="btn btn-outline-danger btn-sm"
                               title="Remove item"
                               onClick={() => handleRemoveFromCart(item._id)}
+                              disabled={todayClosed}
                             >
                               ✖
                             </button>
@@ -286,6 +296,7 @@ export default function PosPage() {
                       className="btn btn-primary btn-block mt-2"
                       style={{ width: "100%" }}
                       onClick={() => setShowCheckoutModal(true)}
+                      disabled={todayClosed}
                     >
                       Checkout 💰
                     </button>

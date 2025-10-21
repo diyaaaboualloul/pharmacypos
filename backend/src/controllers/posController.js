@@ -4,13 +4,12 @@ import Product from "../models/Product.js";
 import Batch from "../models/Batch.js";
 import Sale from "../models/Sale.js";
 import Counter from "../models/Counter.js";
-
+import DayClose from "../models/DayClose.js";
 // === Helper: today's date at UTC midnight ===
 function todayUtc() {
   const d = new Date();
   return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
 }
-// === GET /api/pos/today-total ===
 export const getTodayTotalSales = async (req, res) => {
   try {
     const userId = req.user._id;
@@ -19,11 +18,22 @@ export const getTodayTotalSales = async (req, res) => {
     const end = new Date();
     end.setHours(23, 59, 59, 999);
 
+    // Check if cashier has closed the day
+    const dayClosed = await DayClose.findOne({
+      cashier: userId,
+      closedAt: { $gte: start, $lte: end },
+    });
+
+    if (dayClosed) {
+      return res.json({ total: 0, closed: true });
+    }
+
     const result = await Sale.aggregate([
       {
         $match: {
           cashier: userId,
           createdAt: { $gte: start, $lte: end },
+          isDayClosed: { $ne: true },
         },
       },
       {
@@ -35,11 +45,12 @@ export const getTodayTotalSales = async (req, res) => {
     ]);
 
     const total = result.length > 0 ? result[0].totalSales : 0;
-    res.json({ total });
+    res.json({ total, closed: false });
   } catch (err) {
     res.status(500).json({ message: "Failed to fetch daily total", error: err.message });
   }
 };
+
 
 // === Helper: Asia/Beirut invoice prefix (YYYYMMDD) ===
 function beirutInvoicePrefix() {
@@ -63,6 +74,77 @@ async function nextInvoiceNumber(session) {
   );
   return `${prefix}-${String(ctr.seq).padStart(4, "0")}`;
 }
+
+
+export const closeCashierDay = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const { cashierId } = req.params;
+
+    // Define start/end of day
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+    const end = new Date();
+    end.setHours(23, 59, 59, 999);
+
+    // Aggregate totals
+    const result = await Sale.aggregate([
+      {
+        $match: {
+          cashier: new mongoose.Types.ObjectId(cashierId),
+          createdAt: { $gte: start, $lte: end },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalSales: { $sum: { $cond: [{ $gt: ["$total", 0] }, "$total", 0] } },
+          totalRefunds: { $sum: { $cond: [{ $lt: ["$total", 0] }, "$total", 0] } },
+          netTotal: { $sum: "$total" },
+        },
+      },
+    ]);
+
+    const data = result[0] || { totalSales: 0, totalRefunds: 0, netTotal: 0 };
+
+    // Create a DayClose record
+    const dayClose = await DayClose.create(
+      [
+        {
+          cashier: cashierId,
+          totalSales: data.totalSales,
+          totalRefunds: Math.abs(data.totalRefunds),
+          netTotal: data.netTotal,
+        },
+      ],
+      { session }
+    );
+
+    // Mark all today's sales as "closed"
+    await Sale.updateMany(
+      {
+        cashier: cashierId,
+        createdAt: { $gte: start, $lte: end },
+      },
+      { $set: { isDayClosed: true } },
+      { session }
+    );
+
+    await session.commitTransaction();
+    session.endSession();
+
+    res.json({
+      message: "End-of-day completed successfully.",
+      summary: dayClose[0],
+    });
+  } catch (err) {
+    await session.abortTransaction();
+    session.endSession();
+    res.status(400).json({ message: err.message || "Failed to close day" });
+  }
+};
 
 // === PUT /api/pos/sales/:id ===
 export const updateSale = async (req, res) => {
