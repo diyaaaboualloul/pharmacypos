@@ -20,6 +20,7 @@ import AdminInvoices from "./pages/AdminInvoices";
 import InvoiceView from "./pages/InvoiceView";
 import InvoiceEdit from "./pages/InvoiceEdit";
 import CashierInvoices from "./pages/CashierInvoices";
+import CashierInvoiceDetails from "./pages/CashierInvoiceDetails.jsx";
 
 function App() {
   return (
@@ -154,6 +155,15 @@ function App() {
             </RoleProtectedRoute>
           }
         />
+        <Route
+  path="/cashier/invoices/:id"
+  element={
+    <RoleProtectedRoute allowedRoles={["cashier"]}>
+      <CashierInvoiceDetails />
+    </RoleProtectedRoute>
+  }
+/>
+
         <Route
           path="/cashier/invoices"
           element={

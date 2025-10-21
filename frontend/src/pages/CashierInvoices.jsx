@@ -47,75 +47,76 @@ export default function CashierInvoices() {
     return <p className="text-center mt-5">Loading your invoices...</p>;
 
   return (
-      <div className="container mt-4">
-        <div
+    <div className="container mt-4">
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: "20px",
+        }}
+      >
+        <h3>🧾 My Invoices</h3>
+        <button
+          onClick={() => navigate("/cashier/pos")}
           style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: "20px",
+            backgroundColor: "#0090E4",
+            color: "white",
+            border: "none",
+            borderRadius: "6px",
+            padding: "8px 16px",
+            fontWeight: "500",
+            cursor: "pointer",
           }}
         >
-          <h3>🧾 My Invoices</h3>
-          <button
-            onClick={() => navigate("/cashier/pos")}
-            style={{
-              backgroundColor: "#0090E4",
-              color: "white",
-              border: "none",
-              borderRadius: "6px",
-              padding: "8px 16px",
-              fontWeight: "500",
-              cursor: "pointer",
-            }}
-          >
-            ← Back to POS
-          </button>
-        </div>
-
-        {sales.length === 0 ? (
-          <p className="text-center text-muted">No invoices yet.</p>
-        ) : (
-          <table className="table table-bordered mt-3">
-            <thead className="table-warning">
-              <tr>
-                <th>Invoice #</th>
-                <th>Date</th>
-                <th>Total</th>
-                <th>Status</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {sales.map((s) => (
-                <tr key={s._id}>
-                  <td>{s.invoiceNumber}</td>
-                  <td>{new Date(s.createdAt).toLocaleString()}</td>
-                  <td>${s.total.toFixed(2)}</td>
-                  <td className={s.total < 0 ? "text-danger" : "text-success"}>
-                    {s.total < 0 ? "Refunded" : "Original"}
-                  </td>
-                  <td>
-                    <button
-                      className="btn btn-sm btn-outline-primary me-2"
-                      onClick={() => navigate(`/cashier/invoices/${s._id}`)}
-                    >
-                      View
-                    </button>
-                    {s.total > 0 && (
-                      <button
-                        className="btn btn-sm btn-danger"
-                        onClick={() => handleRefund(s._id)}
-                      >
-                        Refund
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+          ← Back to POS
+        </button>
       </div>
+
+      {sales.length === 0 ? (
+        <p className="text-center text-muted">No invoices yet.</p>
+      ) : (
+        <table className="table table-bordered mt-3">
+          <thead className="table-warning">
+            <tr>
+              <th>Invoice #</th>
+              <th>Date</th>
+              <th>Total</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {sales.map((s) => (
+              <tr key={s._id}>
+                <td>{s.invoiceNumber}</td>
+                <td>{new Date(s.createdAt).toLocaleString()}</td>
+                <td>${s.total.toFixed(2)}</td>
+                <td className={s.total < 0 ? "text-danger" : "text-success"}>
+                  {s.total < 0 ? "Refunded" : "Original"}
+                </td>
+                <td>
+                  <button
+                    className="btn btn-sm btn-outline-primary me-2"
+                    onClick={() => navigate(`/cashier/invoices/${s._id}`)}
+                  >
+                    View
+                  </button>
+
+                  {s.total > 0 && (
+                    <button
+                      className="btn btn-sm btn-danger"
+                      onClick={() => handleRefund(s._id)}
+                    >
+                      Refund All
+                    </button>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
   );
 }

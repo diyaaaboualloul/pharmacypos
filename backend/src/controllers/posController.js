@@ -267,7 +267,216 @@ export const listSales = async (req, res) => {
   }
 };
 
-// === Temporary fix to prevent import error ===
-export const refundSale = async (req, res) => {
-  res.json({ message: "Refund sale endpoint placeholder (implement later)" });
+// === POST /api/pos/replace-item/:saleId ===
+export const replaceItem = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const { saleId } = req.params;
+    const { oldProductId, newProductId, newQuantity } = req.body;
+
+    if (!oldProductId || !newProductId || !newQuantity)
+      throw new Error("Missing replacement details");
+
+    const sale = await Sale.findById(saleId).session(session);
+    if (!sale) throw new Error("Sale not found");
+
+    // 1️⃣ Find old item to refund
+    const oldItem = sale.items.find(
+      (i) => i.product.toString() === oldProductId && !i.isRefunded
+    );
+    if (!oldItem) throw new Error("Old product not found or already refunded");
+
+    // 2️⃣ Restore stock for old item
+    await Batch.updateOne(
+      { _id: oldItem.batch },
+      { $inc: { quantity: oldItem.quantity } },
+      { session }
+    );
+    oldItem.isRefunded = true;
+    oldItem.refundedAt = new Date();
+
+    // 3️⃣ Find new product
+    const product = await Product.findById(newProductId).session(session);
+    if (!product) throw new Error("New product not found");
+
+    // 4️⃣ Find batch for new product
+    const batch = await Batch.findOne({
+      product: product._id,
+      expiryDate: { $gte: new Date() },
+      quantity: { $gte: newQuantity },
+    }).session(session);
+    if (!batch) throw new Error("Insufficient stock for replacement");
+
+    // 5️⃣ Deduct new stock
+    await Batch.updateOne(
+      { _id: batch._id },
+      { $inc: { quantity: -newQuantity } },
+      { session }
+    );
+
+    // 6️⃣ Add new product to sale
+    const newLineTotal = Number((product.price * newQuantity).toFixed(2));
+    sale.items.push({
+      product: product._id,
+      batch: batch._id,
+      quantity: newQuantity,
+      unitPrice: product.price,
+      lineTotal: newLineTotal,
+    });
+
+    // 7️⃣ Adjust totals
+    sale.total = sale.total - oldItem.lineTotal + newLineTotal;
+    sale.subTotal = sale.total;
+    sale.notes = `Replaced ${oldProductId} with ${newProductId}`;
+
+    await sale.save({ session });
+    await session.commitTransaction();
+    session.endSession();
+
+    res.json({
+      message: "Item replaced successfully",
+      newProduct: product.name,
+      newTotal: sale.total,
+    });
+  } catch (err) {
+    await session.abortTransaction();
+    session.endSession();
+    res.status(400).json({ message: err.message || "Replace failed" });
+  }
 };
+
+// === POST /api/pos/refund-item/:saleId ===
+
+
+export const refundItem = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const { saleId } = req.params;
+    const { productId } = req.body;
+
+    const sale = await Sale.findById(saleId).session(session);
+    if (!sale) throw new Error("Sale not found");
+
+    const item = sale.items.find(
+      (i) => i.product.toString() === productId && !i.isRefunded
+    );
+    if (!item) throw new Error("Product not found or already refunded");
+
+    // Restore stock
+    await Batch.updateOne(
+      { _id: item.batch },
+      { $inc: { quantity: item.quantity } },
+      { session }
+    );
+
+    // Mark item as refunded
+    item.isRefunded = true;
+    item.refundedAt = new Date();
+
+    // Adjust the sale total
+    sale.total -= item.lineTotal;
+    sale.subTotal -= item.lineTotal;
+    await sale.save({ session });
+
+    // Create a partial refund invoice (negative entry)
+    const refundInvoiceNumber = sale.invoiceNumber + "-R" + Date.now().toString().slice(-3);
+    const refundSale = await Sale.create(
+      [
+        {
+          invoiceNumber: refundInvoiceNumber,
+          items: [item],
+          subTotal: -item.lineTotal,
+          total: -item.lineTotal,
+          payment: { type: "cash" },
+          cashier: req.user._id,
+          notes: `Partial refund for product ${productId} from ${sale.invoiceNumber}`,
+        },
+      ],
+      { session }
+    );
+
+    await session.commitTransaction();
+    session.endSession();
+
+    res.json({
+      message: "Partial refund processed successfully",
+      refundInvoiceNumber,
+      refundedAmount: item.lineTotal,
+    });
+  } catch (err) {
+    await session.abortTransaction();
+    session.endSession();
+    res.status(400).json({ message: err.message || "Partial refund failed" });
+  }
+};
+// === GET /api/pos/sales/:id ===
+export const getSaleById = async (req, res) => {
+  try {
+    const sale = await Sale.findById(req.params.id)
+      .populate("cashier", "name email role")
+      .populate("items.product", "name category price");
+    if (!sale) return res.status(404).json({ message: "Invoice not found" });
+    res.json(sale);
+  } catch (err) {
+    res.status(500).json({ message: "Failed to get invoice details", error: err.message });
+  }
+};
+
+// === POST /api/pos/refund/:id ===
+export const refundSale = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const sale = await Sale.findById(req.params.id).populate("items.product");
+    if (!sale) throw new Error("Sale not found");
+    if (sale.isRefunded) throw new Error("This invoice was already refunded");
+
+    // ✅ Step 1: Restore stock for each sold item
+    for (const item of sale.items) {
+      await Batch.updateOne(
+        { _id: item.batch },
+        { $inc: { quantity: item.quantity } },
+        { session }
+      );
+    }
+
+    // ✅ Step 2: Mark this sale as refunded
+    sale.isRefunded = true;
+    sale.refundedAt = new Date();
+    await sale.save({ session });
+
+    // ✅ Step 3: Record a new negative sale entry for accounting / audit
+    const refund = await Sale.create(
+      [
+        {
+          invoiceNumber: sale.invoiceNumber + "-R",
+          items: sale.items,
+          subTotal: -Math.abs(sale.subTotal),
+          total: -Math.abs(sale.total),
+          payment: { type: "cash" },
+          cashier: sale.cashier,
+          notes: `Refund of invoice ${sale.invoiceNumber}`,
+        },
+      ],
+      { session }
+    );
+
+    await session.commitTransaction();
+    session.endSession();
+
+    res.json({
+      message: "Refund processed successfully",
+      refundId: refund[0]._id,
+    });
+  } catch (err) {
+    await session.abortTransaction();
+    session.endSession();
+    res.status(400).json({ message: err.message || "Refund failed" });
+  }
+};
+
