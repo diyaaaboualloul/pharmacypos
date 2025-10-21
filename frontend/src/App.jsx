@@ -20,6 +20,8 @@ import AdminInvoices from "./pages/AdminInvoices";
 import InvoiceView from "./pages/InvoiceView";
 import InvoiceEdit from "./pages/InvoiceEdit";
 import CashierInvoices from "./pages/CashierInvoices";
+import EmployeesPage from "./pages/EmployeesPage";   // ✅
+import PayrollPage from "./pages/PayrollPage";       // ✅
 
 function App() {
   return (
@@ -56,7 +58,6 @@ function App() {
             </RoleProtectedRoute>
           }
         />
-
         <Route
           path="/admin/search"
           element={
@@ -65,7 +66,6 @@ function App() {
             </RoleProtectedRoute>
           }
         />
-
         <Route
           path="/admin/users"
           element={
@@ -74,7 +74,6 @@ function App() {
             </RoleProtectedRoute>
           }
         />
-
         <Route
           path="/admin/alerts"
           element={
@@ -83,7 +82,6 @@ function App() {
             </RoleProtectedRoute>
           }
         />
-
         <Route
           path="/admin/categories"
           element={
@@ -92,7 +90,14 @@ function App() {
             </RoleProtectedRoute>
           }
         />
-
+        <Route
+          path="/admin/categories/:categoryName/products"
+          element={
+            <RoleProtectedRoute allowedRoles={["admin"]}>
+              <CategoryProductsPage />
+            </RoleProtectedRoute>
+          }
+        />
         <Route
           path="/admin/products"
           element={
@@ -101,7 +106,6 @@ function App() {
             </RoleProtectedRoute>
           }
         />
-
         <Route
           path="/admin/products/:productId/batches"
           element={
@@ -111,15 +115,7 @@ function App() {
           }
         />
 
-        <Route
-          path="/admin/categories/:categoryName/products"
-          element={
-            <RoleProtectedRoute allowedRoles={["admin"]}>
-              <CategoryProductsPage />
-            </RoleProtectedRoute>
-          }
-        />
-
+        {/* Invoices (Admin) */}
         <Route
           path="/admin/invoices"
           element={
@@ -141,6 +137,16 @@ function App() {
           element={
             <RoleProtectedRoute allowedRoles={["admin"]}>
               <InvoiceEdit />
+            </RoleProtectedRoute>
+          }
+        />
+
+        {/* ================== NEW: EMPLOYEES (Admin or Finance) ================== */}
+        <Route
+          path="/admin/employees"
+          element={
+            <RoleProtectedRoute allowedRoles={["admin", "finance"]}>
+              <EmployeesPage />
             </RoleProtectedRoute>
           }
         />
@@ -177,6 +183,15 @@ function App() {
           element={
             <RoleProtectedRoute allowedRoles={["finance"]}>
               <FinanceDashboardPage />
+            </RoleProtectedRoute>
+          }
+        />
+        {/* NEW: Payroll (Admin or Finance) */}
+        <Route
+          path="/finance/payroll"
+          element={
+            <RoleProtectedRoute allowedRoles={["admin", "finance"]}>
+              <PayrollPage />
             </RoleProtectedRoute>
           }
         />

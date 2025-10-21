@@ -1,33 +1,56 @@
+// backend/src/middleware/auth.js
 import jwt from "jsonwebtoken";
-import User from "../models/User.js";
 
-export const requireAuth = async (req, res, next) => {
-  const authHeader = req.headers.authorization;
-
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return res.status(401).json({ message: "No token provided" });
-  }
-
-  const token = authHeader.split(" ")[1];
-
+/**
+ * Middleware: Require valid JWT
+ * Attaches req.user = { id, email, role, ... } if valid.
+ */
+export function requireAuth(req, res, next) {
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.id).select("-password");
+    const authHeader = req.headers.authorization || "";
+    const [, token] = authHeader.split(" "); // Expect "Bearer <token>"
 
-    if (!user) {
-      return res.status(401).json({ message: "User not found" });
+    if (!token) {
+      return res.status(401).json({ message: "Not authenticated" });
     }
 
-    req.user = user;
-    next();
-  } catch (error) {
-    return res.status(401).json({ message: "Invalid token" });
-  }
-};
+    const payload = jwt.verify(token, process.env.JWT_SECRET);
 
-export const requireAdmin = (req, res, next) => {
-  if (!req.user || req.user.role !== "admin") {
-    return res.status(403).json({ message: "Admin access required" });
+    req.user = {
+      id: payload.id,
+      email: payload.email,
+      role: payload.role,
+      ...payload,
+    };
+
+    next();
+  } catch (err) {
+    return res.status(401).json({ message: "Invalid or expired token" });
   }
-  next();
-};
+}
+
+/**
+ * Factory for role-based access control.
+ * Example: requireRole("admin", "finance")
+ */
+export const requireRole =
+  (...roles) =>
+  (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    if (roles.includes(req.user.role)) {
+      return next();
+    }
+
+    return res
+      .status(403)
+      .json({ message: `Access denied. Allowed roles: ${roles.join(", ")}` });
+  };
+
+/**
+ * Predefined guards for convenience.
+ */
+export const requireAdmin = requireRole("admin");
+export const requireFinanceOrAdmin = requireRole("finance", "admin");

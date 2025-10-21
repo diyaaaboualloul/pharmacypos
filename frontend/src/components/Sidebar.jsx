@@ -34,28 +34,33 @@ export default function Sidebar() {
     { to: "/dashboard", label: "🏠 Dashboard" },
 
     ...(user?.role === "admin"
-      ? [
-          { to: "/admin/alerts", label: "🚨 Alerts", isAlert: true },
-          { to: "/admin/users", label: "👥 Manage Users" },
-          { to: "/reports", label: "📊 Reports" },
-          { to: "/admin/products", label: "📦 Product Management" },
-          { to: "/admin/categories", label: "📂 Categories" },
-                    { to: "/admin/invoices", label: "📂 Invoices" },
+  ? [
+      { to: "/dashboard", label: "🏠 Dashboard" },
+      { to: "/admin/users", label: "👥 Manage Users" },
+      { to: "/reports", label: "📊 Reports" },
+      { to: "/admin/products", label: "📦 Product Management" },
+      { to: "/admin/categories", label: "📦 Categories" },
+      { to: "/admin/employees", label: "👩‍⚕️ Employees" }, // NEW
+      { to: "/finance/payroll", label: "💵 Payroll" },      // NEW
+    ]
+  : []),
 
-        ]
-      : []),
 
 
     ...(user?.role === "cashier"
       ? [
-          { to: "/cashier/sales", label: "🧾 Sales" },
-          { to: "/cashier/inventory", label: "📦 Inventory" },
-        ]
+         { to: "/cashier/pos", label: "🧾 POS" },
+         { to: "/cashier/invoices", label: "🧾 Invoices" },
+       ]
       : []),
 
     ...(user?.role === "finance"
-      ? [{ to: "/finance/reports", label: "💰 Finance Reports" }]
-      : []),
+  ? [
+      { to: "/finance/reports", label: "💰 Finance Reports" },
+      { to: "/finance/payroll", label: "💵 Payroll" }, // NEW
+    ]
+  : []),
+
   ];
 
   return (
