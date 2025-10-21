@@ -1,0 +1,82 @@
+/* ===========================
+   📦 Sidebar Styles
+   =========================== */
+
+.sidebar-custom {
+  width: 220px;
+  height: 100vh;
+  background-color: #212529; /* dark background */
+  color: #fff;
+  position: fixed;
+  top: 0;
+  left: 0;
+  padding-top: 60px;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.2);
+  transition: width 0.3s ease;
+}
+
+/* Sidebar links */
+.sidebar-custom .nav-link {
+  color: #adb5bd;
+  font-weight: 500;
+  padding: 12px 20px;
+  border-radius: var(--border-radius);
+  transition: var(--transition);
+}
+
+.sidebar-custom .nav-link:hover,
+.sidebar-custom .nav-link.active {
+  background-color: var(--color-primary);
+  color: #fff;
+}
+
+/* Sidebar item container */
+.sidebar-custom .nav-item {
+  position: relative;
+}
+
+/* Badge styling */
+.sidebar-custom .badge {
+  font-size: 0.75rem;
+  padding: 4px 8px;
+  border-radius: 12px;
+}
+
+/* Dropdown menu styles */
+.sidebar-dropdown {
+  display: none;
+  flex-direction: column;
+  padding-left: 1.5rem;
+  transition: max-height 0.3s ease;
+}
+
+.sidebar-dropdown.show {
+  display: flex;
+}
+
+/* Dropdown toggle arrow */
+.dropdown-toggle::after {
+  content: "▼";
+  font-size: 0.7rem;
+  margin-left: 8px;
+  transition: transform 0.3s ease;
+}
+
+.dropdown-toggle.open::after {
+  transform: rotate(-180deg);
+}
+
+/* Mobile sidebar (offcanvas) tweaks */
+.offcanvas {
+  background-color: #212529;
+  color: #fff;
+}
+
+.offcanvas .nav-link {
+  color: #ccc;
+}
+
+.offcanvas .nav-link:hover {
+  background-color: var(--color-primary);
+  color: #fff;
+}
