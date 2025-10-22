@@ -9,6 +9,10 @@ export default function CashierSessions() {
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // 🧭 Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5; // show 5 rows per page
+
   const fetchSessions = async () => {
     try {
       const token = getToken();
@@ -28,6 +32,17 @@ export default function CashierSessions() {
     fetchSessions();
   }, [cashierId]);
 
+  // 📄 Pagination logic
+  const totalPages = Math.ceil(sessions.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const currentSessions = sessions.slice(startIndex, startIndex + itemsPerPage);
+
+  const goToPage = (page) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
   return (
     <Layout>
       <div className="container mt-4">
@@ -41,40 +56,75 @@ export default function CashierSessions() {
         ) : sessions.length === 0 ? (
           <p className="text-muted">No sessions found for this cashier.</p>
         ) : (
-          <table className="table table-bordered table-striped">
-            <thead className="table-primary">
-              <tr>
-                <th>Date</th>
-                <th>Status</th>
-                <th>Opened At</th>
-                <th>Closed At</th>
-                <th>Total Sales</th>
-                <th>Total Refunds</th>
-                <th>Net Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              {sessions.map((s, i) => (
-                <tr key={i}>
-                  <td>{new Date(s.date).toLocaleDateString()}</td>
-                  <td>
-                    {s.status === "open" ? (
-                      <span className="badge bg-success">🟢 Open</span>
-                    ) : (
-                      <span className="badge bg-danger">🔴 Closed</span>
-                    )}
-                  </td>
-                  <td>{s.openedAt ? new Date(s.openedAt).toLocaleTimeString() : "-"}</td>
-                  <td>{s.closedAt ? new Date(s.closedAt).toLocaleTimeString() : "-"}</td>
-                  <td>${s.totalSales?.toFixed(2) || "0.00"}</td>
-                  <td>${s.totalRefunds?.toFixed(2) || "0.00"}</td>
-                  <td className="fw-bold">
-                    ${s.netTotal?.toFixed(2) || "0.00"}
-                  </td>
+          <>
+            <table className="table table-bordered table-striped">
+              <thead className="table-primary">
+                <tr>
+                  <th>Date</th>
+                  <th>Status</th>
+                  <th>Opened At</th>
+                  <th>Closed At</th>
+                  <th>Total Sales</th>
+                  <th>Total Refunds</th>
+                  <th>Net Total</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {currentSessions.map((s, i) => (
+                  <tr key={i}>
+                    <td>{new Date(s.date).toLocaleDateString()}</td>
+                    <td>
+                      {s.status === "open" ? (
+                        <span className="badge bg-success">🟢 Open</span>
+                      ) : (
+                        <span className="badge bg-danger">🔴 Closed</span>
+                      )}
+                    </td>
+                    <td>
+                      {s.openedAt
+                        ? new Date(s.openedAt).toLocaleTimeString()
+                        : "-"}
+                    </td>
+                    <td>
+                      {s.closedAt
+                        ? new Date(s.closedAt).toLocaleTimeString()
+                        : "-"}
+                    </td>
+                    <td>${s.totalSales?.toFixed(2) || "0.00"}</td>
+                    <td>${s.totalRefunds?.toFixed(2) || "0.00"}</td>
+                    <td className="fw-bold">
+                      ${s.netTotal?.toFixed(2) || "0.00"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            {/* 📌 Pagination Controls */}
+            <div className="d-flex justify-content-between align-items-center mt-3">
+              <span>
+                Page {currentPage} of {totalPages}
+              </span>
+
+              <div>
+                <button
+                  className="btn btn-outline-primary btn-sm me-2"
+                  onClick={() => goToPage(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  ← Previous
+                </button>
+
+                <button
+                  className="btn btn-outline-primary btn-sm"
+                  onClick={() => goToPage(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                >
+                  Next →
+                </button>
+              </div>
+            </div>
+          </>
         )}
       </div>
     </Layout>
