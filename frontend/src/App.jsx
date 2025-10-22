@@ -23,6 +23,7 @@ import CashierInvoices from "./pages/CashierInvoices";
 import CashierInvoiceDetails from "./pages/CashierInvoiceDetails.jsx";
 import AdminCashiers from "./pages/AdminCashiers";
 import CashierSessions from "./pages/CashierSessions";
+import AdminAnalytics from "./pages/AdminAnalytics"; // ✅ Add this import
 
 // Inside your <Routes>
 
@@ -36,6 +37,7 @@ function App() {
         {/* Redirect root to /login */}
         <Route path="/" element={<Navigate to="/login" replace />} />
 <Route path="/admin/cashiers/:cashierId/sessions" element={<CashierSessions />} />
+<Route path="/admin/analytics" element={<AdminAnalytics />} />
 
         {/* Public Routes */}
         <Route

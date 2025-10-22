@@ -36,7 +36,7 @@ export default function Sidebar() {
       ? [
           { to: "/admin/alerts", label: "🚨 Alerts", isAlert: true },
           { to: "/admin/users", label: "👥 Manage Users" },
-          { to: "/reports", label: "📊 Reports" },
+          { to: "/admin/analytics", label: "📊 Analytics" },
           { to: "/admin/products", label: "📦 Product Management" },
           { to: "/admin/categories", label: "📂 Categories" },
           { to: "/admin/invoices", label: "🧾 Invoices" },

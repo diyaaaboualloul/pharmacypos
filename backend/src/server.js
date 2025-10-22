@@ -13,6 +13,10 @@ import alertRoutes from "./routes/alertRoutes.js";
 import posRoutes from "./routes/posRoutes.js";
 // backend/src/server.js
 import salesRoutes from "./routes/salesRoutes.js";
+// backend/src/server.js
+import reportRoutes from "./routes/reportRoutes.js";
+
+// ...
 
 // ...
 
@@ -41,6 +45,7 @@ app.use("/api/admin/batches", batchRoutes);
 app.use("/api/admin/alerts", alertRoutes);
 app.use("/api/pos", posRoutes);
 app.use("/api/sales", salesRoutes);
+app.use("/api/reports", reportRoutes);
 
 connectDB();
 
