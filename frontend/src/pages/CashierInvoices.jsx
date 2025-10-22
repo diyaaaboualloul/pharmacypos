@@ -7,25 +7,48 @@ import Layout from "../components/Layout";
 export default function CashierInvoices() {
   const [sales, setSales] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [cashierStatus, setCashierStatus] = useState("closed");
   const navigate = useNavigate();
 
+  // 🧾 Fetch cashier invoices
+  const fetchSales = async () => {
+    try {
+      const token = getToken();
+      const { data } = await axios.get(
+        "http://localhost:5000/api/pos/my-sales",
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setSales(data);
+    } catch (err) {
+      console.error("Failed to fetch sales", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 🟢 Fetch cashier status
+  const fetchCashierStatus = async () => {
+    try {
+      const token = getToken();
+      const { data } = await axios.get(
+        "http://localhost:5000/api/pos/cashiers-status",
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const user = JSON.parse(localStorage.getItem("user"));
+      const me = data.find((c) => c.email === user.email);
+      if (me) setCashierStatus(me.status);
+    } catch (err) {
+      console.error("Failed to fetch cashier status", err);
+    }
+  };
+
+  // ⏱️ Run both on mount
   useEffect(() => {
-    const fetchSales = async () => {
-      try {
-        const token = getToken();
-        const { data } = await axios.get("http://localhost:5000/api/pos/my-sales", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setSales(data);
-      } catch (err) {
-        console.error("Failed to fetch sales", err);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchSales();
+    fetchCashierStatus();
   }, []);
 
+  // 🔁 Handle refund
   const handleRefund = async (id) => {
     if (!window.confirm("Are you sure you want to refund this invoice?")) return;
     try {
@@ -36,18 +59,20 @@ export default function CashierInvoices() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       alert("Refund processed successfully!");
-      window.location.reload();
+      fetchSales();
     } catch (err) {
       console.error(err);
       alert("Refund failed: " + (err.response?.data?.message || err.message));
     }
   };
 
-  if (loading)
+  if (loading) {
     return <p className="text-center mt-5">Loading your invoices...</p>;
+  }
 
   return (
       <div className="container mt-4">
+        {/* Header */}
         <div
           style={{
             display: "flex",
@@ -73,7 +98,14 @@ export default function CashierInvoices() {
           </button>
         </div>
 
-        {sales.length === 0 ? (
+        {/* 🚫 Block view if cashier is closed */}
+        {cashierStatus === "closed" ? (
+          <div className="text-center mt-5">
+            <h4 className="text-danger">
+              🚫 You cannot view invoices while your cashier account is closed.
+            </h4>
+          </div>
+        ) : sales.length === 0 ? (
           <p className="text-center text-muted">No invoices yet.</p>
         ) : (
           <table className="table table-bordered mt-3">
@@ -118,7 +150,7 @@ export default function CashierInvoices() {
                         View
                       </button>
 
-                      {/* Hide Refund All button if any item is refunded or invoice is refunded */}
+                      {/* Hide Refund button if any item refunded */}
                       {!hasPartialRefund && !isFullyRefunded && (
                         <button
                           className="btn btn-sm btn-danger"
