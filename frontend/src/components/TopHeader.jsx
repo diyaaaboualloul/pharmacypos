@@ -40,16 +40,7 @@ export default function TopHeader() {
         {/* 🏷 Brand */}
         <span className="navbar-brand fw-bold">💊 Pharmacy POS</span>
 
-        {/* 🔍 Search input */}
-        <div className="d-flex mx-auto" style={{ maxWidth: "300px", width: "100%" }}>
-          <input
-            type="search"
-            className="form-control rounded-pill px-3"
-            placeholder="Search products..."
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
-        </div>
+     
 
         {/* 👤 User info & Logout */}
         <div className="d-flex align-items-center ms-auto">

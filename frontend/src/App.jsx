@@ -13,7 +13,6 @@ import ProductManagementPage from "./pages/ProductManagementPage";
 import CategoryManagementPage from "./pages/CategoryManagementPage";
 import CategoryProductsPage from "./pages/CategoryProductsPage";
 import AlertsPage from "./pages/AlertPage";
-import SearchResultsPage from "./pages/SearchResultsPage";
 import BatchManagementPage from "./pages/BatchManagementPage.jsx";
 import PosPage from "./pages/PosPage";
 import AdminInvoices from "./pages/AdminInvoices";
@@ -68,14 +67,7 @@ function App() {
           }
         />
 
-        <Route
-          path="/admin/search"
-          element={
-            <RoleProtectedRoute allowedRoles={["admin"]}>
-              <SearchResultsPage />
-            </RoleProtectedRoute>
-          }
-        />
+
 
         <Route
           path="/admin/users"
