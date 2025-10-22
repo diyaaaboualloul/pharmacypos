@@ -13,12 +13,15 @@ import {
 
 const router = express.Router();
 
-// All report routes require auth + (admin or finance)
-router.get("/sales/summary", requireAuth, requireAdminOrFinance, salesSummary);
-router.get("/products/top", requireAuth, requireAdminOrFinance, topProducts);
-router.get("/cashiers/performance", requireAuth, requireAdminOrFinance, cashierPerformance);
-router.get("/payments/breakdown", requireAuth, requireAdminOrFinance, paymentBreakdown);
-router.get("/refunds/timeseries", requireAuth, requireAdminOrFinance, refundsTimeseries);
-router.get("/inventory/health", requireAuth, requireAdminOrFinance, inventoryHealth);
+// ✅ All routes require authentication and (admin or finance) role
+router.use(requireAuth, requireAdminOrFinance);
+
+// Analytics routes
+router.get("/sales/summary", salesSummary);
+router.get("/products/top", topProducts);
+router.get("/cashiers/performance", cashierPerformance);
+router.get("/payments/breakdown", paymentBreakdown);
+router.get("/refunds/timeseries", refundsTimeseries);
+router.get("/inventory/health", inventoryHealth);
 
 export default router;
