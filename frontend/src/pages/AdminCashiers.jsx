@@ -8,8 +8,10 @@ export default function AdminCashiers() {
   const [cashiers, setCashiers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
 
-  // 🔹 Fetch cashiers + their current day status
+  // 🔹 Fetch cashiers + status
   const fetchCashiers = async () => {
     try {
       const token = getToken();
@@ -54,72 +56,125 @@ export default function AdminCashiers() {
     }
   };
 
+  // 🔎 Filtered Cashiers
+  const filteredCashiers = cashiers.filter((c) => {
+    const matchesSearch =
+      c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      c.email.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter ? c.status === statusFilter : true;
+    return matchesSearch && matchesStatus;
+  });
+
   return (
     <Layout>
       <div className="container mt-4">
-        <h3 className="mb-4">💼 Cashiers Day Management</h3>
+        <div className="d-flex justify-content-between align-items-center mb-4">
+          <h3 className="fw-bold text-primary">💼 Cashiers Day Management</h3>
+        </div>
 
         {message && <div className="alert alert-info">{message}</div>}
 
+        {/* 🔍 Search & Filter Controls */}
+        <div className="card shadow-sm p-3 mb-3">
+          <div className="row g-3 align-items-center">
+            <div className="col-md-5">
+              <input
+                type="text"
+                className="form-control"
+                placeholder="🔍 Search by name or email..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <div className="col-md-5">
+              <select
+                className="form-select"
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+              >
+                <option value="">All Statuses</option>
+                <option value="open">🟢 Open</option>
+                <option value="closed">🔴 Closed</option>
+              </select>
+            </div>
+            <div className="col-md-2">
+              <button
+                className="btn btn-outline-secondary w-100"
+                onClick={() => {
+                  setSearchTerm("");
+                  setStatusFilter("");
+                }}
+              >
+                🧹 Clear
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* 📋 Responsive Table */}
         <div className="card shadow-sm p-3">
-          <table className="table table-bordered align-middle">
-            <thead className="table-primary">
-              <tr>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Status</th>
-                <th style={{ width: "240px" }}>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {cashiers.length === 0 ? (
+          <div className="table-responsive">
+            <table className="table table-bordered align-middle table-hover mb-0">
+              <thead className="table-primary text-center">
                 <tr>
-                  <td colSpan="4" className="text-center text-muted">
-                    No cashiers found.
-                  </td>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Status</th>
+                  <th style={{ minWidth: "240px" }}>Action</th>
                 </tr>
-              ) : (
-                cashiers.map((c) => (
-                  <tr key={c._id}>
-                    <td>{c.name}</td>
-                    <td>{c.email}</td>
-                    <td>
-                      {c.status === "open" ? (
-                        <span className="badge bg-success">🟢 Open</span>
-                      ) : (
-                        <span className="badge bg-danger">🔴 Closed</span>
-                      )}
-                    </td>
-                    <td>
-                      {c.status === "open" ? (
-                        <button
-                          className="btn btn-sm btn-danger me-2"
-                          onClick={() => handleAction(c._id, "close")}
-                          disabled={loading}
-                        >
-                          🕓 Close Day
-                        </button>
-                      ) : (
-                        <button
-                          className="btn btn-sm btn-success me-2"
-                          onClick={() => handleAction(c._id, "open")}
-                          disabled={loading}
-                        >
-                          🔓 Open Day
-                        </button>
-                      )}
-                      <Link
-                        to={`/admin/cashiers/${c._id}/sessions`}
-                        className="btn btn-sm btn-outline-primary"
-                      >
-                        📜 View Sessions
-                      </Link>
+              </thead>
+              <tbody>
+                {filteredCashiers.length === 0 ? (
+                  <tr>
+                    <td colSpan="4" className="text-center text-muted py-3">
+                      No cashiers found.
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : (
+                  filteredCashiers.map((c) => (
+                    <tr key={c._id}>
+                      <td>{c.name}</td>
+                      <td>{c.email}</td>
+                      <td className="text-center">
+                        {c.status === "open" ? (
+                          <span className="badge bg-success px-3 py-2">🟢 Open</span>
+                        ) : (
+                          <span className="badge bg-danger px-3 py-2">🔴 Closed</span>
+                        )}
+                      </td>
+                      <td className="text-center">
+                        <div className="d-flex flex-wrap justify-content-center gap-2">
+                          {c.status === "open" ? (
+                            <button
+                              className="btn btn-sm btn-danger"
+                              onClick={() => handleAction(c._id, "close")}
+                              disabled={loading}
+                            >
+                              🕓 Close Day
+                            </button>
+                          ) : (
+                            <button
+                              className="btn btn-sm btn-success"
+                              onClick={() => handleAction(c._id, "open")}
+                              disabled={loading}
+                            >
+                              🔓 Open Day
+                            </button>
+                          )}
+                          <Link
+                            to={`/admin/cashiers/${c._id}/sessions`}
+                            className="btn btn-sm btn-outline-primary"
+                          >
+                            📜 View Sessions
+                          </Link>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </Layout>
