@@ -236,15 +236,21 @@ export const inventoryHealth = async (req, res) => {
     const next30 = new Date(today);
     next30.setDate(today.getDate() + 30);
 
-    const expiredCount = await Batch.countDocuments({
-      expiryDate: { $lt: today },
-    });
-    const expiringSoonCount = await Batch.countDocuments({
+    // Expired and expiring soon
+    const expiredBatches = await Batch.find({ expiryDate: { $lt: today } }).populate("product", "name");
+    const expiringSoonBatches = await Batch.find({
       expiryDate: { $gte: today, $lte: next30 },
-    });
+    }).populate("product", "name");
 
+    const expiredProducts = [...new Set(expiredBatches.map(b => b.product?.name).filter(Boolean))];
+    const expiringSoonProducts = [...new Set(expiringSoonBatches.map(b => b.product?.name).filter(Boolean))];
+
+    const expiredCount = expiredProducts.length;
+    const expiringSoonCount = expiringSoonProducts.length;
+
+    // Low / out of stock
     const threshold = Math.max(parseInt(req.query.lowStock || "10", 10), 0);
-    const products = await Product.find().select("_id");
+    const products = await Product.find().select("_id name");
 
     const totals = await Promise.all(
       products.map(async (p) => {
@@ -252,20 +258,27 @@ export const inventoryHealth = async (req, res) => {
           { $match: { product: new mongoose.Types.ObjectId(p._id) } },
           { $group: { _id: null, total: { $sum: "$quantity" } } },
         ]);
-        return { id: p._id, total: agg[0]?.total || 0 };
+        return { name: p.name, total: agg[0]?.total || 0 };
       })
     );
 
-    const lowStockCount = totals.filter((t) => t.total <= threshold).length;
+    const lowStockProducts = totals.filter(t => t.total > 0 && t.total <= threshold).map(t => t.name);
+    const outOfStockProducts = totals.filter(t => t.total === 0).map(t => t.name);
 
     res.json({
       today,
       lowStockThreshold: threshold,
       expiredCount,
+      expiredProducts,
       expiringSoonCount,
-      lowStockCount,
+      expiringSoonProducts,
+      lowStockCount: lowStockProducts.length,
+      lowStockProducts,
+      outOfStockCount: outOfStockProducts.length,
+      outOfStockProducts,
     });
   } catch (err) {
+    console.error("Error in inventoryHealth:", err);
     res.status(500).json({
       message: "Failed to fetch inventory health",
       error: err.message,
