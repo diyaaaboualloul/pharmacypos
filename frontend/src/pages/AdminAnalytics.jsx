@@ -1,4 +1,3 @@
-// src/pages/AdminAnalytics.jsx
 import React, { useState } from "react";
 import Layout from "../components/Layout";
 import axios from "axios";
@@ -105,9 +104,7 @@ export default function AdminAnalytics() {
       <div className="container py-4">
         <h2 className="fw-bold text-primary mb-4">📊 Admin Analytics Dashboard</h2>
 
-        {alertMessage && (
-          <div className="alert alert-warning">{alertMessage}</div>
-        )}
+        {alertMessage && <div className="alert alert-warning">{alertMessage}</div>}
 
         {/* ================== COMPARISON ================== */}
         <section className="mb-5">
@@ -157,21 +154,101 @@ export default function AdminAnalytics() {
 
         {/* ================== TOP PRODUCTS ================== */}
         <section className="card shadow-sm p-3 mb-5">
-          <h5 className="text-primary mb-3">🏆 Top Selling Products</h5>
+          <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-3 gap-3">
+            <h5 className="text-primary mb-0">🏆 Top Selling Products</h5>
+            <div className="row g-2 align-items-center w-100 w-md-auto">
+              <div className="col-sm-6 col-md-3">
+                <label className="form-label">From</label>
+                <input
+                  type="date"
+                  className="form-control"
+                  value={productsFilter.from}
+                  onChange={(e) => setProductsFilter({ ...productsFilter, from: e.target.value })}
+                />
+              </div>
+              <div className="col-sm-6 col-md-3">
+                <label className="form-label">To</label>
+                <input
+                  type="date"
+                  className="form-control"
+                  value={productsFilter.to}
+                  onChange={(e) => setProductsFilter({ ...productsFilter, to: e.target.value })}
+                />
+              </div>
+              <div className="col-sm-6 col-md-3 d-grid">
+                <button className="btn btn-primary" onClick={fetchTopProducts}>🔍 Apply</button>
+              </div>
+              <div className="col-sm-6 col-md-3 d-grid">
+                <button className="btn btn-outline-secondary" onClick={() => setProductsFilter({ from: "", to: "" })}>♻️ Reset</button>
+              </div>
+            </div>
+          </div>
+
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={topProducts}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="name" />
               <YAxis />
               <Tooltip />
-              <Bar dataKey="totalSold" fill="#007bff" />
+              <Bar dataKey="totalSold" fill="#007bff" name="Units Sold" />
             </BarChart>
           </ResponsiveContainer>
         </section>
 
         {/* ================== CASHIER PERFORMANCE ================== */}
         <section className="card shadow-sm p-3 mb-5">
-          <h5 className="text-primary mb-3">👨‍💼 Cashier Performance</h5>
+          <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-3 gap-3">
+            <h5 className="text-primary mb-0">👨‍💼 Cashier Performance</h5>
+            <div className="row g-2 align-items-center w-100 w-md-auto">
+              <div className="col-sm-6 col-md-3">
+                <label className="form-label fw-semibold">Filter Type</label>
+                <select
+                  className="form-select"
+                  value={cashierFilterMode}
+                  onChange={(e) => {
+                    setCashierFilterMode(e.target.value);
+                    setCashiersFilter({ from: "", to: "" });
+                  }}
+                >
+                  <option value="days">Day</option>
+                  <option value="weeks">Week</option>
+                  <option value="months">Month</option>
+                  <option value="years">Year</option>
+                </select>
+              </div>
+
+              <div className="col-sm-6 col-md-3">
+                <label className="form-label fw-semibold">Select Period</label>
+                <input
+                  type={
+                    cashierFilterMode === "weeks"
+                      ? "week"
+                      : cashierFilterMode === "months"
+                      ? "month"
+                      : cashierFilterMode === "years"
+                      ? "number"
+                      : "date"
+                  }
+                  placeholder={cashierFilterMode === "years" ? "e.g. 2024" : ""}
+                  className="form-control"
+                  value={cashiersFilter.from}
+                  onChange={(e) => {
+                    const { from, to } = buildDateRange(cashierFilterMode, e.target.value);
+                    setCashiersFilter({ from, to });
+                  }}
+                />
+              </div>
+
+              <div className="col-sm-6 col-md-3 d-grid">
+                <button className="btn btn-primary" onClick={fetchCashiers}>🔍 Apply</button>
+              </div>
+
+              <div className="col-sm-6 col-md-3 d-grid">
+                <button className="btn btn-outline-secondary" onClick={() => setCashiersFilter({ from: "", to: "" })}>♻️ Reset</button>
+              </div>
+            </div>
+          </div>
+
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={cashierPerformance}>
               <CartesianGrid strokeDasharray="3 3" />
