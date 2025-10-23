@@ -23,6 +23,7 @@ import CashierInvoiceDetails from "./pages/CashierInvoiceDetails.jsx";
 import AdminCashiers from "./pages/AdminCashiers";
 import CashierSessions from "./pages/CashierSessions";
 import AdminAnalytics from "./pages/AdminAnalytics"; // ✅ Add this import
+import LiveAnalytics from "./pages/LiveAnalytics.jsx"; // ✅ Add this import
 
 // Inside your <Routes>
 
@@ -37,6 +38,7 @@ function App() {
         <Route path="/" element={<Navigate to="/login" replace />} />
 <Route path="/admin/cashiers/:cashierId/sessions" element={<CashierSessions />} />
 <Route path="/admin/analytics" element={<AdminAnalytics />} />
+<Route path="/admin/live" element={<LiveAnalytics />} />
 
         {/* Public Routes */}
         <Route
