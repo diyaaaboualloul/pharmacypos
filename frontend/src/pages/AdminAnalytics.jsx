@@ -19,7 +19,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 
 export default function AdminAnalytics() {
   const token = getToken();
-  const COLORS = ["#007bff", "#28a745", "#ffc107", "#dc3545", "#17a2b8", "#6610f2"];
+  const COLORS_MAP = { gross: "#007bff", refunds: "#dc3545", net: "#28a745" };
 
   const [loading, setLoading] = useState(false);
 
@@ -39,10 +39,27 @@ export default function AdminAnalytics() {
 
   // --- Filters ---
   const [productsFilter, setProductsFilter] = useState({ from: "", to: "" });
+  const [cashierFilterMode, setCashierFilterMode] = useState("days");
   const [cashiersFilter, setCashiersFilter] = useState({ from: "", to: "" });
   const [alertMessage, setAlertMessage] = useState("");
 
-  const COLORS_MAP = { gross: "#007bff", refunds: "#dc3545", net: "#28a745" };
+  // -------------------- Helper --------------------
+  const buildDateRange = (mode, value) => {
+    switch (mode) {
+      case "weeks": {
+        const [year, week] = value.split("-W");
+        const start = new Date(year, 0, (week - 1) * 7 + 1).toISOString().split("T")[0];
+        const end = new Date(year, 0, week * 7).toISOString().split("T")[0];
+        return { from: start, to: end };
+      }
+      case "months":
+        return { from: `${value}-01`, to: `${value}-31` };
+      case "years":
+        return { from: `${value}-01-01`, to: `${value}-12-31` };
+      default:
+        return { from: value, to: value };
+    }
+  };
 
   // -------------------- Fetchers --------------------
   const fetchTodaySales = async () => {
@@ -106,11 +123,12 @@ export default function AdminAnalytics() {
     try {
       const getURL = (period) => {
         switch (comparisonMode) {
-          case "weeks":
+          case "weeks": {
             const [year, week] = period.split("-W");
             const start = new Date(year, 0, (week - 1) * 7 + 1).toISOString().split("T")[0];
             const end = new Date(year, 0, week * 7).toISOString().split("T")[0];
             return `http://localhost:5000/api/reports/sales/summary?granularity=week&from=${start}&to=${end}`;
+          }
           case "months":
             return `http://localhost:5000/api/reports/sales/summary?granularity=month&from=${period}-01&to=${period}-31`;
           case "years":
@@ -203,7 +221,6 @@ export default function AdminAnalytics() {
         {/* ================== COMPARISON ================== */}
         <section className="mb-5">
           <h5 className="fw-bold text-primary mb-3">🔄 Compare Periods</h5>
-
           <div className="card border-0 shadow-sm p-3 mb-3 bg-light">
             <div className="row g-3 align-items-end">
               <div className="col-md-3">
@@ -223,7 +240,6 @@ export default function AdminAnalytics() {
                   <option value="years">Years</option>
                 </select>
               </div>
-
               <div className="col-md-3">
                 <label className="form-label fw-semibold">First Period</label>
                 <input
@@ -242,7 +258,6 @@ export default function AdminAnalytics() {
                   onChange={(e) => setPeriod1(e.target.value)}
                 />
               </div>
-
               <div className="col-md-3">
                 <label className="form-label fw-semibold">Second Period</label>
                 <input
@@ -261,82 +276,72 @@ export default function AdminAnalytics() {
                   onChange={(e) => setPeriod2(e.target.value)}
                 />
               </div>
-
               <div className="col-md-3 d-grid">
-                <button
-                  className="btn btn-primary"
-                  onClick={fetchComparison}
-                  disabled={loading}
-                >
+                <button className="btn btn-primary" onClick={fetchComparison} disabled={loading}>
                   {loading ? "Loading..." : "Compare"}
                 </button>
               </div>
             </div>
           </div>
 
-          {/* KPI Comparison */}
           {comparisonData.length > 0 && (
-            <div className="row g-3 my-4">
-              {["gross", "refunds", "net"].map((key, i) => (
-                <div className="col-12 col-md-4" key={i}>
-                  <motion.div
-                    whileHover={{ scale: 1.05 }}
-                    className={`card border-${
-                      key === "refunds" ? "danger" : key === "net" ? "success" : "primary"
-                    } shadow-sm text-center`}
-                  >
-                    <div className="card-body">
-                      <h6 className={`text-${
+            <>
+              <div className="row g-3 my-4">
+                {["gross", "refunds", "net"].map((key, i) => (
+                  <div className="col-12 col-md-4" key={i}>
+                    <motion.div
+                      whileHover={{ scale: 1.05 }}
+                      className={`card border-${
                         key === "refunds" ? "danger" : key === "net" ? "success" : "primary"
-                      }`}>
-                        {key.charAt(0).toUpperCase() + key.slice(1)} Sales
-                      </h6>
-                      <h5>
-                        ${totals1[key].toFixed(2)} → ${totals2[key].toFixed(2)}
-                      </h5>
-                      <p
-                        className={`fw-semibold ${
-                          totals2[key] >= totals1[key] ? "text-success" : "text-danger"
-                        } mb-0`}
-                      >
-                        {totals2[key] >= totals1[key] ? "▲" : "▼"}{" "}
-                        {Math.abs(
-                          ((totals2[key] - totals1[key]) / totals1[key]) * 100 || 0
-                        ).toFixed(1)}%
-                      </p>
-                    </div>
-                  </motion.div>
-                </div>
-              ))}
-            </div>
-          )}
+                      } shadow-sm text-center`}
+                    >
+                      <div className="card-body">
+                        <h6
+                          className={`text-${
+                            key === "refunds" ? "danger" : key === "net" ? "success" : "primary"
+                          }`}
+                        >
+                          {key.charAt(0).toUpperCase() + key.slice(1)} Sales
+                        </h6>
+                        <h5>
+                          ${totals1[key].toFixed(2)} → ${totals2[key].toFixed(2)}
+                        </h5>
+                        <p
+                          className={`fw-semibold ${
+                            totals2[key] >= totals1[key] ? "text-success" : "text-danger"
+                          } mb-0`}
+                        >
+                          {totals2[key] >= totals1[key] ? "▲" : "▼"}{" "}
+                          {Math.abs(
+                            ((totals2[key] - totals1[key]) / totals1[key]) * 100 || 0
+                          ).toFixed(1)}%
+                        </p>
+                      </div>
+                    </motion.div>
+                  </div>
+                ))}
+              </div>
 
-          {/* Chart */}
-          {comparisonData.length > 0 && (
-            <div className="card shadow-sm p-3">
-              <ResponsiveContainer width="100%" height={350}>
-                <LineChart data={comparisonData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Line
-                    type="monotone"
-                    dataKey="gross"
-                    stroke={COLORS_MAP.gross}
-                    name="Gross"
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="refunds"
-                    stroke={COLORS_MAP.refunds}
-                    name="Refunds"
-                  />
-                  <Line type="monotone" dataKey="net" stroke={COLORS_MAP.net} name="Net" />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
+              <div className="card shadow-sm p-3">
+                <ResponsiveContainer width="100%" height={350}>
+                  <LineChart data={comparisonData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Line type="monotone" dataKey="gross" stroke={COLORS_MAP.gross} name="Gross" />
+                    <Line
+                      type="monotone"
+                      dataKey="refunds"
+                      stroke={COLORS_MAP.refunds}
+                      name="Refunds"
+                    />
+                    <Line type="monotone" dataKey="net" stroke={COLORS_MAP.net} name="Net" />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </>
           )}
         </section>
 
@@ -418,19 +423,78 @@ export default function AdminAnalytics() {
         </section>
 
         {/* ================== CASHIER PERFORMANCE ================== */}
-        <section className="card shadow-sm p-3 mb-5">
-          <h5 className="text-primary mb-3">👨‍💼 Cashier Performance</h5>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={cashierPerformance}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="cashierName" />
-              <YAxis />
-              <Tooltip />
-              <Bar dataKey="totalSales" fill="#28a745" name="Total Sales ($)" />
-            </BarChart>
-          </ResponsiveContainer>
-        </section>
-      </div>
-    </Layout>
-  );
-}
+         <section className="card shadow-sm p-3 mb-5">
+                 <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-3 gap-3">
+                   <h5 className="text-primary mb-0">👨‍💼 Cashier Performance</h5>
+       
+                   <div className="row g-2 align-items-center w-100 w-md-auto">
+                     <div className="col-sm-6 col-md-3">
+                       <label className="form-label fw-semibold">Filter Type</label>
+                       <select
+                         className="form-select"
+                         value={cashierFilterMode}
+                         onChange={(e) => {
+                           setCashierFilterMode(e.target.value);
+                           setCashiersFilter({ from: "", to: "" });
+                         }}
+                       >
+                         <option value="days">Day</option>
+                         <option value="weeks">Week</option>
+                         <option value="months">Month</option>
+                         <option value="years">Year</option>
+                       </select>
+                     </div>
+       
+                     <div className="col-sm-6 col-md-3">
+                       <label className="form-label fw-semibold">Select Period</label>
+                       <input
+                         type={
+                           cashierFilterMode === "weeks"
+                             ? "week"
+                             : cashierFilterMode === "months"
+                             ? "month"
+                             : cashierFilterMode === "years"
+                             ? "number"
+                             : "date"
+                         }
+                         placeholder={cashierFilterMode === "years" ? "e.g. 2024" : ""}
+                         className="form-control"
+                         value={cashiersFilter.from}
+                         onChange={(e) => {
+                           const { from, to } = buildDateRange(cashierFilterMode, e.target.value);
+                           setCashiersFilter({ from, to });
+                         }}
+                       />
+                     </div>
+       
+                     <div className="col-sm-6 col-md-3 d-grid">
+                       <button className="btn btn-primary" onClick={fetchCashiers}>
+                         🔍 Apply
+                       </button>
+                     </div>
+       
+                     <div className="col-sm-6 col-md-3 d-grid">
+                       <button
+                         className="btn btn-outline-secondary"
+                         onClick={() => setCashiersFilter({ from: "", to: "" })}
+                       >
+                         ♻️ Reset
+                       </button>
+                     </div>
+                   </div>
+                 </div>
+       
+                 <ResponsiveContainer width="100%" height={300}>
+                   <BarChart data={cashierPerformance}>
+                     <CartesianGrid strokeDasharray="3 3" />
+                     <XAxis dataKey="cashierName" />
+                     <YAxis />
+                     <Tooltip />
+                     <Bar dataKey="totalSales" fill="#28a745" name="Total Sales ($)" />
+                   </BarChart>
+                 </ResponsiveContainer>
+               </section>
+             </div>
+           </Layout>
+         );
+       }
