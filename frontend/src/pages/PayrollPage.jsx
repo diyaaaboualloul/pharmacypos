@@ -12,7 +12,7 @@ function currentPeriod() {
 
 export default function PayrollPage() {
   const [period, setPeriod] = useState(currentPeriod());
-  const [rows, setRows] = useState([]);           // payroll entries
+  const [rows, setRows] = useState([]);           
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -25,7 +25,6 @@ export default function PayrollPage() {
     []
   );
 
-  // load entries (and auto-create missing ones on the backend)
   const loadPayroll = async () => {
     if (!/^\d{4}-\d{2}$/.test(period)) {
       setMessage("Please choose a valid month (YYYY-MM).");
@@ -46,15 +45,25 @@ export default function PayrollPage() {
 
   useEffect(() => {
     loadPayroll();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // local field change
+  // ✅ Local field change with live netPay recalculation
   const updateLocal = (id, patch) => {
-    setRows((prev) => prev.map((r) => (r._id === id ? { ...r, ...patch } : r)));
+    setRows(prev =>
+      prev.map(r => {
+        if (r._id !== id) return r;
+        const updated = { ...r, ...patch };
+
+        const base = Number(updated.baseSalary || 0);
+        const adv = Number(updated.advances || 0);
+        const ded = Number(updated.deductions || 0);
+        updated.netPay = Math.max(0, base - adv - ded);
+
+        return updated;
+      })
+    );
   };
 
-  // persist advances/deductions/baseSalary to server for one row
   const saveRow = async (row) => {
     try {
       const payload = {
@@ -64,23 +73,23 @@ export default function PayrollPage() {
       };
       const { data } = await api.put(`/api/payroll/${row._id}`, payload);
       setMessage(data.message || "Payroll updated");
-      // refresh the row totals from server (netPay is recalculated there)
       await loadPayroll();
     } catch (err) {
       setMessage(err.response?.data?.message || "Failed to update payroll");
     }
   };
 
-  // mark paid/unpaid
   const togglePaid = async (row) => {
     try {
-      // If we are marking it as PAID, ask quick info
+      await api.put(`/api/payroll/${row._id}`, {
+        baseSalary: Number(row.baseSalary ?? 0),
+        advances: Number(row.advances ?? 0),
+        deductions: Number(row.deductions ?? 0),
+      });
+
       let body = { paid: !row.paid };
       if (!row.paid) {
-        const method = prompt(
-          "Payment method? (cash / card / bank)",
-          "cash"
-        );
+        const method = prompt("Payment method? (cash / card / bank)", "cash");
         if (!method) return;
         body.paymentMethod = method;
         body.paidDate = new Date().toISOString();
@@ -93,7 +102,6 @@ export default function PayrollPage() {
     }
   };
 
-  // export CSV with auth header
   const exportCsv = async () => {
     try {
       const res = await api.get("/api/payroll/export.csv", {
@@ -112,14 +120,17 @@ export default function PayrollPage() {
     }
   };
 
-  // compute totals for footer
   const totals = useMemo(() => {
     const t = { base: 0, adv: 0, ded: 0, net: 0 };
     rows.forEach((r) => {
-      t.base += Number(r.baseSalary || 0);
-      t.adv += Number(r.advances || 0);
-      t.ded += Number(r.deductions || 0);
-      t.net += Number(r.netPay || 0);
+      const base = Number(r.baseSalary || 0);
+      const adv = Number(r.advances || 0);
+      const ded = Number(r.deductions || 0);
+      const net = Number(r.netPay || 0);
+      t.base += base;
+      t.adv += adv;
+      t.ded += ded;
+      t.net += net;
     });
     return t;
   }, [rows]);
@@ -161,7 +172,7 @@ export default function PayrollPage() {
                   <th style={{ width: 120 }}>Deductions</th>
                   <th style={{ width: 120 }}>Net</th>
                   <th style={{ width: 140 }}>Paid</th>
-                  <th style={{ width: 140 }}>Action</th>
+                  <th style={{ width: 160 }}>Action</th>
                 </tr>
               </thead>
               <tbody>

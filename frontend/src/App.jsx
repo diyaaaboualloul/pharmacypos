@@ -23,6 +23,7 @@ import CashierInvoices from "./pages/CashierInvoices";
 import EmployeesPage from "./pages/EmployeesPage";   // ✅
 import PayrollPage from "./pages/PayrollPage";       // ✅
 
+
 function App() {
   return (
     <Router>
