@@ -204,60 +204,58 @@ export const closeCashierDay = async (req, res) => {
 
 
 // === PUT /api/pos/sales/:id ===
-export const updateSale = async (req, res) => {
-  try {
-    const sale = await Sale.findById(req.params.id);
-    if (!sale) return res.status(404).json({ message: "Sale not found" });
+// export const updateSale = async (req, res) => {
+//   try {
+//     const sale = await Sale.findById(req.params.id);
+//     if (!sale) return res.status(404).json({ message: "Sale not found" });
 
-    const { items, notes } = req.body;
+//     const { items, notes } = req.body;
 
-    // Restore old stock
-    for (const item of sale.items) {
-      await Batch.updateOne({ _id: item.batch }, { $inc: { quantity: item.quantity } });
-    }
+//     for (const item of sale.items) {
+//       await Batch.updateOne({ _id: item.batch }, { $inc: { quantity: item.quantity } });
+//     }
 
-    // Deduct stock for new items
-    const updatedItems = [];
-    let newTotal = 0;
+//     const updatedItems = [];
+//     let newTotal = 0;
 
-    for (const i of items) {
-      const product = await Product.findById(i.productId);
-      if (!product) throw new Error("Product not found");
+//     for (const i of items) {
+//       const product = await Product.findById(i.productId);
+//       if (!product) throw new Error("Product not found");
 
-      const batch = await Batch.findOne({ product: product._id, quantity: { $gt: 0 } });
-      if (!batch) throw new Error("No available stock");
+//       const batch = await Batch.findOne({ product: product._id, quantity: { $gt: 0 } });
+//       if (!batch) throw new Error("No available stock");
 
-      await Batch.updateOne({ _id: batch._id }, { $inc: { quantity: -i.quantity } });
+//       await Batch.updateOne({ _id: batch._id }, { $inc: { quantity: -i.quantity } });
 
-      const lineTotal = i.price * i.quantity;
-      updatedItems.push({
-        product: product._id,
-        batch: batch._id,
-        quantity: i.quantity,
-        unitPrice: i.price,
-        lineTotal,
-      });
-      newTotal += lineTotal;
-    }
+//       const lineTotal = i.price * i.quantity;
+//       updatedItems.push({
+//         product: product._id,
+//         batch: batch._id,
+//         quantity: i.quantity,
+//         unitPrice: i.price,
+//         lineTotal,
+//       });
+//       newTotal += lineTotal;
+//     }
 
-    sale.items = updatedItems;
-    sale.total = newTotal;
-    sale.subTotal = newTotal;
-    sale.isEdited = true;
-    sale.notes = notes;
-    sale.editHistory = [
-      ...(sale.editHistory || []),
-      { editedAt: new Date(), editor: req.user?._id },
-    ];
+//     sale.items = updatedItems;
+//     sale.total = newTotal;
+//     sale.subTotal = newTotal;
+//     sale.isEdited = true;
+//     sale.notes = notes;
+//     sale.editHistory = [
+//       ...(sale.editHistory || []),
+//       { editedAt: new Date(), editor: req.user?._id },
+//     ];
 
-    await sale.save();
+//     await sale.save();
 
-    res.json({ message: "Invoice updated successfully", sale });
-  } catch (err) {
-    console.error(err);
-    res.status(400).json({ message: err.message || "Update failed" });
-  }
-};
+//     res.json({ message: "Invoice updated successfully", sale });
+//   } catch (err) {
+//     console.error(err);
+//     res.status(400).json({ message: err.message || "Update failed" });
+//   }
+// };
 
 // === GET /api/pos/search?q=... ===
 export const searchSellable = async (req, res) => {

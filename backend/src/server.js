@@ -5,7 +5,7 @@ import cors from "cors";
 import morgan from "morgan";
 import { connectDB } from "./config/db.js";
 
-// Route imports
+// ====== Route Imports ======
 import authRoutes from "./routes/authRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
@@ -21,31 +21,36 @@ import payrollRoutes from "./routes/payrollRoutes.js";
 dotenv.config();
 const app = express();
 
-// Middleware
 // ====== Middleware ======
 app.use(cors());
 app.use(express.json());
 app.use(morgan("dev"));
 
-// Base route
+// ====== Base Route ======
 app.get("/", (req, res) => res.send("Pharmacy POS API 🚀"));
 
-// Mount routes
+// ====== Mount Routes ======
 app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
-app.use("/api/products", productRoutes);
-app.use("/api/batches", batchRoutes);
 
+// Product and Category Management
+app.use("/api/products", productRoutes);
 app.use("/api/admin/products", productRoutes);
 app.use("/api/admin/categories", categoryRoutes);
+
+// Batch and Alert Management
+app.use("/api/batches", batchRoutes);
 app.use("/api/admin/batches", batchRoutes);
 app.use("/api/admin/alerts", alertRoutes);
 
+// POS and Sales
 app.use("/api/pos", posRoutes);
 app.use("/api/sales", salesRoutes);
+
+// Reports and Analytics
 app.use("/api/reports", reportRoutes);
 
-// ====== NEW ======
+// Employees and Payroll
 app.use("/api/employees", employeeRoutes);
 app.use("/api/payroll", payrollRoutes);
 

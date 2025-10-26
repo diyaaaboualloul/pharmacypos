@@ -5,7 +5,6 @@ import {
   searchSellable,
   checkout,
   listSales,
-  updateSale,
   listMySales,
   getSaleById,
   refundItem,
@@ -43,7 +42,6 @@ router.get("/sales", listSales);
 router.get("/sales/:id", getSaleById);
 
 // ✏️ Update a sale
-router.put("/sales/:id", updateSale);
 
 // 📜 List sales belonging to the logged-in cashier
 router.get("/my-sales", listMySales);

@@ -17,31 +17,28 @@ import BatchManagementPage from "./pages/BatchManagementPage.jsx";
 import PosPage from "./pages/PosPage";
 import AdminInvoices from "./pages/AdminInvoices";
 import InvoiceView from "./pages/InvoiceView";
-import InvoiceEdit from "./pages/InvoiceEdit";
 import CashierInvoices from "./pages/CashierInvoices";
 import CashierInvoiceDetails from "./pages/CashierInvoiceDetails.jsx";
 import AdminCashiers from "./pages/AdminCashiers";
 import CashierSessions from "./pages/CashierSessions";
-import AdminAnalytics from "./pages/AdminAnalytics"; // ✅ Add this import
-import LiveAnalytics from "./pages/LiveAnalytics.jsx"; // ✅ Add this import
+import AdminAnalytics from "./pages/AdminAnalytics";
+import LiveAnalytics from "./pages/LiveAnalytics.jsx";
 
 // Inside your <Routes>
-import EmployeesPage from "./pages/EmployeesPage";   // ✅
-import PayrollPage from "./pages/PayrollPage";       // ✅
-
+import EmployeesPage from "./pages/EmployeesPage";
+import PayrollPage from "./pages/PayrollPage";
 
 function App() {
   return (
     <Router>
-
       <Routes>
-              <Route path="/admin/cashiers" element={<AdminCashiers />} />
+        <Route path="/admin/cashiers" element={<AdminCashiers />} />
 
         {/* Redirect root to /login */}
         <Route path="/" element={<Navigate to="/login" replace />} />
-<Route path="/admin/cashiers/:cashierId/sessions" element={<CashierSessions />} />
-<Route path="/admin/analytics" element={<AdminAnalytics />} />
-<Route path="/admin/live" element={<LiveAnalytics />} />
+        <Route path="/admin/cashiers/:cashierId/sessions" element={<CashierSessions />} />
+        <Route path="/admin/analytics" element={<AdminAnalytics />} />
+        <Route path="/admin/live" element={<LiveAnalytics />} />
 
         {/* Public Routes */}
         <Route
@@ -72,9 +69,6 @@ function App() {
           }
         />
 
-
-
-       
         <Route
           path="/admin/users"
           element={
@@ -141,14 +135,6 @@ function App() {
             </RoleProtectedRoute>
           }
         />
-        <Route
-          path="/admin/invoices/:id/edit"
-          element={
-            <RoleProtectedRoute allowedRoles={["admin"]}>
-              <InvoiceEdit />
-            </RoleProtectedRoute>
-          }
-        />
 
         {/* ================== NEW: EMPLOYEES (Admin or Finance) ================== */}
         <Route
@@ -170,15 +156,6 @@ function App() {
           }
         />
         <Route
-  path="/cashier/invoices/:id"
-  element={
-    <RoleProtectedRoute allowedRoles={["cashier"]}>
-      <CashierInvoiceDetails />
-    </RoleProtectedRoute>
-  }
-/>
-
-        <Route
           path="/cashier/invoices"
           element={
             <RoleProtectedRoute allowedRoles={["cashier"]}>
@@ -187,10 +164,10 @@ function App() {
           }
         />
         <Route
-          path="/cashier/invoices/:id/edit"
+          path="/cashier/invoices/:id"
           element={
             <RoleProtectedRoute allowedRoles={["cashier"]}>
-              <InvoiceEdit />
+              <CashierInvoiceDetails />
             </RoleProtectedRoute>
           }
         />
@@ -204,7 +181,6 @@ function App() {
             </RoleProtectedRoute>
           }
         />
-        {/* NEW: Payroll (Admin or Finance) */}
         <Route
           path="/finance/payroll"
           element={

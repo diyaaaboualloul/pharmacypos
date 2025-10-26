@@ -14,7 +14,7 @@ export default function AdminInvoices() {
   const itemsPerPage = 8;
   const navigate = useNavigate();
 
-  // Fetch all sales
+  // 🧾 Fetch all sales
   const fetchSales = async () => {
     try {
       setLoading(true);
@@ -139,7 +139,7 @@ export default function AdminInvoices() {
                       >
                         {sale.total < 0 ? "Refunded" : "Original"}
                       </td>
-                      <td className="d-flex gap-2">
+                      <td>
                         <button
                           className="btn btn-primary btn-sm"
                           onClick={() =>
@@ -147,14 +147,6 @@ export default function AdminInvoices() {
                           }
                         >
                           View
-                        </button>
-                        <button
-                          className="btn btn-warning btn-sm"
-                          onClick={() =>
-                            navigate(`/admin/invoices/${sale._id}/edit`)
-                          }
-                        >
-                          Edit
                         </button>
                       </td>
                     </tr>
