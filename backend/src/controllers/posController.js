@@ -398,15 +398,24 @@ export const checkout = async (req, res) => {
 // === GET /api/pos/my-sales ===
 export const listMySales = async (req, res) => {
   try {
-    const sales = await Sale.find({ cashier: req.user._id })
-      .populate("cashier", "name email")
+    const sales = await Sale.find({
+      $or: [
+        { cashier: req.user._id },          // 🟢 new ObjectId-based invoices
+        { cashierId: req.user._id },        // 🟢 fallback if saved under cashierId
+        { cashierName: req.user.name },     // 🟢 old string-based invoices
+        { cashierEmail: req.user.email },   // 🟢 optional fallback
+      ],
+    })
       .populate("items.product", "name category price")
       .sort({ createdAt: -1 });
+
     res.json(sales);
   } catch (err) {
+    console.error("listMySales error:", err);
     res.status(500).json({ message: "Failed to fetch your invoices", error: err.message });
   }
 };
+
 
 // === GET /api/pos/sales ===
 export const listSales = async (req, res) => {

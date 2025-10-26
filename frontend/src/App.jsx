@@ -1,53 +1,49 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-
-// ✅ Public Pages
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
-import UnauthorizedPage from "./pages/UnauthorizedPage";
-import NotFoundPage from "./pages/NotFoundPage";
-
-// ✅ Dashboards
 import AdminDashboardPage from "./pages/AdminDashboardPage";
 import CashierDashboardPage from "./pages/CashierDashboardPage";
 import FinanceDashboardPage from "./pages/FinanceDashboardPage";
-
-// ✅ Admin Pages
+import GuestRoute from "./components/GuestRoute";
+import RoleProtectedRoute from "./components/RoleProtectedRoute";
 import UserManagementPage from "./pages/UserManagementPage";
+import UnauthorizedPage from "./pages/UnauthorizedPage";
+import NotFoundPage from "./pages/NotFoundPage";
 import ProductManagementPage from "./pages/ProductManagementPage";
 import CategoryManagementPage from "./pages/CategoryManagementPage";
 import CategoryProductsPage from "./pages/CategoryProductsPage";
 import AlertsPage from "./pages/AlertPage";
-import BatchManagementPage from "./pages/BatchManagementPage";
+import BatchManagementPage from "./pages/BatchManagementPage.jsx";
+import PosPage from "./pages/PosPage";
 import AdminInvoices from "./pages/AdminInvoices";
 import InvoiceView from "./pages/InvoiceView";
 import InvoiceEdit from "./pages/InvoiceEdit";
+import CashierInvoices from "./pages/CashierInvoices";
+import CashierInvoiceDetails from "./pages/CashierInvoiceDetails.jsx";
 import AdminCashiers from "./pages/AdminCashiers";
 import CashierSessions from "./pages/CashierSessions";
-import AdminAnalytics from "./pages/AdminAnalytics";
-import LiveAnalytics from "./pages/LiveAnalytics";
+import AdminAnalytics from "./pages/AdminAnalytics"; // ✅ Add this import
+import LiveAnalytics from "./pages/LiveAnalytics.jsx"; // ✅ Add this import
 
-// ✅ Finance Pages
-import EmployeesPage from "./pages/EmployeesPage";
-import PayrollPage from "./pages/PayrollPage";
+// Inside your <Routes>
+import EmployeesPage from "./pages/EmployeesPage";   // ✅
+import PayrollPage from "./pages/PayrollPage";       // ✅
 
-// ✅ Cashier Pages
-import PosPage from "./pages/PosPage";
-import CashierInvoices from "./pages/CashierInvoices";
-import CashierInvoiceDetails from "./pages/CashierInvoiceDetails";
-
-// ✅ Route Protection Components
-import GuestRoute from "./components/GuestRoute";
-import RoleProtectedRoute from "./components/RoleProtectedRoute";
 
 function App() {
   return (
     <Router>
+
       <Routes>
+              <Route path="/admin/cashiers" element={<AdminCashiers />} />
 
-        {/* 🌐 Redirect root to /login */}
+        {/* Redirect root to /login */}
         <Route path="/" element={<Navigate to="/login" replace />} />
+<Route path="/admin/cashiers/:cashierId/sessions" element={<CashierSessions />} />
+<Route path="/admin/analytics" element={<AdminAnalytics />} />
+<Route path="/admin/live" element={<LiveAnalytics />} />
 
-        {/* ================= PUBLIC ROUTES ================= */}
+        {/* Public Routes */}
         <Route
           path="/login"
           element={
@@ -66,7 +62,7 @@ function App() {
         />
         <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
-        {/* ================= ADMIN ROUTES ================= */}
+        {/* ================== ADMIN ROUTES ================== */}
         <Route
           path="/dashboard"
           element={
@@ -76,38 +72,9 @@ function App() {
           }
         />
 
-        <Route
-          path="/admin/analytics"
-          element={
-            <RoleProtectedRoute allowedRoles={["admin"]}>
-              <AdminAnalytics />
-            </RoleProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/live"
-          element={
-            <RoleProtectedRoute allowedRoles={["admin"]}>
-              <LiveAnalytics />
-            </RoleProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/cashiers"
-          element={
-            <RoleProtectedRoute allowedRoles={["admin"]}>
-              <AdminCashiers />
-            </RoleProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/cashiers/:cashierId/sessions"
-          element={
-            <RoleProtectedRoute allowedRoles={["admin"]}>
-              <CashierSessions />
-            </RoleProtectedRoute>
-          }
-        />
+
+
+       
         <Route
           path="/admin/users"
           element={
@@ -117,18 +84,10 @@ function App() {
           }
         />
         <Route
-          path="/admin/products"
+          path="/admin/alerts"
           element={
             <RoleProtectedRoute allowedRoles={["admin"]}>
-              <ProductManagementPage />
-            </RoleProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/products/:productId/batches"
-          element={
-            <RoleProtectedRoute allowedRoles={["admin"]}>
-              <BatchManagementPage />
+              <AlertsPage />
             </RoleProtectedRoute>
           }
         />
@@ -149,13 +108,23 @@ function App() {
           }
         />
         <Route
-          path="/admin/alerts"
+          path="/admin/products"
           element={
             <RoleProtectedRoute allowedRoles={["admin"]}>
-              <AlertsPage />
+              <ProductManagementPage />
             </RoleProtectedRoute>
           }
         />
+        <Route
+          path="/admin/products/:productId/batches"
+          element={
+            <RoleProtectedRoute allowedRoles={["admin"]}>
+              <BatchManagementPage />
+            </RoleProtectedRoute>
+          }
+        />
+
+        {/* Invoices (Admin) */}
         <Route
           path="/admin/invoices"
           element={
@@ -180,6 +149,8 @@ function App() {
             </RoleProtectedRoute>
           }
         />
+
+        {/* ================== NEW: EMPLOYEES (Admin or Finance) ================== */}
         <Route
           path="/admin/employees"
           element={
@@ -189,7 +160,7 @@ function App() {
           }
         />
 
-        {/* ================= CASHIER ROUTES ================= */}
+        {/* ================== CASHIER ROUTES ================== */}
         <Route
           path="/cashier/pos"
           element={
@@ -199,18 +170,19 @@ function App() {
           }
         />
         <Route
+  path="/cashier/invoices/:id"
+  element={
+    <RoleProtectedRoute allowedRoles={["cashier"]}>
+      <CashierInvoiceDetails />
+    </RoleProtectedRoute>
+  }
+/>
+
+        <Route
           path="/cashier/invoices"
           element={
             <RoleProtectedRoute allowedRoles={["cashier"]}>
               <CashierInvoices />
-            </RoleProtectedRoute>
-          }
-        />
-        <Route
-          path="/cashier/invoices/:id"
-          element={
-            <RoleProtectedRoute allowedRoles={["cashier"]}>
-              <CashierInvoiceDetails />
             </RoleProtectedRoute>
           }
         />
@@ -223,7 +195,7 @@ function App() {
           }
         />
 
-        {/* ================= FINANCE ROUTES ================= */}
+        {/* ================== FINANCE ROUTES ================== */}
         <Route
           path="/finance-dashboard"
           element={
@@ -232,6 +204,7 @@ function App() {
             </RoleProtectedRoute>
           }
         />
+        {/* NEW: Payroll (Admin or Finance) */}
         <Route
           path="/finance/payroll"
           element={
@@ -241,7 +214,7 @@ function App() {
           }
         />
 
-        {/* ================= 404 PAGE ================= */}
+        {/* 404 PAGE */}
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </Router>
