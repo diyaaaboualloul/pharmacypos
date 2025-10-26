@@ -5,6 +5,15 @@ import { getToken } from "../utils/auth";
 
 export default function ReportsPage() {
   const [period, setPeriod] = useState("daily");
+  const [selectedDate, setSelectedDate] = useState(() => {
+    const today = new Date();
+    return today.toISOString().split("T")[0]; // yyyy-mm-dd
+  });
+  const [selectedMonth, setSelectedMonth] = useState(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+  });
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [data, setData] = useState({
     totalSales: 0,
     totalExpenses: 0,
@@ -19,7 +28,12 @@ export default function ReportsPage() {
 
   const loadReport = async () => {
     try {
-      const res = await api.get("/api/reports/summary", { params: { period } });
+      const params = { period };
+      if (period === "daily") params.date = selectedDate;
+      if (period === "monthly") params.month = selectedMonth;
+      if (period === "yearly") params.year = selectedYear;
+
+      const res = await api.get("/api/reports/summary", { params });
       setData(res.data);
     } catch (err) {
       console.error("Failed to load report", err);
@@ -27,7 +41,12 @@ export default function ReportsPage() {
   };
 
   const downloadPDF = async () => {
-    const url = `http://localhost:5000/api/reports/pdf?period=${period}`;
+    const params = new URLSearchParams({ period });
+    if (period === "daily") params.append("date", selectedDate);
+    if (period === "monthly") params.append("month", selectedMonth);
+    if (period === "yearly") params.append("year", selectedYear);
+
+    const url = `http://localhost:5000/api/reports/pdf?${params.toString()}`;
     const token = getToken();
     const res = await fetch(url, {
       headers: { Authorization: `Bearer ${token}` },
@@ -41,38 +60,76 @@ export default function ReportsPage() {
 
   useEffect(() => {
     loadReport();
-  }, [period]);
+  }, [period, selectedDate, selectedMonth, selectedYear]);
 
   return (
     <Layout>
       <div className="container py-4">
-        <h3 className="mb-4">📈 Reports Dashboard</h3>
+        <h3 className="mb-4 text-primary">
+          📊 Reports Dashboard
+        </h3>
 
-        <div className="mb-3">
+        <div className="d-flex flex-wrap align-items-center mb-3 gap-2">
           <div className="btn-group">
             {["daily", "monthly", "yearly"].map((p) => (
               <button
                 key={p}
-                className={`btn btn-outline-primary ${
-                  period === p ? "active" : ""
-                }`}
+                className={`btn btn-outline-primary ${period === p ? "active" : ""}`}
                 onClick={() => setPeriod(p)}
               >
                 {p.charAt(0).toUpperCase() + p.slice(1)}
               </button>
             ))}
           </div>
-          <button
-            className="btn btn-outline-danger ms-3"
-            onClick={downloadPDF}
-          >
+
+          {/* Date / Month / Year Picker */}
+          {period === "daily" && (
+            <input
+              type="date"
+              className="form-control"
+              style={{ width: "200px" }}
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+            />
+          )}
+
+          {period === "monthly" && (
+            <input
+              type="month"
+              className="form-control"
+              style={{ width: "200px" }}
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(e.target.value)}
+            />
+          )}
+
+          {period === "yearly" && (
+            <input
+              type="number"
+              className="form-control"
+              style={{ width: "120px" }}
+              min="2000"
+              max={new Date().getFullYear()}
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(e.target.value)}
+            />
+          )}
+
+          <button className="btn btn-outline-danger ms-2" onClick={downloadPDF}>
             Export PDF
           </button>
         </div>
 
-        <div className="card shadow-sm">
+        {/* Summary Table */}
+        <div className="card shadow-sm border-0">
           <div className="card-body">
-            <table className="table table-bordered text-center">
+            <h5 className="mb-3 text-secondary text-center">
+              {period === "daily" && `Report for ${selectedDate}`}
+              {period === "monthly" && `Report for ${selectedMonth}`}
+              {period === "yearly" && `Report for ${selectedYear}`}
+            </h5>
+
+            <table className="table table-bordered text-center align-middle">
               <tbody>
                 <tr>
                   <th>Total Sales</th>
@@ -89,10 +146,9 @@ export default function ReportsPage() {
                 <tr>
                   <th>Net Profit</th>
                   <td
-                    style={{
-                      color: data.netProfit >= 0 ? "green" : "red",
-                      fontWeight: "bold",
-                    }}
+                    className={`fw-bold ${
+                      data.netProfit >= 0 ? "text-success" : "text-danger"
+                    }`}
                   >
                     ${data.netProfit.toFixed(2)}
                   </td>

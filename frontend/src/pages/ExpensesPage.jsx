@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import Layout from "../components/Layout";
-import { getToken, getUser } from "../utils/auth";
+import { getToken } from "../utils/auth";
+import { PlusCircle, Edit, Trash2, DollarSign, Calendar, Filter } from "lucide-react";
 
 const CATEGORIES = [
   "Rent",
@@ -22,8 +23,6 @@ export default function ExpensesPage() {
     to: "",
     category: "All",
   });
-
-  // form state (create / edit)
   const [formData, setFormData] = useState({
     _id: null,
     category: "Other",
@@ -31,11 +30,11 @@ export default function ExpensesPage() {
     date: "",
     description: "",
   });
-
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showForm, setShowForm] = useState(false);
 
-  // summary state
+  // monthly summary
   const [period, setPeriod] = useState(() => {
     const d = new Date();
     const mm = String(d.getMonth() + 1).padStart(2, "0");
@@ -52,7 +51,6 @@ export default function ExpensesPage() {
     headers: { Authorization: `Bearer ${getToken()}` },
   });
 
-  // load list with filters
   const loadExpenses = async () => {
     setLoading(true);
     try {
@@ -63,7 +61,6 @@ export default function ExpensesPage() {
           category: filters.category !== "All" ? filters.category : undefined,
         },
       });
-
       setExpenses(data.rows || []);
       setTotalAmount(data.totalAmount || 0);
     } catch (err) {
@@ -74,7 +71,6 @@ export default function ExpensesPage() {
     }
   };
 
-  // load summary for the month
   const loadSummary = async () => {
     try {
       const { data } = await api.get("/api/expenses/summary/month", {
@@ -98,28 +94,21 @@ export default function ExpensesPage() {
     loadSummary();
   }, [period]);
 
-  // handle create or update
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     if (!formData.date || !formData.amount || !formData.category) {
       alert("Please fill date, amount, and category.");
       return;
     }
-
     try {
       if (formData._id) {
-        // update
         const { _id, ...body } = formData;
-        const { data } = await api.put(`/api/expenses/${_id}`, body);
-        setMessage(data.message || "Updated");
+        await api.put(`/api/expenses/${_id}`, body);
+        setMessage("✅ Expense updated successfully.");
       } else {
-        // create
-        const { data } = await api.post("/api/expenses", formData);
-        setMessage(data.message || "Created");
+        await api.post("/api/expenses", formData);
+        setMessage("✅ Expense added successfully.");
       }
-
-      // reset form
       setFormData({
         _id: null,
         category: "Other",
@@ -127,12 +116,12 @@ export default function ExpensesPage() {
         date: "",
         description: "",
       });
-
+      setShowForm(false);
       loadExpenses();
       loadSummary();
     } catch (err) {
       console.error(err);
-      setMessage(err.response?.data?.message || "Failed to save expense");
+      setMessage("❌ Failed to save expense.");
     }
   };
 
@@ -144,170 +133,187 @@ export default function ExpensesPage() {
       date: exp.date ? exp.date.slice(0, 10) : "",
       description: exp.description || "",
     });
+    setShowForm(true);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this expense?")) return;
     try {
-      const { data } = await api.delete(`/api/expenses/${id}`);
-      setMessage(data.message || "Deleted");
+      await api.delete(`/api/expenses/${id}`);
+      setMessage("🗑️ Expense deleted successfully.");
       loadExpenses();
       loadSummary();
-    } catch (err) {
-      console.error(err);
-      setMessage(err.response?.data?.message || "Delete failed");
+    } catch {
+      setMessage("❌ Delete failed.");
     }
   };
 
   return (
     <Layout>
       <div className="container py-4">
-        <h3 className="mb-3">💸 Expenses Management</h3>
+        <div className="d-flex justify-content-between align-items-center mb-4">
+          <h3 className="fw-bold mb-0 text-primary">💰 Expenses Dashboard</h3>
+          <button
+            className="btn btn-primary d-flex align-items-center"
+            onClick={() => setShowForm(!showForm)}
+          >
+            <PlusCircle size={18} className="me-2" />
+            {showForm ? "Close Form" : "Add Expense"}
+          </button>
+        </div>
 
         {message && (
-          <div className="alert alert-info py-2 text-center">{message}</div>
+          <div className="alert alert-info py-2 text-center fw-semibold shadow-sm">
+            {message}
+          </div>
         )}
 
-        {/* ===== Summary Card (Month) ===== */}
-        <div className="card mb-4 shadow-sm">
-          <div className="card-body">
-            <div className="d-flex flex-wrap justify-content-between align-items-center mb-3">
-              <h5 className="mb-3 mb-md-0">📊 Monthly Summary (with Payroll)</h5>
-
-              <div className="d-flex gap-2">
-                <input
-                  type="month"
-                  className="form-control"
-                  style={{ minWidth: 170 }}
-                  value={period}
-                  onChange={(e) => setPeriod(e.target.value)}
-                />
+        {/* ===== Monthly Summary Cards ===== */}
+        <div className="row g-3 mb-4">
+          <div className="col-md-4">
+            <div className="card shadow-sm border-0 bg-light h-100">
+              <div className="card-body text-center">
+                <h6 className="text-muted">Total Expenses</h6>
+                <h4 className="text-danger fw-bold">
+                  ${summary.totalExpenses.toFixed(2)}
+                </h4>
               </div>
             </div>
-
-            <div className="table-responsive">
-              <table className="table table-bordered align-middle text-center">
-                <tbody>
-                  <tr>
-                    <th style={{ width: "200px" }}>Expenses Total</th>
-                    <td>${summary.totalExpenses.toFixed(2)}</td>
-                  </tr>
-                  <tr>
-                    <th>Payroll Paid</th>
-                    <td>${summary.payrollPaid.toFixed(2)}</td>
-                  </tr>
-                  <tr>
-                    <th>Grand Total</th>
-                    <td className="fw-bold text-danger">
-                      ${summary.grandTotal.toFixed(2)}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+          </div>
+          <div className="col-md-4">
+            <div className="card shadow-sm border-0 bg-light h-100">
+              <div className="card-body text-center">
+                <h6 className="text-muted">Payroll Paid</h6>
+                <h4 className="text-warning fw-bold">
+                  ${summary.payrollPaid.toFixed(2)}
+                </h4>
+              </div>
+            </div>
+          </div>
+          <div className="col-md-4">
+            <div className="card shadow-sm border-0 bg-light h-100">
+              <div className="card-body text-center">
+                <h6 className="text-muted">Grand Total</h6>
+                <h4 className="fw-bold text-success">
+                  ${summary.grandTotal.toFixed(2)}
+                </h4>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* ===== Add / Edit Expense Form ===== */}
-        <div className="card mb-4 shadow-sm">
-          <div className="card-header bg-primary text-white">
-            <h5 className="mb-0">
-              {formData._id ? "✏️ Edit Expense" : "➕ Add Expense"}
-            </h5>
+        {/* ===== Collapsible Add/Edit Form ===== */}
+        {showForm && (
+          <div className="card shadow-sm mb-4 animate__animated animate__fadeIn">
+            <div className="card-header bg-primary text-white d-flex justify-content-between">
+              <h5 className="mb-0">
+                {formData._id ? "✏️ Edit Expense" : "➕ Add New Expense"}
+              </h5>
+            </div>
+            <div className="card-body">
+              <form onSubmit={handleSubmit} className="row g-3">
+                <div className="col-md-3">
+                  <label className="form-label">
+                    <Calendar size={16} className="me-1" />
+                    Date
+                  </label>
+                  <input
+                    type="date"
+                    className="form-control"
+                    value={formData.date}
+                    onChange={(e) =>
+                      setFormData({ ...formData, date: e.target.value })
+                    }
+                    required
+                  />
+                </div>
+                <div className="col-md-3">
+                  <label className="form-label">
+                    <Filter size={16} className="me-1" />
+                    Category
+                  </label>
+                  <select
+                    className="form-select"
+                    value={formData.category}
+                    onChange={(e) =>
+                      setFormData({ ...formData, category: e.target.value })
+                    }
+                    required
+                  >
+                    {CATEGORIES.map((c) => (
+                      <option key={c}>{c}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="col-md-3">
+                  <label className="form-label">
+                    <DollarSign size={16} className="me-1" />
+                    Amount ($)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    className="form-control"
+                    value={formData.amount}
+                    onChange={(e) =>
+                      setFormData({ ...formData, amount: e.target.value })
+                    }
+                    required
+                  />
+                </div>
+                <div className="col-md-3">
+                  <label className="form-label">Description</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="Optional note"
+                    value={formData.description}
+                    onChange={(e) =>
+                      setFormData({ ...formData, description: e.target.value })
+                    }
+                  />
+                </div>
+                <div className="col-12 text-end">
+                  <button
+                    type="button"
+                    className="btn btn-secondary me-2"
+                    onClick={() =>
+                      setFormData({
+                        _id: null,
+                        category: "Other",
+                        amount: "",
+                        date: "",
+                        description: "",
+                      })
+                    }
+                  >
+                    Clear
+                  </button>
+                  <button type="submit" className="btn btn-success">
+                    {formData._id ? "Update Expense" : "Add Expense"}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
-          <div className="card-body">
-            <form onSubmit={handleSubmit} className="row g-3">
-              <div className="col-md-3">
-                <label className="form-label">Date</label>
-                <input
-                  type="date"
-                  className="form-control"
-                  value={formData.date}
-                  onChange={(e) =>
-                    setFormData({ ...formData, date: e.target.value })
-                  }
-                  required
-                />
-              </div>
+        )}
 
-              <div className="col-md-3">
-                <label className="form-label">Category</label>
-                <select
-                  className="form-select"
-                  value={formData.category}
-                  onChange={(e) =>
-                    setFormData({ ...formData, category: e.target.value })
-                  }
-                  required
-                >
-                  {CATEGORIES.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="col-md-3">
-                <label className="form-label">Amount ($)</label>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  className="form-control"
-                  value={formData.amount}
-                  onChange={(e) =>
-                    setFormData({ ...formData, amount: e.target.value })
-                  }
-                  required
-                />
-              </div>
-
-              <div className="col-md-3">
-                <label className="form-label">Description</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  placeholder="Optional note"
-                  value={formData.description}
-                  onChange={(e) =>
-                    setFormData({ ...formData, description: e.target.value })
-                  }
-                />
-              </div>
-
-              <div className="col-12 text-end">
-                <button className="btn btn-secondary me-2" type="button"
-                  onClick={() =>
-                    setFormData({
-                      _id: null,
-                      category: "Other",
-                      amount: "",
-                      date: "",
-                      description: "",
-                    })
-                  }
-                >
-                  Clear
-                </button>
-
-                <button className="btn btn-primary" type="submit">
-                  {formData._id ? "Update" : "Add"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-
-        {/* ===== Filters + Table ===== */}
+        {/* ===== Filter and Table ===== */}
         <div className="card shadow-sm">
-          <div className="card-header bg-dark text-white">
+          <div className="card-header bg-dark text-white d-flex justify-content-between">
             <h5 className="mb-0">📜 Expense History</h5>
+            <div>
+              <input
+                type="month"
+                className="form-control form-control-sm"
+                value={period}
+                onChange={(e) => setPeriod(e.target.value)}
+              />
+            </div>
           </div>
-
           <div className="card-body">
-            {/* Filters row */}
             <div className="row g-3 mb-3">
               <div className="col-md-3">
                 <label className="form-label">From</label>
@@ -346,42 +352,38 @@ export default function ExpensesPage() {
                   ))}
                 </select>
               </div>
-
-              <div className="col-md-3 d-flex align-items-end">
-                <div className="w-100">
-                  <div className="text-end small text-muted">
-                    Total:{" "}
-                    <strong className="text-danger">
-                      ${totalAmount.toFixed(2)}
-                    </strong>
-                  </div>
-                </div>
+              <div className="col-md-3 d-flex align-items-end justify-content-end">
+                <h6 className="text-end text-muted mb-0">
+                  Total:{" "}
+                  <span className="fw-bold text-danger">
+                    ${totalAmount.toFixed(2)}
+                  </span>
+                </h6>
               </div>
             </div>
 
-            {/* table */}
             <div className="table-responsive">
-              <table className="table table-striped table-bordered align-middle">
+              <table className="table table-hover align-middle table-bordered">
                 <thead className="table-light">
                   <tr>
                     <th>Date</th>
                     <th>Category</th>
                     <th>Description</th>
-                    <th>Amount ($)</th>
+                    <th>Amount</th>
                     <th>Added By</th>
-                    <th style={{ width: "120px" }}>Action</th>
+                    <th style={{ width: "130px" }}>Action</th>
                   </tr>
                 </thead>
                 <tbody>
                   {loading ? (
                     <tr>
-                      <td colSpan="6" className="text-center">
+                      <td colSpan="6" className="text-center py-3">
                         Loading...
                       </td>
                     </tr>
                   ) : expenses.length === 0 ? (
                     <tr>
-                      <td colSpan="6" className="text-center">
+                      <td colSpan="6" className="text-center py-3">
                         No expenses found
                       </td>
                     </tr>
@@ -389,22 +391,26 @@ export default function ExpensesPage() {
                     expenses.map((exp) => (
                       <tr key={exp._id}>
                         <td>{new Date(exp.date).toLocaleDateString()}</td>
-                        <td>{exp.category}</td>
-                        <td>{exp.description || "-"}</td>
-                        <td>${exp.amount.toFixed(2)}</td>
-                        <td>{exp.createdBy?.name || "—"}</td>
                         <td>
+                          <span className="badge bg-secondary">{exp.category}</span>
+                        </td>
+                        <td>{exp.description || "—"}</td>
+                        <td className="fw-semibold text-danger">
+                          ${exp.amount.toFixed(2)}
+                        </td>
+                        <td>{exp.createdBy?.name || "—"}</td>
+                        <td className="text-center">
                           <button
                             className="btn btn-sm btn-outline-warning me-2"
                             onClick={() => handleEdit(exp)}
                           >
-                            Edit
+                            <Edit size={14} />
                           </button>
                           <button
                             className="btn btn-sm btn-outline-danger"
                             onClick={() => handleDelete(exp._id)}
                           >
-                            Delete
+                            <Trash2 size={14} />
                           </button>
                         </td>
                       </tr>
