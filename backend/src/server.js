@@ -3,40 +3,32 @@ import dotenv from "dotenv";
 import cors from "cors";
 import morgan from "morgan";
 import { connectDB } from "./config/db.js";
+
+// Route imports
 import authRoutes from "./routes/authRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import batchRoutes from "./routes/batchRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
 import categoryRoutes from "./routes/categoryRoutes.js";
 import alertRoutes from "./routes/alertRoutes.js";
-// ✅ Add this import at the top
 import posRoutes from "./routes/posRoutes.js";
-// backend/src/server.js
 import salesRoutes from "./routes/salesRoutes.js";
-// backend/src/server.js
 import reportRoutes from "./routes/reportRoutes.js";
-
-// ...
-
-// ...
-
-
-// ✅ Mount this after auth routes
-
-
 
 dotenv.config();
 const app = express();
 
+// Middleware
 app.use(cors());
 app.use(express.json());
 app.use(morgan("dev"));
 
+// Base route
 app.get("/", (req, res) => res.send("Pharmacy POS API 🚀"));
 
+// Mount routes
 app.use("/api/auth", authRoutes);
-app.use("/api/admin", adminRoutes);  // ✅ Add this line
-
+app.use("/api/admin", adminRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/batches", batchRoutes);
 app.use("/api/admin/products", productRoutes);
@@ -47,8 +39,11 @@ app.use("/api/pos", posRoutes);
 app.use("/api/sales", salesRoutes);
 app.use("/api/reports", reportRoutes);
 
+// Connect to DB (and seed admin)
 connectDB();
 
-app.listen(process.env.PORT, () =>
-  console.log(`🚀 Server running on http://localhost:${process.env.PORT}`)
+// Start server
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () =>
+  console.log(`🚀 Server running on http://localhost:${PORT}`)
 );
