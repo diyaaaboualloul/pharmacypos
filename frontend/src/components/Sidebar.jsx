@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { NavLink, useLocation } from "react-router-dom";
 import axios from "axios";
 import { getUser, getToken } from "../utils/auth";
 import {
@@ -7,16 +7,15 @@ import {
   Users,
   BarChart3,
   Package,
-  Layers3,
-  UserCheck,
   Wallet,
-  ShoppingCart,
   Receipt,
-  FileChartColumn,
   Bell,
   ChevronDown,
   ChevronRight,
 } from "lucide-react";
+
+const SIDEBAR_WIDTH = 240;       // keep width in one place
+const TOPBAR_HEIGHT = 60;        // matches your paddingTop
 
 export default function Sidebar() {
   const user = getUser();
@@ -24,14 +23,23 @@ export default function Sidebar() {
   const [alertCount, setAlertCount] = useState(0);
   const [openDropdown, setOpenDropdown] = useState(null);
 
-  // 🔔 Fetch alerts count
+  const api = useMemo(() => {
+    const token = getToken();
+    return axios.create({
+      baseURL: "http://localhost:5000",
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+  }, []);
+
+  // 🔔 Fetch alerts count (admins only)
   const fetchAlerts = async () => {
+    if (user?.role !== "admin") return;
     try {
-      const token = getToken();
-      const { data } = await axios.get("http://localhost:5000/api/admin/alerts", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const total = data.expiredCount + data.expiringSoonCount + data.lowStockCount;
+      const { data } = await api.get("/api/admin/alerts");
+      const total =
+        (data?.expiredCount || 0) +
+        (data?.expiringSoonCount || 0) +
+        (data?.lowStockCount || 0);
       setAlertCount(total);
     } catch (err) {
       console.error("Failed to fetch alerts", err);
@@ -41,24 +49,15 @@ export default function Sidebar() {
   useEffect(() => {
     if (user?.role === "admin") {
       fetchAlerts();
-      const interval = setInterval(fetchAlerts, 60000);
-      return () => clearInterval(interval);
+      const id = setInterval(fetchAlerts, 60_000);
+      return () => clearInterval(id);
     }
-  }, [user]);
-
-  // Handle dropdown toggle
-  const toggleDropdown = (label) => {
-    setOpenDropdown(openDropdown === label ? null : label);
-  };
+  }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Menu structure with dropdowns
   const menuSections = [
+    { label: "Dashboard", icon: <LayoutDashboard size={18} />, to: "/dashboard" },
     {
-      label: "Dashboard",
-      icon: <LayoutDashboard size={18} />,
-      to: "/dashboard",
-    },
-       {
       label: "Alerts",
       icon: <Bell size={18} />,
       to: "/admin/alerts",
@@ -92,201 +91,224 @@ export default function Sidebar() {
     {
       label: "Finance",
       icon: <Wallet size={18} />,
-      subItems: [
-        { label: "Payroll", to: "/finance/payroll" },
-      ],
+      subItems: [{ label: "Payroll", to: "/finance/payroll" }],
     },
     {
       label: "Invoices",
       icon: <Receipt size={18} />,
-      subItems: [
-        { label: "All Invoices", to: "/admin/invoices" },
-      ],
+      subItems: [{ label: "All Invoices", to: "/admin/invoices" }],
     },
- 
- 
   ];
+
+  // Auto-open the dropdown that matches the current route
+  useEffect(() => {
+    const activeSection = menuSections.find(
+      (sec) =>
+        sec.subItems &&
+        sec.subItems.some((s) => location.pathname.startsWith(s.to))
+    );
+    setOpenDropdown(activeSection?.label ?? null);
+  }, [location.pathname]); // re-evaluate on route change
+
+  const toggleDropdown = (label) => {
+    setOpenDropdown((prev) => (prev === label ? null : label));
+  };
 
   return (
     <>
       {/* 🖥️ Desktop Sidebar */}
-      <div
+      <nav
+        role="navigation"
+        aria-label="Primary"
         className="d-none d-lg-flex flex-column bg-dark text-white position-fixed top-0 shadow-lg"
         style={{
-          width: "240px",
+          width: `${SIDEBAR_WIDTH}px`,
           height: "100vh",
-          paddingTop: "60px",
-          borderRight: "2px solid rgba(255,255,255,0.1)",
+          left: 0,                  // 👈 ensures left pin
+          paddingTop: `${TOPBAR_HEIGHT}px`,
+          borderRight: "2px solid rgba(255,255,255,0.08)",
+          boxSizing: "border-box",
+          overflowY: "auto",
+          WebkitOverflowScrolling: "touch",
+          zIndex: 1030,            // above main content but below modals
         }}
       >
-        <div className="text-center mb-4">
+        <div className="text-center mb-3 px-3">
           <h5
-            style={{
-              fontWeight: 600,
-              color: "#00B4D8",
-              letterSpacing: "0.5px",
-            }}
+            className="mb-2"
+            style={{ fontWeight: 600, color: "#00B4D8", letterSpacing: "0.5px" }}
           >
             💊 Pharmacy POS
           </h5>
-          <hr className="border-secondary" />
+          <hr className="border-secondary opacity-25 m-0" />
         </div>
 
-        <ul className="nav flex-column px-2">
+        <ul className="nav flex-column px-2 mb-4">
           {menuSections.map((item) => {
-            const isActive = location.pathname === item.to;
-            const isOpen = openDropdown === item.label;
+            const isSectionOpen = openDropdown === item.label;
 
+            if (item.subItems) {
+              const sectionActive = item.subItems.some((s) =>
+                location.pathname.startsWith(s.to)
+              );
+              return (
+                <li key={item.label} className="nav-item my-1">
+                  <button
+                    type="button"
+                    className={`w-100 text-start text-light d-flex align-items-center justify-content-between py-2 px-3 rounded-3 ${
+                      sectionActive ? "bg-secondary bg-opacity-25" : ""
+                    }`}
+                    style={{
+                      background: "transparent",
+                      border: "none",
+                      transition: "all 0.2s ease",
+                    }}
+                    aria-expanded={isSectionOpen}
+                    aria-controls={`sec-${item.label}`}
+                    onClick={() => toggleDropdown(item.label)}
+                  >
+                    <span className="d-flex align-items-center">
+                      <span className="me-2">{item.icon}</span>
+                      {item.label}
+                    </span>
+                    {isSectionOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                  </button>
+
+                  <ul
+                    id={`sec-${item.label}`}
+                    className={`list-unstyled ps-4 ${isSectionOpen ? "d-block" : "d-none"}`}
+                  >
+                    {item.subItems.map((sub) => (
+                      <li key={sub.to} className="my-1">
+                        <NavLink
+                          to={sub.to}
+                          className={({ isActive }) =>
+                            `nav-link py-1 px-2 rounded-2 ${
+                              isActive ? "bg-primary text-white" : "text-light"
+                            }`
+                          }
+                          style={{ fontSize: "0.9rem", transition: "background 0.2s" }}
+                        >
+                          {sub.label}
+                        </NavLink>
+                      </li>
+                    ))}
+                  </ul>
+                </li>
+              );
+            }
+
+            // Simple single-link item (e.g., Dashboard, Alerts)
             return (
               <li key={item.label} className="nav-item my-1">
-                {item.subItems ? (
-                  <>
-                    <button
-                      className="btn w-100 text-start text-light d-flex align-items-center justify-content-between py-2 px-3"
-                      style={{
-                        background: "transparent",
-                        border: "none",
-                        borderRadius: "8px",
-                        transition: "all 0.2s ease",
-                      }}
-                      onClick={() => toggleDropdown(item.label)}
-                    >
-                      <span className="d-flex align-items-center">
-                        <span className="me-2">{item.icon}</span>
-                        {item.label}
-                      </span>
-                      {isOpen ? (
-                        <ChevronDown size={16} />
-                      ) : (
-                        <ChevronRight size={16} />
-                      )}
-                    </button>
-
-                    {/* Dropdown content */}
-                    <ul
-                      className={`list-unstyled ps-4 ${
-                        isOpen ? "d-block" : "d-none"
-                      }`}
-                    >
-                      {item.subItems.map((sub) => (
-                        <li key={sub.to} className="my-1">
-                          <Link
-                            to={sub.to}
-                            className={`nav-link py-1 px-2 rounded-2 ${
-                              location.pathname === sub.to
-                                ? "bg-primary text-white"
-                                : "text-light"
-                            }`}
-                            style={{
-                              fontSize: "0.9rem",
-                              transition: "background 0.2s",
-                            }}
-                          >
-                            {sub.label}
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
-                  </>
-                ) : (
-                  <Link
-                    to={item.to}
-                    className={`nav-link d-flex align-items-center py-2 px-3 rounded-3 ${
+                <NavLink
+                  to={item.to}
+                  end
+                  className={({ isActive }) =>
+                    `nav-link d-flex align-items-center py-2 px-3 rounded-3 ${
                       isActive ? "bg-primary text-white" : "text-light"
-                    }`}
-                    style={{ transition: "0.2s" }}
-                  >
-                    <span className="me-2">{item.icon}</span>
-                    <span className="flex-grow-1">{item.label}</span>
-                    {item.isAlert && alertCount > 0 && (
-                      <span className="badge bg-danger">{alertCount}</span>
-                    )}
-                  </Link>
-                )}
+                    }`
+                  }
+                  style={{ transition: "0.2s" }}
+                >
+                  <span className="me-2">{item.icon}</span>
+                  <span className="flex-grow-1">{item.label}</span>
+                  {item.isAlert && alertCount > 0 && (
+                    <span className="badge bg-danger">{alertCount}</span>
+                  )}
+                </NavLink>
               </li>
             );
           })}
         </ul>
-      </div>
+      </nav>
 
-      {/* 📱 Mobile Sidebar */}
+      {/* 📱 Mobile Sidebar (Bootstrap Offcanvas) */}
       <div
         className="offcanvas offcanvas-start bg-dark text-white"
         tabIndex="-1"
         id="sidebarMenu"
+        aria-labelledby="sidebarMenuLabel"
       >
         <div className="offcanvas-header border-bottom border-secondary">
-          <h5 className="offcanvas-title">📋 Menu</h5>
+          <h5 id="sidebarMenuLabel" className="offcanvas-title">
+            📋 Menu
+          </h5>
           <button
             type="button"
             className="btn-close btn-close-white"
             data-bs-dismiss="offcanvas"
             aria-label="Close"
-          ></button>
+          />
         </div>
 
         <div className="offcanvas-body">
           <ul className="nav flex-column">
-            {menuSections.map((item) => (
-              <li key={item.label} className="nav-item my-1">
-                {item.subItems ? (
-                  <>
+            {menuSections.map((item) => {
+              if (item.subItems) {
+                const isOpen = openDropdown === item.label;
+                return (
+                  <li key={item.label} className="nav-item my-1">
                     <button
-                      className="btn w-100 text-start text-light d-flex align-items-center justify-content-between py-2 px-3"
-                      style={{
-                        background: "transparent",
-                        border: "none",
-                      }}
+                      type="button"
+                      className="w-100 text-start text-light d-flex align-items-center justify-content-between py-2 px-3 rounded-2"
+                      style={{ background: "transparent", border: "none" }}
+                      aria-expanded={isOpen}
+                      aria-controls={`m-sec-${item.label}`}
                       onClick={() => toggleDropdown(item.label)}
                     >
                       <span className="d-flex align-items-center">
                         <span className="me-2">{item.icon}</span>
                         {item.label}
                       </span>
-                      {openDropdown === item.label ? (
-                        <ChevronDown size={16} />
-                      ) : (
-                        <ChevronRight size={16} />
-                      )}
+                      {isOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
                     </button>
                     <ul
-                      className={`list-unstyled ps-4 ${
-                        openDropdown === item.label ? "d-block" : "d-none"
-                      }`}
+                      id={`m-sec-${item.label}`}
+                      className={`list-unstyled ps-4 ${isOpen ? "d-block" : "d-none"}`}
                     >
                       {item.subItems.map((sub) => (
                         <li key={sub.to}>
-                          <Link
+                          <NavLink
                             to={sub.to}
                             className="nav-link text-light py-1 px-2"
                             data-bs-dismiss="offcanvas"
                           >
                             {sub.label}
-                          </Link>
+                          </NavLink>
                         </li>
                       ))}
                     </ul>
-                  </>
-                ) : (
-                  <Link
+                  </li>
+                );
+              }
+
+              return (
+                <li key={item.label} className="nav-item my-1">
+                  <NavLink
                     to={item.to}
+                    end
                     className="nav-link d-flex align-items-center py-2 px-3 rounded-3 text-light"
                     data-bs-dismiss="offcanvas"
                   >
                     <span className="me-2">{item.icon}</span>
-                    {item.label}
+                    <span className="flex-grow-1">{item.label}</span>
                     {item.isAlert && alertCount > 0 && (
-                      <span className="badge bg-danger ms-auto">
-                        {alertCount}
-                      </span>
+                      <span className="badge bg-danger ms-auto">{alertCount}</span>
                     )}
-                  </Link>
-                )}
-              </li>
-            ))}
+                  </NavLink>
+                </li>
+              );
+            })}
           </ul>
         </div>
       </div>
+
+      {/* 👉 Tip: make sure your main content container has margin-left on desktop:
+          <main className="container-fluid" style={{ marginLeft: SIDEBAR_WIDTH, paddingTop: TOPBAR_HEIGHT }}>
+            ...page content...
+          </main>
+       */}
     </>
   );
 }
