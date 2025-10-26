@@ -31,21 +31,27 @@ export default function CashierInvoiceDetails() {
     fetchInvoice();
   }, [invoiceId]);
 
-  const handleRefundItem = async (productId) => {
-    if (!window.confirm("Refund this product?")) return;
-    try {
-      const token = getToken();
-      const { data } = await axios.post(
-        `http://localhost:5000/api/pos/refund-item/${invoiceId}`,
-        { productId },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      alert(`Refund successful! Ref. Invoice: ${data.refundInvoiceNumber}`);
-      window.location.reload();
-    } catch (err) {
-      alert("Refund failed: " + (err.response?.data?.message || err.message));
-    }
-  };
+ const handleRefundItem = async (productId) => {
+  if (!window.confirm("Refund this product?")) return;
+  try {
+    const token = getToken();
+    const { data } = await axios.post(
+      `http://localhost:5000/api/pos/refund-item/${invoiceId}`,
+      { productId },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    alert(`Refund successful! Ref. Invoice: ${data.refundInvoiceNumber}`);
+    window.location.reload();
+  } catch (err) {
+    alert("Refund failed: " + (err.response?.data?.message || err.message));
+  }
+};
+
 
   const handleReplacePrompt = async (oldProductId) => {
     const newProductId = prompt("Enter NEW product ID to replace with:");
@@ -168,7 +174,7 @@ export default function CashierInvoiceDetails() {
                       <div className="d-flex gap-2">
                         <button
                           className="btn btn-sm btn-danger"
-                          onClick={() => handleRefundItem(item.product._id)}
+onClick={() => handleRefundItem(item.product?._id || item.product)}
                         >
                           Refund Item
                         </button>

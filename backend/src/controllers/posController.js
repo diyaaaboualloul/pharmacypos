@@ -396,23 +396,29 @@ export const checkout = async (req, res) => {
 // === GET /api/pos/my-sales ===
 export const listMySales = async (req, res) => {
   try {
+    const me = req.user;
+
     const sales = await Sale.find({
       $or: [
-        { cashier: req.user._id },          // 🟢 new ObjectId-based invoices
-        { cashierId: req.user._id },        // 🟢 fallback if saved under cashierId
-        { cashierName: req.user.name },     // 🟢 old string-based invoices
-        { cashierEmail: req.user.email },   // 🟢 optional fallback
+        { cashier: me._id },          // new: ObjectId ref
+        { cashierId: me._id },        // legacy style
+        { cashierName: me.name },     // legacy style (string name)
+        { cashierEmail: me.email },   // legacy style (string email)
       ],
     })
       .populate("items.product", "name category price")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
 
     res.json(sales);
   } catch (err) {
     console.error("listMySales error:", err);
-    res.status(500).json({ message: "Failed to fetch your invoices", error: err.message });
+    res
+      .status(500)
+      .json({ message: "Failed to fetch your invoices", error: err.message });
   }
 };
+
 
 
 // === GET /api/pos/sales ===
@@ -526,6 +532,7 @@ export const replaceItem = async (req, res) => {
 // === POST /api/pos/refund-item/:saleId ===
 
 
+// === POST /api/pos/refund-item/:saleId ===
 export const refundItem = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -534,33 +541,39 @@ export const refundItem = async (req, res) => {
     const { saleId } = req.params;
     const { productId } = req.body;
 
+    if (!productId) throw new Error("productId is required");
+
+    // ✅ Find the sale
     const sale = await Sale.findById(saleId).session(session);
     if (!sale) throw new Error("Sale not found");
 
+    // ✅ Find the item we want to refund
     const item = sale.items.find(
       (i) => i.product.toString() === productId && !i.isRefunded
     );
-    if (!item) throw new Error("Product not found or already refunded");
+    if (!item) throw new Error("Product not found in sale or already refunded");
 
-    // Restore stock
+    // ✅ Restore stock
     await Batch.updateOne(
       { _id: item.batch },
       { $inc: { quantity: item.quantity } },
       { session }
     );
 
-    // Mark item as refunded
+    // ✅ Mark item as refunded
     item.isRefunded = true;
     item.refundedAt = new Date();
 
-    // Adjust the sale total
+    // ✅ Adjust totals on original sale
     sale.total -= item.lineTotal;
     sale.subTotal -= item.lineTotal;
     await sale.save({ session });
 
-    // Create a partial refund invoice (negative entry)
-    const refundInvoiceNumber = sale.invoiceNumber + "-R" + Date.now().toString().slice(-3);
-    const refundSale = await Sale.create(
+    // ✅ Create a new negative "refund invoice"
+    const refundInvoiceNumber =
+      sale.invoiceNumber + "-R" + Date.now().toString().slice(-3);
+
+    await Sale.create(
       [
         {
           invoiceNumber: refundInvoiceNumber,
@@ -568,7 +581,8 @@ export const refundItem = async (req, res) => {
           subTotal: -item.lineTotal,
           total: -item.lineTotal,
           payment: { type: "cash" },
-          cashier: req.user._id,
+          // ✅ FIXED cashier field: use id or fallback
+          cashier: req.user?._id || req.user?.id || sale.cashier,
           notes: `Partial refund for product ${productId} from ${sale.invoiceNumber}`,
         },
       ],
@@ -586,9 +600,14 @@ export const refundItem = async (req, res) => {
   } catch (err) {
     await session.abortTransaction();
     session.endSession();
-    res.status(400).json({ message: err.message || "Partial refund failed" });
+    console.error("refundItem error:", err);
+    res
+      .status(400)
+      .json({ message: err.message || "Partial refund failed" });
   }
 };
+
+
 // === GET /api/pos/sales/:id ===
 export const getSaleById = async (req, res) => {
   try {
