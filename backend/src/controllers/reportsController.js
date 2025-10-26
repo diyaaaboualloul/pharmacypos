@@ -2,6 +2,8 @@ import Sale from "../models/Sale.js";
 import Expense from "../models/Expense.js";
 import PayrollEntry from "../models/PayrollEntry.js";
 import mongoose from "mongoose";
+import PDFDocument from "pdfkit";   // ✅ add this line
+
 
 function getDateRange(period) {
   const now = new Date();
