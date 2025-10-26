@@ -759,9 +759,15 @@ export const getCashierSessions = async (req, res) => {
 };
 
 // ✅ Get current session total for the logged-in cashier
+// ✅ GET /api/pos/current-session-total
 export const getCurrentSessionTotal = async (req, res) => {
   try {
-    const cashierId = req.user._id; // from JWT
+    // ✅ Fix: your auth middleware provides req.user.id, not req.user._id
+    const cashierId = req.user?._id || req.user?.id;
+
+    if (!cashierId) {
+      return res.status(401).json({ message: "Unauthorized: cashier ID missing" });
+    }
 
     // find the latest open session for this cashier
     const currentSession = await DayClose.findOne({
@@ -779,7 +785,7 @@ export const getCurrentSessionTotal = async (req, res) => {
     const salesAgg = await Sale.aggregate([
       {
         $match: {
-          cashier: cashierId,
+          cashier: new mongoose.Types.ObjectId(cashierId),
           createdAt: { $gte: start, $lte: end },
           total: { $gt: 0 },
         },
@@ -790,7 +796,7 @@ export const getCurrentSessionTotal = async (req, res) => {
     const refundsAgg = await Sale.aggregate([
       {
         $match: {
-          cashier: cashierId,
+          cashier: new mongoose.Types.ObjectId(cashierId),
           createdAt: { $gte: start, $lte: end },
           total: { $lt: 0 },
         },
@@ -813,6 +819,7 @@ export const getCurrentSessionTotal = async (req, res) => {
     res.status(500).json({ message: "Failed to fetch session total" });
   }
 };
+
 
 
 
