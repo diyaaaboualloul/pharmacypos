@@ -89,13 +89,17 @@ export default function Sidebar() {
         { label: "Categories", to: "/admin/categories" },
       ],
     },
-    {
-      label: "Finance",
-      icon: <Wallet size={18} />,
-      subItems: [
-        { label: "Payroll", to: "/finance/payroll" },
-      ],
-    },
+{
+  label: "Finance",
+  icon: <Wallet size={18} />,
+  subItems: [
+    { label: "Payroll", to: "/finance/payroll" },
+    { label: "Expenses", to: "/finance/expenses" },
+    { label: "Reports", to: "/finance/reports" },
+  ],
+},
+
+
     {
       label: "Invoices",
       icon: <Receipt size={18} />,

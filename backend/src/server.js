@@ -17,6 +17,8 @@ import salesRoutes from "./routes/salesRoutes.js";
 import reportRoutes from "./routes/reportRoutes.js";
 import employeeRoutes from "./routes/employeeRoutes.js";
 import payrollRoutes from "./routes/payrollRoutes.js";
+import expenseRoutes from "./routes/expenseRoutes.js";
+import reportsRoutes from "./routes/reportsRoutes.js";
 
 dotenv.config();
 const app = express();
@@ -32,6 +34,8 @@ app.get("/", (req, res) => res.send("Pharmacy POS API 🚀"));
 // ====== Mount Routes ======
 app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/expenses", expenseRoutes);
+app.use("/api/reports", reportsRoutes);
 
 // Product and Category Management
 app.use("/api/products", productRoutes);

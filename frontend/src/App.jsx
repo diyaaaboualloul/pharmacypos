@@ -23,6 +23,8 @@ import AdminCashiers from "./pages/AdminCashiers";
 import CashierSessions from "./pages/CashierSessions";
 import AdminAnalytics from "./pages/AdminAnalytics";
 import LiveAnalytics from "./pages/LiveAnalytics.jsx";
+import ExpensesPage from "./pages/ExpensesPage.jsx";
+import ReportsPage from "./pages/ReportsPage.jsx";
 
 // Inside your <Routes>
 import EmployeesPage from "./pages/EmployeesPage";
@@ -33,6 +35,22 @@ function App() {
     <Router>
       <Routes>
         <Route path="/admin/cashiers" element={<AdminCashiers />} />
+<Route
+  path="/finance/expenses"
+  element={
+    <RoleProtectedRoute allowedRoles={["admin", "finance"]}>
+      <ExpensesPage />
+    </RoleProtectedRoute>
+  }
+/>
+<Route
+  path="/finance/reports"
+  element={
+    <RoleProtectedRoute allowedRoles={["admin", "finance"]}>
+      <ReportsPage />
+    </RoleProtectedRoute>
+  }
+/>
 
         {/* Redirect root to /login */}
         <Route path="/" element={<Navigate to="/login" replace />} />
