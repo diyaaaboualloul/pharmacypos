@@ -34,7 +34,7 @@ const batchSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// ✅ Auto-increment batchNumber before saving
+// ✅ Auto-increment batchNumber before savinggg
 batchSchema.pre("validate", async function (next) {
   if (this.isNew) {
     const lastBatch = await this.constructor.findOne().sort({ batchNumber: -1 });
