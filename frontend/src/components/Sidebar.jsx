@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import axios from "axios";
 import { getUser, getToken } from "../utils/auth";
+import { hideOffcanvasById } from "../utils/offcanvas";
 import {
   LayoutDashboard,
   Users,
@@ -14,8 +15,8 @@ import {
   ChevronRight,
 } from "lucide-react";
 
-const SIDEBAR_WIDTH = 240;
-const TOPBAR_HEIGHT = 60;
+export const SIDEBAR_WIDTH = 240; // keep width in one place
+export const TOPBAR_HEIGHT = 60;  // matches your TopHeader height
 
 export default function Sidebar() {
   const user = getUser();
@@ -129,11 +130,14 @@ export default function Sidebar() {
         sec.subItems.some((s) => location.pathname.startsWith(s.to))
     );
     setOpenDropdown(activeSection?.label ?? null);
-  }, [location.pathname]); // re-evaluate on route change
+  }, [location.pathname]);
 
   const toggleDropdown = (label) => {
     setOpenDropdown((prev) => (prev === label ? null : label));
   };
+
+  // ✅ Close the mobile drawer when a link is clicked
+  const handleMobileNavClick = () => hideOffcanvasById("sidebarMenu");
 
   return (
     <>
@@ -219,6 +223,7 @@ export default function Sidebar() {
               );
             }
 
+            // Simple single-link item
             return (
               <li key={item.label} className="nav-item my-1">
                 <NavLink
@@ -246,7 +251,7 @@ export default function Sidebar() {
       {/* 📱 Mobile Sidebar (Bootstrap Offcanvas) */}
       <div
         className="offcanvas offcanvas-start bg-dark text-white"
-        tabIndex="-1"
+        tabIndex={-1}
         id="sidebarMenu"
         aria-labelledby="sidebarMenuLabel"
       >
@@ -292,7 +297,7 @@ export default function Sidebar() {
                           <NavLink
                             to={sub.to}
                             className="nav-link text-light py-1 px-2"
-                            data-bs-dismiss="offcanvas"
+                            onClick={handleMobileNavClick}  // ✅ close then navigate
                           >
                             {sub.label}
                           </NavLink>
@@ -309,7 +314,7 @@ export default function Sidebar() {
                     to={item.to}
                     end
                     className="nav-link d-flex align-items-center py-2 px-3 rounded-3 text-light"
-                    data-bs-dismiss="offcanvas"
+                    onClick={handleMobileNavClick} // ✅ close then navigate
                   >
                     <span className="me-2">{item.icon}</span>
                     <span className="flex-grow-1">{item.label}</span>
