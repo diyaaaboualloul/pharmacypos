@@ -8,6 +8,19 @@ export default function TopHeader() {
   return (
     <nav className="navbar navbar-expand-lg navbar-light bg-light fixed-top shadow-sm">
       <div className="container-fluid">
+
+        {/* 🍔 Mobile toggler → opens #sidebarMenu offcanvas */}
+        <button
+          className="navbar-toggler d-lg-none me-2"
+          type="button"
+          data-bs-toggle="offcanvas"
+          data-bs-target="#sidebarMenu"
+          aria-controls="sidebarMenu"
+          aria-label="Toggle sidebar"
+        >
+          <span className="navbar-toggler-icon"></span>
+        </button>
+
         {/* 🏷 Brand */}
         <span
           className="navbar-brand fw-bold"

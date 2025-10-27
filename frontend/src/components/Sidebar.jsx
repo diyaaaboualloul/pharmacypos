@@ -14,8 +14,8 @@ import {
   ChevronRight,
 } from "lucide-react";
 
-const SIDEBAR_WIDTH = 240;       // keep width in one place
-const TOPBAR_HEIGHT = 60;        // matches your paddingTop
+export const SIDEBAR_WIDTH = 240; // keep width in one place
+export const TOPBAR_HEIGHT = 60;  // matches your TopHeader height
 
 export default function Sidebar() {
   const user = getUser();
@@ -88,17 +88,15 @@ export default function Sidebar() {
         { label: "Categories", to: "/admin/categories" },
       ],
     },
-{
-  label: "Finance",
-  icon: <Wallet size={18} />,
-  subItems: [
-    { label: "Payroll", to: "/finance/payroll" },
-    { label: "Expenses", to: "/finance/expenses" },
-    { label: "Reports", to: "/finance/reports" },
-  ],
-},
-
-
+    {
+      label: "Finance",
+      icon: <Wallet size={18} />,
+      subItems: [
+        { label: "Payroll", to: "/finance/payroll" },
+        { label: "Expenses", to: "/finance/expenses" },
+        { label: "Reports", to: "/finance/reports" },
+      ],
+    },
     {
       label: "Invoices",
       icon: <Receipt size={18} />,
@@ -114,7 +112,7 @@ export default function Sidebar() {
         sec.subItems.some((s) => location.pathname.startsWith(s.to))
     );
     setOpenDropdown(activeSection?.label ?? null);
-  }, [location.pathname]); // re-evaluate on route change
+  }, [location.pathname]);
 
   const toggleDropdown = (label) => {
     setOpenDropdown((prev) => (prev === label ? null : label));
@@ -130,13 +128,13 @@ export default function Sidebar() {
         style={{
           width: `${SIDEBAR_WIDTH}px`,
           height: "100vh",
-          left: 0,                  // 👈 ensures left pin
+          left: 0,
           paddingTop: `${TOPBAR_HEIGHT}px`,
           borderRight: "2px solid rgba(255,255,255,0.08)",
           boxSizing: "border-box",
           overflowY: "auto",
           WebkitOverflowScrolling: "touch",
-          zIndex: 1030,            // above main content but below modals
+          zIndex: 1030,
         }}
       >
         <div className="text-center mb-3 px-3">
@@ -204,7 +202,7 @@ export default function Sidebar() {
               );
             }
 
-            // Simple single-link item (e.g., Dashboard, Alerts)
+            // Simple single-link item
             return (
               <li key={item.label} className="nav-item my-1">
                 <NavLink
@@ -232,7 +230,7 @@ export default function Sidebar() {
       {/* 📱 Mobile Sidebar (Bootstrap Offcanvas) */}
       <div
         className="offcanvas offcanvas-start bg-dark text-white"
-        tabIndex="-1"
+        tabIndex={-1}
         id="sidebarMenu"
         aria-labelledby="sidebarMenuLabel"
       >
@@ -309,12 +307,6 @@ export default function Sidebar() {
           </ul>
         </div>
       </div>
-
-      {/* 👉 Tip: make sure your main content container has margin-left on desktop:
-          <main className="container-fluid" style={{ marginLeft: SIDEBAR_WIDTH, paddingTop: TOPBAR_HEIGHT }}>
-            ...page content...
-          </main>
-       */}
     </>
   );
 }
