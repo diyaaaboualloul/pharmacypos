@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import axios from "axios";
 import { getUser, getToken } from "../utils/auth";
+import { hideOffcanvasById } from "../utils/offcanvas";
 import {
   LayoutDashboard,
   Users,
@@ -117,6 +118,9 @@ export default function Sidebar() {
   const toggleDropdown = (label) => {
     setOpenDropdown((prev) => (prev === label ? null : label));
   };
+
+  // ✅ Close the mobile drawer when a link is clicked
+  const handleMobileNavClick = () => hideOffcanvasById("sidebarMenu");
 
   return (
     <>
@@ -276,7 +280,7 @@ export default function Sidebar() {
                           <NavLink
                             to={sub.to}
                             className="nav-link text-light py-1 px-2"
-                            data-bs-dismiss="offcanvas"
+                            onClick={handleMobileNavClick}  // ✅ close then navigate
                           >
                             {sub.label}
                           </NavLink>
@@ -293,7 +297,7 @@ export default function Sidebar() {
                     to={item.to}
                     end
                     className="nav-link d-flex align-items-center py-2 px-3 rounded-3 text-light"
-                    data-bs-dismiss="offcanvas"
+                    onClick={handleMobileNavClick} // ✅ close then navigate
                   >
                     <span className="me-2">{item.icon}</span>
                     <span className="flex-grow-1">{item.label}</span>
