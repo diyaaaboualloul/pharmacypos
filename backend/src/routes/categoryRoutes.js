@@ -1,6 +1,6 @@
 // ✅ backend/routes/categoryRoutes.js
 import express from "express";
-import { requireAuth, requireAdmin } from "../middleware/auth.js";
+import { requireAuth, requireAdmin,requireFinanceOrAdmin } from "../middleware/auth.js";
 import {
   createCategory,
   getCategories,

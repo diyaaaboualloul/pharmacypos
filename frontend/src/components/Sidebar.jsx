@@ -14,8 +14,8 @@ import {
   ChevronRight,
 } from "lucide-react";
 
-const SIDEBAR_WIDTH = 240;       // keep width in one place
-const TOPBAR_HEIGHT = 60;        // matches your paddingTop
+const SIDEBAR_WIDTH = 240;
+const TOPBAR_HEIGHT = 60;
 
 export default function Sidebar() {
   const user = getUser();
@@ -49,12 +49,12 @@ export default function Sidebar() {
   useEffect(() => {
     if (user?.role === "admin") {
       fetchAlerts();
-      const id = setInterval(fetchAlerts, 60_000);
+      const id = setInterval(fetchAlerts, 60000);
       return () => clearInterval(id);
     }
   }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Menu structure with dropdowns
+  // 🎯 Base Menu (Full Access)
   const menuSections = [
     { label: "Dashboard", icon: <LayoutDashboard size={18} />, to: "/dashboard" },
     {
@@ -88,17 +88,15 @@ export default function Sidebar() {
         { label: "Categories", to: "/admin/categories" },
       ],
     },
-{
-  label: "Finance",
-  icon: <Wallet size={18} />,
-  subItems: [
-    { label: "Payroll", to: "/finance/payroll" },
-    { label: "Expenses", to: "/finance/expenses" },
-    { label: "Reports", to: "/finance/reports" },
-  ],
-},
-
-
+    {
+      label: "Finance",
+      icon: <Wallet size={18} />,
+      subItems: [
+        { label: "Payroll", to: "/finance/payroll" },
+        { label: "Expenses", to: "/finance/expenses" },
+        { label: "Reports", to: "/finance/reports" },
+      ],
+    },
     {
       label: "Invoices",
       icon: <Receipt size={18} />,
@@ -106,9 +104,26 @@ export default function Sidebar() {
     },
   ];
 
-  // Auto-open the dropdown that matches the current route
+  // 🧠 Role-based filtering
+  const filteredSections = menuSections.filter((section) => {
+    if (user?.role === "admin") return true;
+
+    if (user?.role === "finance") {
+      // Finance users: everything except "Management"
+      return section.label !== "Management" && section.label !== "Alerts";
+    }
+
+    if (user?.role === "cashier") {
+      // Cashiers: only Dashboard and Invoices
+      return ["Dashboard", "Invoices"].includes(section.label);
+    }
+
+    return false;
+  });
+
+  // Auto-open active dropdown
   useEffect(() => {
-    const activeSection = menuSections.find(
+    const activeSection = filteredSections.find(
       (sec) =>
         sec.subItems &&
         sec.subItems.some((s) => location.pathname.startsWith(s.to))
@@ -130,13 +145,13 @@ export default function Sidebar() {
         style={{
           width: `${SIDEBAR_WIDTH}px`,
           height: "100vh",
-          left: 0,                  // 👈 ensures left pin
+          left: 0,
           paddingTop: `${TOPBAR_HEIGHT}px`,
           borderRight: "2px solid rgba(255,255,255,0.08)",
           boxSizing: "border-box",
           overflowY: "auto",
           WebkitOverflowScrolling: "touch",
-          zIndex: 1030,            // above main content but below modals
+          zIndex: 1030,
         }}
       >
         <div className="text-center mb-3 px-3">
@@ -150,7 +165,7 @@ export default function Sidebar() {
         </div>
 
         <ul className="nav flex-column px-2 mb-4">
-          {menuSections.map((item) => {
+          {filteredSections.map((item) => {
             const isSectionOpen = openDropdown === item.label;
 
             if (item.subItems) {
@@ -204,7 +219,6 @@ export default function Sidebar() {
               );
             }
 
-            // Simple single-link item (e.g., Dashboard, Alerts)
             return (
               <li key={item.label} className="nav-item my-1">
                 <NavLink
@@ -250,7 +264,7 @@ export default function Sidebar() {
 
         <div className="offcanvas-body">
           <ul className="nav flex-column">
-            {menuSections.map((item) => {
+            {filteredSections.map((item) => {
               if (item.subItems) {
                 const isOpen = openDropdown === item.label;
                 return (
@@ -309,12 +323,6 @@ export default function Sidebar() {
           </ul>
         </div>
       </div>
-
-      {/* 👉 Tip: make sure your main content container has margin-left on desktop:
-          <main className="container-fluid" style={{ marginLeft: SIDEBAR_WIDTH, paddingTop: TOPBAR_HEIGHT }}>
-            ...page content...
-          </main>
-       */}
     </>
   );
 }

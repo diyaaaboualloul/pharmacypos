@@ -35,22 +35,22 @@ function App() {
     <Router>
       <Routes>
         <Route path="/admin/cashiers" element={<AdminCashiers />} />
-<Route
-  path="/finance/expenses"
-  element={
-    <RoleProtectedRoute allowedRoles={["admin", "finance"]}>
-      <ExpensesPage />
-    </RoleProtectedRoute>
-  }
-/>
-<Route
-  path="/finance/reports"
-  element={
-    <RoleProtectedRoute allowedRoles={["admin", "finance"]}>
-      <ReportsPage />
-    </RoleProtectedRoute>
-  }
-/>
+        <Route
+          path="/finance/expenses"
+          element={
+            <RoleProtectedRoute allowedRoles={["admin", "finance"]}>
+              <ExpensesPage />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="/finance/reports"
+          element={
+            <RoleProtectedRoute allowedRoles={["admin", "finance"]}>
+              <ReportsPage />
+            </RoleProtectedRoute>
+          }
+        />
 
         {/* Redirect root to /login */}
         <Route path="/" element={<Navigate to="/login" replace />} />
@@ -106,7 +106,7 @@ function App() {
         <Route
           path="/admin/categories"
           element={
-            <RoleProtectedRoute allowedRoles={["admin"]}>
+            <RoleProtectedRoute allowedRoles={["admin", "finance"]}>
               <CategoryManagementPage />
             </RoleProtectedRoute>
           }
@@ -114,7 +114,7 @@ function App() {
         <Route
           path="/admin/categories/:categoryName/products"
           element={
-            <RoleProtectedRoute allowedRoles={["admin"]}>
+            <RoleProtectedRoute allowedRoles={["admin", "finance"]}>
               <CategoryProductsPage />
             </RoleProtectedRoute>
           }
@@ -122,7 +122,7 @@ function App() {
         <Route
           path="/admin/products"
           element={
-            <RoleProtectedRoute allowedRoles={["admin"]}>
+            <RoleProtectedRoute allowedRoles={["admin", "finance"]}>
               <ProductManagementPage />
             </RoleProtectedRoute>
           }
@@ -130,7 +130,7 @@ function App() {
         <Route
           path="/admin/products/:productId/batches"
           element={
-            <RoleProtectedRoute allowedRoles={["admin"]}>
+            <RoleProtectedRoute allowedRoles={["admin","finance"]}>
               <BatchManagementPage />
             </RoleProtectedRoute>
           }
@@ -140,7 +140,7 @@ function App() {
         <Route
           path="/admin/invoices"
           element={
-            <RoleProtectedRoute allowedRoles={["admin"]}>
+            <RoleProtectedRoute allowedRoles={["admin","finance"]}>
               <AdminInvoices />
             </RoleProtectedRoute>
           }
@@ -148,7 +148,7 @@ function App() {
         <Route
           path="/admin/invoices/:id"
           element={
-            <RoleProtectedRoute allowedRoles={["admin"]}>
+            <RoleProtectedRoute allowedRoles={["admin","finance"]}>
               <InvoiceView />
             </RoleProtectedRoute>
           }
