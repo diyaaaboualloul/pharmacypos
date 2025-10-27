@@ -449,7 +449,7 @@ export const listSales = async (req, res) => {
   }
 };
 
-// === POST /api/pos/replace-item/:saleId ===
+// === POST /api/pos/replacement-item/:saleId ===
 export const replaceItem = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
