@@ -1,179 +1,82 @@
 /* =============================
-   🌐 Global App Layout (Vite default)
+   💊 Pharmacy Topbar
    ============================= */
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+:root{
+  --tb-ink: #0b1220;
+  --tb-glass: rgba(255,255,255,.10);
+  --tb-glass-strong: rgba(255,255,255,.18);
+  --tb-text: #e5f2ff;
+  --tb-muted: #a5b4c4;
+  --tb-mint: #34d399;
+  --tb-sky:  #38bdf8;
+  --tb-primary: #0ea5e9;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter var(--transition);
+.topbar {
+  background:
+    radial-gradient(900px 300px at -10% -200%, rgba(56,189,248,.22), transparent 60%),
+    radial-gradient(800px 400px at 120% 200%, rgba(52,211,153,.20), transparent 60%),
+    linear-gradient(180deg, #0c1528 0%, #0b1220 100%);
+  color: var(--tb-text);
+  backdrop-filter: blur(6px);
+  border-bottom: 1px solid rgba(255,255,255,.08);
 }
 
-.logo:hover {
-  filter: drop-shadow(0 0 2em var(--color-primary));
+/* Brand with gradient text */
+.topbar-brand .brand-text{
+  font-weight: 800;
+  letter-spacing: .3px;
+  background: linear-gradient(45deg, var(--tb-mint), var(--tb-sky));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
-}
-
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
-}
-
-.card {
-  padding: 2em;
-}
-
-.read-the-docs {
-  color: #888;
-}
-
-/* =============================
-   🔐 LOGIN PAGE
-   ============================= */
-.login-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  background: var(--color-light-bg);
-}
-
-.login-form {
-  background: #fff;
-  padding: 2rem;
-  border-radius: var(--border-radius);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-  width: 300px;
-  display: flex;
-  flex-direction: column;
-}
-
-.login-title {
-  text-align: center;
-  margin-bottom: 1rem;
-}
-
-.login-input {
-  margin-bottom: 1rem;
-  padding: 0.5rem;
-  font-size: 1rem;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  font-family: var(--font-main);
-}
-
-.login-button {
-  padding: 0.7rem;
-  background: var(--color-primary);
-  color: #fff;
+/* Subtle glass chips (user & role) */
+.topbar-chip{
+  padding: .25rem .6rem;
+  border-radius: 999px;
+  background: var(--tb-glass);
+  border: 1px solid rgba(255,255,255,.12);
+  color: var(--tb-text);
   font-weight: 600;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background var(--transition);
+  font-size: .82rem;
+  line-height: 1;
+}
+.topbar-chip.alt{
+  background: linear-gradient(90deg, rgba(14,165,233,.22), rgba(52,211,153,.22));
+  border-color: rgba(255,255,255,.18);
 }
 
-.login-button:hover {
-  background: var(--color-primary-hover);
+/* Icon buttons */
+.btn.btn-icon{
+  padding: .4rem .55rem;
+  border-radius: 10px;
+  color: var(--tb-text);
+  background: transparent;
+  border: 1px solid transparent;
+  transition: .2s ease;
+}
+.btn.btn-icon:hover{
+  background: rgba(255,255,255,.06);
+  border-color: rgba(255,255,255,.10);
 }
 
-.login-button:disabled {
-  background: #9cc9f3;
-  cursor: not-allowed;
+/* Ghost buttons (logout/alerts) */
+.btn.btn-ghost{
+  padding: .35rem .6rem;
+  border-radius: 10px;
+  color: var(--tb-text);
+  background: transparent;
+  border: 1px solid rgba(255,255,255,.10);
+  transition: .2s ease;
+}
+.btn.btn-ghost:hover{
+  background: rgba(255,255,255,.08);
+  border-color: rgba(255,255,255,.20);
 }
 
-.login-error {
-  color: var(--color-danger);
-  margin-bottom: 1rem;
-  text-align: center;
-}
+/* Make sure page content sits below topbar */
+body{ padding-top: 60px; }  /* or match your TOPBAR_HEIGHT */
 
-/* =============================
-   📝 REGISTER PAGE
-   ============================= */
-.register-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  background: var(--color-light-bg);
-}
-
-.register-form {
-  background: #fff;
-  padding: 2rem;
-  border-radius: var(--border-radius);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-  width: 300px;
-  display: flex;
-  flex-direction: column;
-}
-
-.register-title {
-  text-align: center;
-  margin-bottom: 1rem;
-}
-
-.register-input {
-  margin-bottom: 1rem;
-  padding: 0.5rem;
-  font-size: 1rem;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  font-family: var(--font-main);
-}
-
-.register-button {
-  padding: 0.7rem;
-  background: var(--color-success);
-  color: #fff;
-  font-weight: 600;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background var(--transition);
-}
-
-.register-button:hover {
-  background: #208d38; /* Could also define a success-hover var if you want */
-}
-
-.register-button:disabled {
-  background: #9bd5af;
-  cursor: not-allowed;
-}
-
-.register-error {
-  color: var(--color-danger);
-  text-align: center;
-  margin-bottom: 1rem;
-}
-
-.register-success {
-  color: var(--color-success);
-  text-align: center;
-  margin-bottom: 1rem;
-}
-
-.sidebar-custom {
-  margin-left: -49px !important;
-}
+/* Optional: if you don’t want global body padding,
+   add paddingTop in your main layout container instead. */

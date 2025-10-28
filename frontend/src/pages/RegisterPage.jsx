@@ -40,14 +40,14 @@ export default function RegisterPage() {
   return (
     <div className="register-container">
       <form onSubmit={handleSubmit} className="register-form">
-        <h2 className="register-title">📝 Register</h2>
+        <h2 className="register-title">💊 Pharmacy POS Register</h2>
 
         {error && <p className="register-error">{error}</p>}
         {success && <p className="register-success">{success}</p>}
 
         <input
           type="text"
-          placeholder="Name"
+          placeholder="Full Name"
           value={name}
           onChange={(e) => setName(e.target.value)}
           required
@@ -55,7 +55,7 @@ export default function RegisterPage() {
         />
         <input
           type="email"
-          placeholder="Email"
+          placeholder="Email Address"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
