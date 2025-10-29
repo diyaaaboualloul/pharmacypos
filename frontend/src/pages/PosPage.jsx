@@ -140,7 +140,8 @@ export default function PosPage() {
         onChange={(e) => setSearch(e.target.value)}
       />
 
-      <div className="d-flex flex-column flex-md-row gap-3">
+      <div className="d-flex flex-row justify-content-between align-items-start gap-3">
+
         {/* 🛍️ Products */}
         <div style={{ flex: "0 0 60%" }}>
           <div className="card mb-3">
