@@ -1,17 +1,19 @@
-import Sidebar from "./Sidebar";
 import TopHeader from "./TopHeader";
-import "../css/Layout.css";
+import Sidebar from "./Sidebar";
 
 export default function Layout({ children }) {
   return (
     <>
       <TopHeader />
-      <div className="d-flex flex-wrap">
-        <Sidebar />
-        <div className="container-fluid mt-4 bigcont">
-          {children}
+      <Sidebar />
+      <main className="app-main">
+        {/* centers content and applies the clean page surface */}
+        <div className="content-shell">
+          <div className="content-sheet">
+            {children}
+          </div>
         </div>
-      </div>
+      </main>
     </>
   );
 }

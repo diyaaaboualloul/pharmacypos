@@ -1,0 +1,19 @@
+/* container card look */
+.invoice-table { border-radius: 10px; overflow: hidden; }
+
+/* sticky header for long lists */
+.invoice-table thead th {
+  background: #fff7d6; /* soft warm yellow */
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+/* status badges */
+.badge-original { background:#e6f7ea; color:#0a7d1a; font-weight:600; }
+.badge-partial  { background:#fff2cc; color:#b26b00; font-weight:600; }
+.badge-refunded { background:#fde7e7; color:#b71c1c; font-weight:600; }
+
+/* table cosmetics */
+.table-striped > tbody > tr:nth-of-type(odd) > * { background-color: rgba(0,0,0,.02); }
+.table-hover tbody tr:hover > * { background-color: rgba(0,0,0,.04); }
