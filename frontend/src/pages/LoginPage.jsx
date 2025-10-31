@@ -1,76 +1,104 @@
 import { useState } from "react";
 import axios from "axios";
-import "../App.css";   // ✅ Import global styles here
-
+import "../App.css"; // uses the auth styles
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [email, setEmail]         = useState("");
+  const [password, setPassword]   = useState("");
+  const [showPwd, setShowPwd]     = useState(false);
+  const [error, setError]         = useState("");
+  const [loading, setLoading]     = useState(false);
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  setError("");
-  setLoading(true);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
 
-  try {
-    const { data } = await axios.post(
-      "http://localhost:5000/api/auth/login",
-      { email, password }
-    );
+    try {
+      const { data } = await axios.post(
+        "http://localhost:5000/api/auth/login",
+        { email, password }
+      );
 
-    localStorage.setItem("token", data.token);
-    localStorage.setItem("user", JSON.stringify(data.user));
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
 
-    // ✅ Redirect based on role
-    if (data.user.role === "admin") {
-      window.location.href = "/dashboard";
-    } else if (data.user.role === "cashier") {
-  window.location.href = "/cashier/pos";  // ✅ redirect to POS page
-    } else if (data.user.role === "accounting" || data.user.role === "finance") {
-      window.location.href = "/finance-dashboard";
-    } else {
-      window.location.href = "/";
+      if (data.user.role === "admin") {
+        window.location.href = "/dashboard";
+      } else if (data.user.role === "cashier") {
+        window.location.href = "/cashier/pos";
+      } else if (data.user.role === "accounting" || data.user.role === "finance") {
+        window.location.href = "/finance-dashboard";
+      } else {
+        window.location.href = "/";
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || "Login failed");
+    } finally {
+      setLoading(false);
     }
-
-  } catch (err) {
-    setError(err.response?.data?.message || "Login failed");
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   return (
-    <div className="login-container">
-      <form onSubmit={handleSubmit} className="login-form">
-        <h2 className="login-title">🔐 Pharmacy POS Login</h2>
+    <div className="auth-page">
+      <div className="auth-card">
+        {/* brand row */}
+        <div className="auth-brand">
+          <img src="/logo-pharmacy.png" alt="Pharmacy POS" className="auth-logo" width={40} height={40} />
+          <div className="auth-brand-text">
+            <span className="auth-brand-name">DHL PHARMACY</span>
+            <span className="auth-brand-sub">Point of Sale</span>
+          </div>
+        </div>
 
-        {error && <p className="login-error">{error}</p>}
+        <h2 className="auth-title">Sign in</h2>
+        <p className="auth-subtitle">Welcome back! Please enter your details.</p>
 
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-          className="login-input"
-        />
+        {error && <p className="auth-alert error">{error}</p>}
 
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          className="login-input"
-        />
+        <form onSubmit={handleSubmit} className="auth-form">
+          <label className="auth-label">
+            Email
+            <input
+              type="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="auth-input"
+              autoComplete="username"
+            />
+          </label>
 
-        <button type="submit" disabled={loading} className="login-button">
-          {loading ? "Logging in..." : "Login"}
-        </button>
-      </form>
+          <label className="auth-label">
+            Password
+            <div className="auth-input-wrap">
+              <input
+                type={showPwd ? "text" : "password"}
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="auth-input has-toggle"
+                autoComplete="current-password"
+              />
+              <button
+                type="button"
+                className="auth-eye"
+                aria-label={showPwd ? "Hide password" : "Show password"}
+                aria-pressed={showPwd}
+                onClick={() => setShowPwd((s) => !s)}
+              >
+                {showPwd ? "Hide" : "Show"}
+              </button>
+            </div>
+          </label>
+
+          <button type="submit" disabled={loading} className="auth-button primary">
+            {loading ? "Logging in..." : "Login"}
+          </button>
+        </form>
+      </div>
     </div>
   );
 }

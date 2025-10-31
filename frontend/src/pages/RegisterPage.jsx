@@ -3,13 +3,14 @@ import axios from "axios";
 import "../App.css";
 
 export default function RegisterPage() {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [name, setName]         = useState("");
+  const [email, setEmail]       = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState("cashier");
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [showPwd, setShowPwd]   = useState(false);
+  const [role, setRole]         = useState("cashier");
+  const [error, setError]       = useState("");
+  const [success, setSuccess]   = useState("");
+  const [loading, setLoading]   = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -38,64 +39,90 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="login-container">
-      <div className="login-card">
-        <h2 className="login-title">🧾 Create Pharmacy POS Account</h2>
+    <div className="auth-page">
+      <div className="auth-card">
+        {/* brand row */}
+        <div className="auth-brand">
+          <img src="/logo-pharmacy.png" alt="Pharmacy POS" className="auth-logo" width={40} height={40} />
+          <div className="auth-brand-text">
+            <span className="auth-brand-name">DHL PHARMACY</span>
+            <span className="auth-brand-sub">Create your account</span>
+          </div>
+        </div>
 
-        {error && <p className="login-alert error">{error}</p>}
-        {success && <p className="login-alert success">{success}</p>}
+        <h2 className="auth-title">Register</h2>
+        <p className="auth-subtitle">Set up access for a new team member.</p>
 
-        <form onSubmit={handleSubmit} className="login-form">
-          <label className="login-label">
+        {error && <p className="auth-alert error">{error}</p>}
+        {success && <p className="auth-alert success">{success}</p>}
+
+        <form onSubmit={handleSubmit} className="auth-form">
+          <label className="auth-label">
             Full Name
             <input
               type="text"
-              className="login-input"
+              className="auth-input"
               placeholder="John Doe"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
+              autoComplete="name"
             />
           </label>
 
-          <label className="login-label">
+          <label className="auth-label">
             Email
             <input
               type="email"
-              className="login-input"
+              className="auth-input"
               placeholder="you@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              autoComplete="email"
             />
           </label>
 
-          <label className="login-label">
+          <label className="auth-label">
             Password
-            <input
-              type="password"
-              className="login-input"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
+            <div className="auth-input-wrap">
+              <input
+                type={showPwd ? "text" : "password"}
+                className="auth-input has-toggle"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                autoComplete="new-password"
+                minLength={6}
+              />
+              <button
+                type="button"
+                className="auth-eye"
+                aria-label={showPwd ? "Hide password" : "Show password"}
+                aria-pressed={showPwd}
+                onClick={() => setShowPwd((s) => !s)}
+              >
+                {showPwd ? "Hide" : "Show"}
+              </button>
+            </div>
           </label>
 
-          <label className="login-label">
+          <label className="auth-label">
             Role
             <select
-              className="login-input"
+              className="auth-input"
               value={role}
               onChange={(e) => setRole(e.target.value)}
             >
               <option value="admin">Admin</option>
               <option value="cashier">Cashier</option>
+              <option value="finance">Finance</option>
               <option value="accounting">Accounting</option>
             </select>
           </label>
 
-          <button type="submit" className="login-button" disabled={loading}>
+          <button type="submit" className="auth-button primary" disabled={loading}>
             {loading ? "Registering..." : "Register"}
           </button>
         </form>
@@ -103,3 +130,4 @@ export default function RegisterPage() {
     </div>
   );
 }
+  

@@ -1,15 +1,18 @@
+// src/components/Layout.jsx
 import TopHeader from "./TopHeader";
-import Sidebar from "./Sidebar";
+import Sidebar, { SIDEBAR_WIDTH, TOPBAR_HEIGHT } from "./Sidebar";
 
-export default function Layout({ children }) {
+export default function Layout({ title, children }) {
   return (
     <>
       <TopHeader />
       <Sidebar />
-      <main className="app-main">
-        {/* centers content and applies the clean page surface */}
+
+      {/* Main area under topbar, beside sidebar */}
+      <main className="app-main" style={{ minHeight: `calc(100vh - ${TOPBAR_HEIGHT}px)` }}>
         <div className="content-shell">
           <div className="content-sheet">
+            {title ? <h1 className="page-title">{title}</h1> : null}
             {children}
           </div>
         </div>

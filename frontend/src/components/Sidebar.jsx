@@ -100,20 +100,21 @@ export default function Sidebar() {
 
   const filteredSections = menuSections.filter((section) => {
     if (user?.role === "admin") return true;
+
     if (user?.role === "finance") {
       return section.label !== "Management" && section.label !== "Alerts";
     }
+
     if (user?.role === "cashier") {
       return ["Dashboard", "Invoices"].includes(section.label);
     }
+
     return false;
   });
 
   useEffect(() => {
     const activeSection = filteredSections.find(
-      (sec) =>
-        sec.subItems &&
-        sec.subItems.some((s) => location.pathname.startsWith(s.to))
+      (sec) => sec.subItems && sec.subItems.some((s) => location.pathname.startsWith(s.to))
     );
     setOpenDropdown(activeSection?.label ?? null);
   }, [location.pathname]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -126,11 +127,11 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* Desktop Sidebar */}
+      {/* 🖥️ Desktop Sidebar */}
       <nav
         role="navigation"
         aria-label="Primary"
-        className="sidebar d-none d-lg-flex flex-column text-white position-fixed top-0 shadow-lg"
+        className="sidebar d-none d-lg-flex flex-column position-fixed top-0 shadow-lg"
         style={{
           width: `${SIDEBAR_WIDTH}px`,
           height: "100vh",
@@ -142,14 +143,6 @@ export default function Sidebar() {
           zIndex: 1030,
         }}
       >
-        <div className="text-center mb-3 px-3">
-          <h5
-            className="mb-2"
-            style={{ fontWeight: 700, letterSpacing: ".5px", color: "var(--brand)" }}
-          />
-          <hr className="border-secondary opacity-25 m-0" />
-        </div>
-
         <ul className="nav flex-column px-2 mb-4">
           {filteredSections.map((item) => {
             const isSectionOpen = openDropdown === item.label;
@@ -162,8 +155,8 @@ export default function Sidebar() {
                 <li key={item.label} className="nav-item my-1">
                   <button
                     type="button"
-                    className={`section-toggle w-100 text-start d-flex align-items-center justify-content-between py-2 px-3 ${
-                      sectionActive ? "bg-secondary bg-opacity-25" : ""
+                    className={`section-toggle w-100 text-start d-flex align-items-center justify-content-between py-2 px-3 rounded-3 ${
+                      sectionActive ? "is-active" : ""
                     }`}
                     aria-expanded={isSectionOpen}
                     aria-controls={`sec-${item.label}`}
@@ -185,7 +178,9 @@ export default function Sidebar() {
                         <NavLink
                           to={sub.to}
                           className={({ isActive }) =>
-                            `nav-link py-1 px-2 ${isActive ? "bg-primary text-white" : ""}`
+                            `nav-link py-1 px-2 rounded-2 ${
+                              isActive ? "bg-primary text-white" : "text-light"
+                            }`
                           }
                           style={{ fontSize: "0.9rem", transition: "background 0.2s" }}
                         >
@@ -204,7 +199,9 @@ export default function Sidebar() {
                   to={item.to}
                   end
                   className={({ isActive }) =>
-                    `nav-link d-flex align-items-center py-2 px-3 ${isActive ? "bg-primary text-white" : ""}`
+                    `nav-link d-flex align-items-center py-2 px-3 rounded-3 ${
+                      isActive ? "bg-primary text-white" : "text-light"
+                    }`
                   }
                   style={{ transition: "0.2s" }}
                 >
@@ -220,9 +217,9 @@ export default function Sidebar() {
         </ul>
       </nav>
 
-      {/* Mobile Sidebar (offcanvas) */}
+      {/* 📱 Mobile Sidebar */}
       <div
-        className="offcanvas offcanvas-start bg-dark text-white"
+        className="offcanvas offcanvas-start sidebar"
         tabIndex={-1}
         id="sidebarMenu"
         aria-labelledby="sidebarMenuLabel"
@@ -240,13 +237,14 @@ export default function Sidebar() {
         <div className="offcanvas-body">
           <ul className="nav flex-column">
             {filteredSections.map((item) => {
+              const isOpen = openDropdown === item.label;
+
               if (item.subItems) {
-                const isOpen = openDropdown === item.label;
                 return (
                   <li key={item.label} className="nav-item my-1">
                     <button
                       type="button"
-                      className="section-toggle w-100 text-start d-flex align-items-center justify-content-between py-2 px-3"
+                      className="section-toggle w-100 text-start d-flex align-items-center justify-content-between py-2 px-3 rounded-3"
                       aria-expanded={isOpen}
                       aria-controls={`m-sec-${item.label}`}
                       onClick={() => toggleDropdown(item.label)}
@@ -265,7 +263,7 @@ export default function Sidebar() {
                         <li key={sub.to}>
                           <NavLink
                             to={sub.to}
-                            className="nav-link py-1 px-2"
+                            className="nav-link text-light py-1 px-2 rounded-2"
                             onClick={handleMobileNavClick}
                           >
                             {sub.label}
@@ -282,7 +280,7 @@ export default function Sidebar() {
                   <NavLink
                     to={item.to}
                     end
-                    className="nav-link d-flex align-items-center py-2 px-3"
+                    className="nav-link d-flex align-items-center py-2 px-3 text-light rounded-3"
                     onClick={handleMobileNavClick}
                   >
                     <span className="me-2">{item.icon}</span>
