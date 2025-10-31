@@ -1,4 +1,3 @@
-// frontend/src/pages/PosPage.jsx
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { getToken } from "../utils/auth";
@@ -14,6 +13,8 @@ export default function PosPage() {
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const [lastSale, setLastSale] = useState(null);
+  const [todayTotal, setTodayTotal] = useState(0);
+  const [cashierStatus, setCashierStatus] = useState("closed"); // 🟢 or 🔴
 
   const user = JSON.parse(localStorage.getItem("user"));
   const navigate = useNavigate();
@@ -23,6 +24,46 @@ export default function PosPage() {
     localStorage.removeItem("user");
     navigate("/login");
   };
+
+  // 💵 Fetch live cashier total
+  const fetchTodayTotal = async () => {
+    try {
+      const token = getToken();
+      const { data } = await axios.get(
+        "http://localhost:5000/api/pos/today-total",
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setTodayTotal(data.total || 0);
+    } catch (err) {
+      console.error("Failed to fetch today's total", err);
+    }
+  };
+
+  // 🧾 Fetch cashier's current status
+  const fetchCashierStatus = async () => {
+    try {
+      const token = getToken();
+      const { data } = await axios.get(
+        "http://localhost:5000/api/pos/cashiers-status",
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const me = data.find((c) => c.email === user.email);
+      if (me) setCashierStatus(me.status);
+    } catch (err) {
+      console.error("Failed to fetch cashier status", err);
+    }
+  };
+
+  // 🔁 Auto-refresh every 10 seconds
+  useEffect(() => {
+    fetchTodayTotal();
+    fetchCashierStatus();
+    const interval = setInterval(() => {
+      fetchTodayTotal();
+      fetchCashierStatus();
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   // 🔍 Fetch products
   useEffect(() => {
@@ -45,12 +86,42 @@ export default function PosPage() {
       setProducts([]);
     }
   }, [search]);
+useEffect(() => {
+  fetchTodayTotal();
+  fetchCashierStatus();
+  fetchSessionTotal();
+  const interval = setInterval(() => {
+    fetchTodayTotal();
+    fetchCashierStatus();
+    fetchSessionTotal();
+  }, 5000);
+  return () => clearInterval(interval);
+}, []);
 
   const handleRemoveFromCart = (id) => {
     setCart((prev) => prev.filter((item) => item._id !== id));
   };
+const [sessionTotal, setSessionTotal] = useState(0);
+// 🧾 Fetch current open session total
+const fetchSessionTotal = async () => {
+  try {
+    const token = getToken();
+    const { data } = await axios.get(
+      "http://localhost:5000/api/pos/current-session-total",
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    setSessionTotal(data.sessionTotal || 0);
+  } catch (err) {
+    console.error("Failed to fetch session total", err);
+  }
+};
 
   const handleAddToCart = (product) => {
+    if (cashierStatus === "closed") {
+      alert("❌ You cannot add items while your account is closed!");
+      return;
+    }
+
     setCart((prev) => {
       const existing = prev.find((item) => item._id === product._id);
       if (existing) {
@@ -66,6 +137,11 @@ export default function PosPage() {
 
   // ✅ Confirm Sale
   const handleConfirmSale = async (paymentData) => {
+    if (cashierStatus === "closed") {
+      alert("❌ You cannot checkout while your account is closed!");
+      return;
+    }
+
     try {
       const token = getToken();
       const payload = {
@@ -97,6 +173,10 @@ export default function PosPage() {
       setShowCheckoutModal(false);
       setShowInvoiceModal(true);
       setCart([]);
+
+      // 🔄 Refresh totals + status
+      fetchTodayTotal();
+      fetchCashierStatus();
     } catch (err) {
       console.error("Checkout failed:", err);
       alert(err.response?.data?.message || "Checkout failed");
@@ -105,7 +185,7 @@ export default function PosPage() {
 
   const handleCloseInvoice = () => {
     setShowInvoiceModal(false);
-    window.location.href = "/cashier/pos";
+    fetchTodayTotal();
   };
 
   const cartTotal = cart.reduce(
@@ -115,20 +195,49 @@ export default function PosPage() {
 
   return (
     <div className="container p-4">
-      <div className="d-flex align-items-center ms-auto">
-        <span className="me-3 d-none d-sm-inline">
-          👤 <strong>{user?.name}</strong> ({user?.role})
-        </span>
-        <button onClick={logout} className="btn btn-danger btn-sm">
-          Logout
-        </button>
-        <button
-  className="btn btn-outline-secondary btn-sm me-2"
-  onClick={() => navigate("/cashier/invoices")}
->
-  My Invoices
-</button>
+      {/* Header Row */}
+      <div className="d-flex align-items-center justify-content-between mb-3">
+        <div>
+          <span className="me-3 d-none d-sm-inline">
+            👤 <strong>{user?.name}</strong> ({user?.role}){" "}
+            {cashierStatus === "open" ? (
+              <span className="badge bg-success ms-2">🟢 Open</span>
+            ) : (
+              <span className="badge bg-danger ms-2">🔴 Closed</span>
+            )}
+          </span>
+        </div>
 
+        {/* 💰 Sales Summary Box */}
+        <div
+          style={{
+            background: "#0090E4",
+            color: "white",
+            borderRadius: "10px",
+            padding: "10px 20px",
+            fontWeight: "600",
+            boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
+            display: "flex",
+            alignItems: "center",
+            gap: "12px",
+          }}
+        >
+<div className="d-flex flex-column text-white">
+  <span>
+    🕓 Current Session Total:{" "}
+    <strong>${sessionTotal.toFixed(2)}</strong>
+  </span>
+</div>
+          <button
+            className="btn btn-outline-light btn-sm"
+            onClick={() => navigate("/cashier/invoices")}
+          >
+            My Invoices
+          </button>
+          <button onClick={logout} className="btn btn-danger btn-sm">
+            Logout
+          </button>
+        </div>
       </div>
 
       {/* 🔍 Search */}
@@ -138,6 +247,7 @@ export default function PosPage() {
         className="form-control mb-3"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
+        disabled={cashierStatus === "closed"}
       />
 
       <div className="d-flex flex-row justify-content-between align-items-start gap-3">
@@ -171,6 +281,7 @@ export default function PosPage() {
                           <button
                             className="btn btn-success btn-sm"
                             onClick={() => handleAddToCart(product)}
+                            disabled={cashierStatus === "closed"}
                           >
                             + Add
                           </button>
@@ -225,6 +336,7 @@ export default function PosPage() {
                                   )
                                 );
                               }}
+                              disabled={cashierStatus === "closed"}
                             />
                           </td>
                           <td>${item.price.toFixed(2)}</td>
@@ -234,6 +346,7 @@ export default function PosPage() {
                               className="btn btn-outline-danger btn-sm"
                               title="Remove item"
                               onClick={() => handleRemoveFromCart(item._id)}
+                              disabled={cashierStatus === "closed"}
                             >
                               ✖
                             </button>
@@ -249,6 +362,7 @@ export default function PosPage() {
                       className="btn btn-primary btn-block mt-2"
                       style={{ width: "100%" }}
                       onClick={() => setShowCheckoutModal(true)}
+                      disabled={cashierStatus === "closed"}
                     >
                       Checkout 💰
                     </button>

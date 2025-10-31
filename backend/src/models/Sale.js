@@ -8,6 +8,8 @@ const saleItemSchema = new mongoose.Schema(
     quantity: { type: Number, required: true, min: 1 },
     unitPrice: { type: Number, required: true, min: 0 },
     lineTotal: { type: Number, required: true, min: 0 },
+    isRefunded: { type: Boolean, default: false },
+    refundedAt: { type: Date },
   },
   { _id: false }
 );
@@ -30,6 +32,8 @@ const saleSchema = new mongoose.Schema(
     payment: { type: paymentSchema, required: true },
     cashier: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     notes: String,
+    isRefunded: { type: Boolean, default: false },
+    refundedAt: Date,
   },
   { timestamps: true }
 );

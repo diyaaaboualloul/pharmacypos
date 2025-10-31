@@ -13,20 +13,50 @@ import ProductManagementPage from "./pages/ProductManagementPage";
 import CategoryManagementPage from "./pages/CategoryManagementPage";
 import CategoryProductsPage from "./pages/CategoryProductsPage";
 import AlertsPage from "./pages/AlertPage";
-import SearchResultsPage from "./pages/SearchResultsPage";
 import BatchManagementPage from "./pages/BatchManagementPage.jsx";
 import PosPage from "./pages/PosPage";
 import AdminInvoices from "./pages/AdminInvoices";
 import InvoiceView from "./pages/InvoiceView";
-import InvoiceEdit from "./pages/InvoiceEdit";
 import CashierInvoices from "./pages/CashierInvoices";
+import CashierInvoiceDetails from "./pages/CashierInvoiceDetails.jsx";
+import AdminCashiers from "./pages/AdminCashiers";
+import CashierSessions from "./pages/CashierSessions";
+import AdminAnalytics from "./pages/AdminAnalytics";
+import LiveAnalytics from "./pages/LiveAnalytics.jsx";
+import ExpensesPage from "./pages/ExpensesPage.jsx";
+import ReportsPage from "./pages/ReportsPage.jsx";
+
+// Inside your <Routes>
+import EmployeesPage from "./pages/EmployeesPage";
+import PayrollPage from "./pages/PayrollPage";
 
 function App() {
   return (
     <Router>
       <Routes>
+        <Route path="/admin/cashiers" element={<AdminCashiers />} />
+        <Route
+          path="/finance/expenses"
+          element={
+            <RoleProtectedRoute allowedRoles={["admin", "finance"]}>
+              <ExpensesPage />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="/finance/reports"
+          element={
+            <RoleProtectedRoute allowedRoles={["admin", "finance"]}>
+              <ReportsPage />
+            </RoleProtectedRoute>
+          }
+        />
+
         {/* Redirect root to /login */}
         <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="/admin/cashiers/:cashierId/sessions" element={<CashierSessions />} />
+        <Route path="/admin/analytics" element={<AdminAnalytics />} />
+        <Route path="/admin/live" element={<LiveAnalytics />} />
 
         {/* Public Routes */}
         <Route
@@ -58,15 +88,6 @@ function App() {
         />
 
         <Route
-          path="/admin/search"
-          element={
-            <RoleProtectedRoute allowedRoles={["admin"]}>
-              <SearchResultsPage />
-            </RoleProtectedRoute>
-          }
-        />
-
-        <Route
           path="/admin/users"
           element={
             <RoleProtectedRoute allowedRoles={["admin"]}>
@@ -74,7 +95,6 @@ function App() {
             </RoleProtectedRoute>
           }
         />
-
         <Route
           path="/admin/alerts"
           element={
@@ -83,47 +103,44 @@ function App() {
             </RoleProtectedRoute>
           }
         />
-
         <Route
           path="/admin/categories"
           element={
-            <RoleProtectedRoute allowedRoles={["admin"]}>
+            <RoleProtectedRoute allowedRoles={["admin", "finance"]}>
               <CategoryManagementPage />
             </RoleProtectedRoute>
           }
         />
-
+        <Route
+          path="/admin/categories/:categoryName/products"
+          element={
+            <RoleProtectedRoute allowedRoles={["admin", "finance"]}>
+              <CategoryProductsPage />
+            </RoleProtectedRoute>
+          }
+        />
         <Route
           path="/admin/products"
           element={
-            <RoleProtectedRoute allowedRoles={["admin"]}>
+            <RoleProtectedRoute allowedRoles={["admin", "finance"]}>
               <ProductManagementPage />
             </RoleProtectedRoute>
           }
         />
-
         <Route
           path="/admin/products/:productId/batches"
           element={
-            <RoleProtectedRoute allowedRoles={["admin"]}>
+            <RoleProtectedRoute allowedRoles={["admin","finance"]}>
               <BatchManagementPage />
             </RoleProtectedRoute>
           }
         />
 
-        <Route
-          path="/admin/categories/:categoryName/products"
-          element={
-            <RoleProtectedRoute allowedRoles={["admin"]}>
-              <CategoryProductsPage />
-            </RoleProtectedRoute>
-          }
-        />
-
+        {/* Invoices (Admin) */}
         <Route
           path="/admin/invoices"
           element={
-            <RoleProtectedRoute allowedRoles={["admin"]}>
+            <RoleProtectedRoute allowedRoles={["admin","finance"]}>
               <AdminInvoices />
             </RoleProtectedRoute>
           }
@@ -131,16 +148,18 @@ function App() {
         <Route
           path="/admin/invoices/:id"
           element={
-            <RoleProtectedRoute allowedRoles={["admin"]}>
+            <RoleProtectedRoute allowedRoles={["admin","finance"]}>
               <InvoiceView />
             </RoleProtectedRoute>
           }
         />
+
+        {/* ================== NEW: EMPLOYEES (Admin or Finance) ================== */}
         <Route
-          path="/admin/invoices/:id/edit"
+          path="/admin/employees"
           element={
-            <RoleProtectedRoute allowedRoles={["admin"]}>
-              <InvoiceEdit />
+            <RoleProtectedRoute allowedRoles={["admin", "finance"]}>
+              <EmployeesPage />
             </RoleProtectedRoute>
           }
         />
@@ -163,10 +182,10 @@ function App() {
           }
         />
         <Route
-          path="/cashier/invoices/:id/edit"
+          path="/cashier/invoices/:id"
           element={
             <RoleProtectedRoute allowedRoles={["cashier"]}>
-              <InvoiceEdit />
+              <CashierInvoiceDetails />
             </RoleProtectedRoute>
           }
         />
@@ -177,6 +196,14 @@ function App() {
           element={
             <RoleProtectedRoute allowedRoles={["finance"]}>
               <FinanceDashboardPage />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="/finance/payroll"
+          element={
+            <RoleProtectedRoute allowedRoles={["admin", "finance"]}>
+              <PayrollPage />
             </RoleProtectedRoute>
           }
         />

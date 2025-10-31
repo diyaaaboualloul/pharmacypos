@@ -1,6 +1,6 @@
 import { useState } from "react";
 import axios from "axios";
-import "../App.css";   // ✅ Import global styles here
+import "../App.css";
 
 export default function RegisterPage() {
   const [name, setName] = useState("");
@@ -25,7 +25,7 @@ export default function RegisterPage() {
         role,
       });
 
-      setSuccess(data.message);
+      setSuccess(data.message || "Registration successful!");
       setName("");
       setEmail("");
       setPassword("");
@@ -38,52 +38,68 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="register-container">
-      <form onSubmit={handleSubmit} className="register-form">
-        <h2 className="register-title">📝 Register</h2>
+    <div className="login-container">
+      <div className="login-card">
+        <h2 className="login-title">🧾 Create Pharmacy POS Account</h2>
 
-        {error && <p className="register-error">{error}</p>}
-        {success && <p className="register-success">{success}</p>}
+        {error && <p className="login-alert error">{error}</p>}
+        {success && <p className="login-alert success">{success}</p>}
 
-        <input
-          type="text"
-          placeholder="Name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          required
-          className="register-input"
-        />
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-          className="register-input"
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          className="register-input"
-        />
+        <form onSubmit={handleSubmit} className="login-form">
+          <label className="login-label">
+            Full Name
+            <input
+              type="text"
+              className="login-input"
+              placeholder="John Doe"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+            />
+          </label>
 
-        <select
-          value={role}
-          onChange={(e) => setRole(e.target.value)}
-          className="register-input"
-        >
-          <option value="admin">Admin</option>
-          <option value="cashier">Cashier</option>
-          <option value="accounting">Accounting</option>
-        </select>
+          <label className="login-label">
+            Email
+            <input
+              type="email"
+              className="login-input"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </label>
 
-        <button type="submit" disabled={loading} className="register-button">
-          {loading ? "Registering..." : "Register"}
-        </button>
-      </form>
+          <label className="login-label">
+            Password
+            <input
+              type="password"
+              className="login-input"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </label>
+
+          <label className="login-label">
+            Role
+            <select
+              className="login-input"
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+            >
+              <option value="admin">Admin</option>
+              <option value="cashier">Cashier</option>
+              <option value="accounting">Accounting</option>
+            </select>
+          </label>
+
+          <button type="submit" className="login-button" disabled={loading}>
+            {loading ? "Registering..." : "Register"}
+          </button>
+        </form>
+      </div>
     </div>
   );
 }

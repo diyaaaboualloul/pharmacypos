@@ -1,0 +1,427 @@
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import Layout from "../components/Layout";
+import { getToken } from "../utils/auth";
+import { PlusCircle, Edit, Trash2, DollarSign, Calendar, Filter } from "lucide-react";
+
+const CATEGORIES = [
+  "Rent",
+  "Electricity",
+  "Water",
+  "Internet",
+  "Maintenance",
+  "Supplies",
+  "Payroll",
+  "Other",
+];
+
+export default function ExpensesPage() {
+  const [expenses, setExpenses] = useState([]);
+  const [totalAmount, setTotalAmount] = useState(0);
+  const [filters, setFilters] = useState({
+    from: "",
+    to: "",
+    category: "All",
+  });
+  const [formData, setFormData] = useState({
+    _id: null,
+    category: "Other",
+    amount: "",
+    date: "",
+    description: "",
+  });
+  const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+
+  // monthly summary
+  const [period, setPeriod] = useState(() => {
+    const d = new Date();
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    return `${d.getFullYear()}-${mm}`;
+  });
+  const [summary, setSummary] = useState({
+    totalExpenses: 0,
+    payrollPaid: 0,
+    grandTotal: 0,
+  });
+
+  const api = axios.create({
+    baseURL: "http://localhost:5000",
+    headers: { Authorization: `Bearer ${getToken()}` },
+  });
+
+  const loadExpenses = async () => {
+    setLoading(true);
+    try {
+      const { data } = await api.get("/api/expenses", {
+        params: {
+          from: filters.from || undefined,
+          to: filters.to || undefined,
+          category: filters.category !== "All" ? filters.category : undefined,
+        },
+      });
+      setExpenses(data.rows || []);
+      setTotalAmount(data.totalAmount || 0);
+    } catch (err) {
+      console.error(err);
+      setMessage(err.response?.data?.message || "Failed to load expenses");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadSummary = async () => {
+    try {
+      const { data } = await api.get("/api/expenses/summary/month", {
+        params: { period },
+      });
+      setSummary({
+        totalExpenses: data.totalExpenses || 0,
+        payrollPaid: data.payrollPaid || 0,
+        grandTotal: data.grandTotal || 0,
+      });
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    loadExpenses();
+  }, [filters]);
+
+  useEffect(() => {
+    loadSummary();
+  }, [period]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!formData.date || !formData.amount || !formData.category) {
+      alert("Please fill date, amount, and category.");
+      return;
+    }
+    try {
+      if (formData._id) {
+        const { _id, ...body } = formData;
+        await api.put(`/api/expenses/${_id}`, body);
+        setMessage("✅ Expense updated successfully.");
+      } else {
+        await api.post("/api/expenses", formData);
+        setMessage("✅ Expense added successfully.");
+      }
+      setFormData({
+        _id: null,
+        category: "Other",
+        amount: "",
+        date: "",
+        description: "",
+      });
+      setShowForm(false);
+      loadExpenses();
+      loadSummary();
+    } catch (err) {
+      console.error(err);
+      setMessage("❌ Failed to save expense.");
+    }
+  };
+
+  const handleEdit = (exp) => {
+    setFormData({
+      _id: exp._id,
+      category: exp.category,
+      amount: exp.amount,
+      date: exp.date ? exp.date.slice(0, 10) : "",
+      description: exp.description || "",
+    });
+    setShowForm(true);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Delete this expense?")) return;
+    try {
+      await api.delete(`/api/expenses/${id}`);
+      setMessage("🗑️ Expense deleted successfully.");
+      loadExpenses();
+      loadSummary();
+    } catch {
+      setMessage("❌ Delete failed.");
+    }
+  };
+
+  return (
+    <Layout>
+      <div className="container py-4">
+        <div className="d-flex justify-content-between align-items-center mb-4">
+          <h3 className="fw-bold mb-0 text-primary">💰 Expenses Dashboard</h3>
+          <button
+            className="btn btn-primary d-flex align-items-center"
+            onClick={() => setShowForm(!showForm)}
+          >
+            <PlusCircle size={18} className="me-2" />
+            {showForm ? "Close Form" : "Add Expense"}
+          </button>
+        </div>
+
+        {message && (
+          <div className="alert alert-info py-2 text-center fw-semibold shadow-sm">
+            {message}
+          </div>
+        )}
+
+        {/* ===== Monthly Summary Cards ===== */}
+        <div className="row g-3 mb-4">
+          <div className="col-md-4">
+            <div className="card shadow-sm border-0 bg-light h-100">
+              <div className="card-body text-center">
+                <h6 className="text-muted">Total Expenses</h6>
+                <h4 className="text-danger fw-bold">
+                  ${summary.totalExpenses.toFixed(2)}
+                </h4>
+              </div>
+            </div>
+          </div>
+          <div className="col-md-4">
+            <div className="card shadow-sm border-0 bg-light h-100">
+              <div className="card-body text-center">
+                <h6 className="text-muted">Payroll Paid</h6>
+                <h4 className="text-warning fw-bold">
+                  ${summary.payrollPaid.toFixed(2)}
+                </h4>
+              </div>
+            </div>
+          </div>
+          <div className="col-md-4">
+            <div className="card shadow-sm border-0 bg-light h-100">
+              <div className="card-body text-center">
+                <h6 className="text-muted">Grand Total</h6>
+                <h4 className="fw-bold text-success">
+                  ${summary.grandTotal.toFixed(2)}
+                </h4>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ===== Collapsible Add/Edit Form ===== */}
+        {showForm && (
+          <div className="card shadow-sm mb-4 animate__animated animate__fadeIn">
+            <div className="card-header bg-primary text-white d-flex justify-content-between">
+              <h5 className="mb-0">
+                {formData._id ? "✏️ Edit Expense" : "➕ Add New Expense"}
+              </h5>
+            </div>
+            <div className="card-body">
+              <form onSubmit={handleSubmit} className="row g-3">
+                <div className="col-md-3">
+                  <label className="form-label">
+                    <Calendar size={16} className="me-1" />
+                    Date
+                  </label>
+                  <input
+                    type="date"
+                    className="form-control"
+                    value={formData.date}
+                    onChange={(e) =>
+                      setFormData({ ...formData, date: e.target.value })
+                    }
+                    required
+                  />
+                </div>
+                <div className="col-md-3">
+                  <label className="form-label">
+                    <Filter size={16} className="me-1" />
+                    Category
+                  </label>
+                  <select
+                    className="form-select"
+                    value={formData.category}
+                    onChange={(e) =>
+                      setFormData({ ...formData, category: e.target.value })
+                    }
+                    required
+                  >
+                    {CATEGORIES.map((c) => (
+                      <option key={c}>{c}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="col-md-3">
+                  <label className="form-label">
+                    <DollarSign size={16} className="me-1" />
+                    Amount ($)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    className="form-control"
+                    value={formData.amount}
+                    onChange={(e) =>
+                      setFormData({ ...formData, amount: e.target.value })
+                    }
+                    required
+                  />
+                </div>
+                <div className="col-md-3">
+                  <label className="form-label">Description</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="Optional note"
+                    value={formData.description}
+                    onChange={(e) =>
+                      setFormData({ ...formData, description: e.target.value })
+                    }
+                  />
+                </div>
+                <div className="col-12 text-end">
+                  <button
+                    type="button"
+                    className="btn btn-secondary me-2"
+                    onClick={() =>
+                      setFormData({
+                        _id: null,
+                        category: "Other",
+                        amount: "",
+                        date: "",
+                        description: "",
+                      })
+                    }
+                  >
+                    Clear
+                  </button>
+                  <button type="submit" className="btn btn-success">
+                    {formData._id ? "Update Expense" : "Add Expense"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* ===== Filter and Table ===== */}
+        <div className="card shadow-sm">
+          <div className="card-header bg-dark text-white d-flex justify-content-between">
+            <h5 className="mb-0">📜 Expense History</h5>
+            <div>
+              <input
+                type="month"
+                className="form-control form-control-sm"
+                value={period}
+                onChange={(e) => setPeriod(e.target.value)}
+              />
+            </div>
+          </div>
+          <div className="card-body">
+            <div className="row g-3 mb-3">
+              <div className="col-md-3">
+                <label className="form-label">From</label>
+                <input
+                  type="date"
+                  className="form-control"
+                  value={filters.from}
+                  onChange={(e) =>
+                    setFilters((f) => ({ ...f, from: e.target.value }))
+                  }
+                />
+              </div>
+              <div className="col-md-3">
+                <label className="form-label">To</label>
+                <input
+                  type="date"
+                  className="form-control"
+                  value={filters.to}
+                  onChange={(e) =>
+                    setFilters((f) => ({ ...f, to: e.target.value }))
+                  }
+                />
+              </div>
+              <div className="col-md-3">
+                <label className="form-label">Category</label>
+                <select
+                  className="form-select"
+                  value={filters.category}
+                  onChange={(e) =>
+                    setFilters((f) => ({ ...f, category: e.target.value }))
+                  }
+                >
+                  <option>All</option>
+                  {CATEGORIES.map((c) => (
+                    <option key={c}>{c}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="col-md-3 d-flex align-items-end justify-content-end">
+                <h6 className="text-end text-muted mb-0">
+                  Total:{" "}
+                  <span className="fw-bold text-danger">
+                    ${totalAmount.toFixed(2)}
+                  </span>
+                </h6>
+              </div>
+            </div>
+
+            <div className="table-responsive">
+              <table className="table table-hover align-middle table-bordered">
+                <thead className="table-light">
+                  <tr>
+                    <th>Date</th>
+                    <th>Category</th>
+                    <th>Description</th>
+                    <th>Amount</th>
+                    <th>Added By</th>
+                    <th style={{ width: "130px" }}>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {loading ? (
+                    <tr>
+                      <td colSpan="6" className="text-center py-3">
+                        Loading...
+                      </td>
+                    </tr>
+                  ) : expenses.length === 0 ? (
+                    <tr>
+                      <td colSpan="6" className="text-center py-3">
+                        No expenses found
+                      </td>
+                    </tr>
+                  ) : (
+                    expenses.map((exp) => (
+                      <tr key={exp._id}>
+                        <td>{new Date(exp.date).toLocaleDateString()}</td>
+                        <td>
+                          <span className="badge bg-secondary">{exp.category}</span>
+                        </td>
+                        <td>{exp.description || "—"}</td>
+                        <td className="fw-semibold text-danger">
+                          ${exp.amount.toFixed(2)}
+                        </td>
+                        <td>{exp.createdBy?.name || "—"}</td>
+                        <td className="text-center">
+                          <button
+                            className="btn btn-sm btn-outline-warning me-2"
+                            onClick={() => handleEdit(exp)}
+                          >
+                            <Edit size={14} />
+                          </button>
+                          <button
+                            className="btn btn-sm btn-outline-danger"
+                            onClick={() => handleDelete(exp._id)}
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Layout>
+  );
+}

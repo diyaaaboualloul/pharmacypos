@@ -11,25 +11,34 @@ export default function CheckoutModal({ isOpen, onClose, total, onConfirm }) {
     setChange(received - total);
   }, [cashReceived, total]);
 
+  // keep your original confirm logic
   const handleConfirm = () => {
     if (paymentType === "cash" && change < 0) {
       alert("Received amount is less than total!");
       return;
     }
     onConfirm({
-      type: paymentType, // ✅ now correctly lowercase
+      type: paymentType,
       cashReceived: paymentType === "cash" ? parseFloat(cashReceived) : null,
       change: paymentType === "cash" ? change : 0,
     });
   };
 
+  // ✅ submit handler so Enter triggers confirm
+  const handleSubmit = (e) => {
+    e.preventDefault(); // stop default form submit
+    handleConfirm();
+  };
+
   return (
     <Modal show={isOpen} onHide={onClose} centered>
-      <Modal.Header closeButton>
-        <Modal.Title>🧾 Checkout</Modal.Title>
-      </Modal.Header>
-      <Modal.Body>
-        <Form>
+      {/* ✅ Wrap header+body+footer in a single <Form> with onSubmit */}
+      <Form onSubmit={handleSubmit}>
+        <Modal.Header closeButton>
+          <Modal.Title>🧾 Checkout</Modal.Title>
+        </Modal.Header>
+
+        <Modal.Body>
           <Form.Group className="mb-3">
             <Form.Label>Payment Type</Form.Label>
             <Form.Select
@@ -62,16 +71,20 @@ export default function CheckoutModal({ isOpen, onClose, total, onConfirm }) {
           <div className="mt-3">
             <strong>Total: ${total.toFixed(2)}</strong>
           </div>
-        </Form>
-      </Modal.Body>
-      <Modal.Footer>
-        <Button variant="secondary" onClick={onClose}>
-          Cancel
-        </Button>
-        <Button variant="primary" onClick={handleConfirm}>
-          Confirm Sale
-        </Button>
-      </Modal.Footer>
+        </Modal.Body>
+
+        <Modal.Footer>
+          {/* ❌ Not a submit button, so Enter won't trigger it */}
+          <Button variant="secondary" type="button" onClick={onClose}>
+            Cancel
+          </Button>
+
+          {/* ✅ The ONLY submit button; Enter will trigger this */}
+          <Button variant="primary" type="submit" autoFocus>
+            Confirm Sale
+          </Button>
+        </Modal.Footer>
+      </Form>
     </Modal>
   );
 }
