@@ -180,6 +180,7 @@ html, body {
   color: var(--sheet-fg);
 }
 
+
 /* ---------- Fancy Logout Modal ---------- */
 .modal-backdrop.show { backdrop-filter: blur(6px); }
 .modal-content.modal-glass {
@@ -338,5 +339,6 @@ html, body {
   50%  { filter: drop-shadow(0 0 10px rgba(125,249,225,.7)); }
   100% { filter: drop-shadow(0 0 4px rgba(0,212,176,.4)); }
 }
+
 
 

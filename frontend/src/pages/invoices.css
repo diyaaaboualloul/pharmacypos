@@ -1,19 +1,31 @@
-/* container card look */
-.invoice-table { border-radius: 10px; overflow: hidden; }
-
-/* sticky header for long lists */
-.invoice-table thead th {
-  background: #fff7d6; /* soft warm yellow */
-  position: sticky;
-  top: 0;
-  z-index: 1;
+/* Make the WHOLE invoice page pure white (kills the bottom black strip) */
+.invoice-page-shell {
+  background: #fff !important;
+  min-height: 100vh;
 }
 
-/* status badges */
-.badge-original { background:#e6f7ea; color:#0a7d1a; font-weight:600; }
-.badge-partial  { background:#fff2cc; color:#b26b00; font-weight:600; }
-.badge-refunded { background:#fde7e7; color:#b71c1c; font-weight:600; }
+/* In case a global dark theme is applied on <html> or #root */
+html, body, #root {
+  background: #fff !important;
+}
 
-/* table cosmetics */
-.table-striped > tbody > tr:nth-of-type(odd) > * { background-color: rgba(0,0,0,.02); }
-.table-hover tbody tr:hover > * { background-color: rgba(0,0,0,.04); }
+/* Table/card look to match your new POS styling */
+.invoice-table thead th {
+  background: #fff8e1;            /* soft warm header */
+  border-bottom: 1px solid #f0e6c8;
+}
+.invoice-table tbody tr:nth-child(even) {
+  background: #fafafa;
+}
+.invoice-table .badge-original {
+  background: #e7f7ef;
+  color: #127c58;
+}
+.invoice-table .badge-partial {
+  background: #fff1d6;
+  color: #9a6b00;
+}
+.invoice-table .badge-refunded {
+  background: #ffe2e6;
+  color: #b4232c;
+}

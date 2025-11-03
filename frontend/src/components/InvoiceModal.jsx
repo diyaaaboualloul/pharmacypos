@@ -1,132 +1,249 @@
 import React from "react";
 
-export default function InvoiceModal({ isOpen, onClose, sale }) {
-  if (!isOpen || !sale) return null;
+/**
+ * Print a simple, professional invoice/receipt using a popup window.
+ * Works with normal A4 printers and 80mm thermal printers.
+ */
+function printInvoice(sale) {
+  if (!sale) return;
 
-  const handlePrint = () => {
-    const printWindow = window.open("", "_blank");
-    const htmlContent = `
-      <html>
-        <head>
-          <title>Invoice ${sale.invoiceNumber}</title>
-          <style>
-            body { font-family: Arial, sans-serif; padding: 20px; }
-            h2 { text-align: center; margin-bottom: 10px; }
-            .info { text-align: center; margin-bottom: 20px; }
-            table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-            th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
-            th { background-color: #f5f5f5; }
-            .total { text-align: right; font-size: 1.2em; margin-top: 10px; }
-            .footer { text-align: center; font-size: 0.9em; margin-top: 20px; }
-          </style>
-        </head>
-        <body>
-          <h2>🏪 Pharmacy POS</h2>
-          <div class="info">
-            <p><strong>Invoice #:</strong> ${sale.invoiceNumber}</p>
-            <p><strong>Date:</strong> ${new Date(sale.date).toLocaleString()}</p>
-            <p><strong>Cashier:</strong> ${sale.cashier || "Cashier 1"}</p>
-          </div>
-          <table>
-            <thead>
-              <tr>
-                <th>Item</th>
-                <th>Qty</th>
-                <th>Price</th>
-                <th>Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${sale.items
-                .map(
-                  (item) => `
-                <tr>
-                  <td>${item.name}</td>
-                  <td>${item.quantity}</td>
-                  <td>$${item.price.toFixed(2)}</td>
-                  <td>$${(item.price * item.quantity).toFixed(2)}</td>
-                </tr>
-              `
-                )
-                .join("")}
-            </tbody>
-          </table>
-          <div class="total">
-            <strong>Total: $${sale.total.toFixed(2)}</strong>
-          </div>
-          <div class="footer">
-            <p>Thank you for your purchase!</p>
-          </div>
-        </body>
-      </html>
-    `;
-    printWindow.document.write(htmlContent);
-    printWindow.document.close();
-    printWindow.print();
-  };
+  const fmt = new Intl.NumberFormat(undefined, {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+  });
+
+  const rows = (sale.items || [])
+    .map(
+      (it, i) => `
+      <tr>
+        <td>${i + 1}</td>
+        <td>${escapeHtml(it.name || "")}</td>
+        <td class="ta-r">${it.quantity}</td>
+        <td class="ta-r">${fmt.format(it.price)}</td>
+        <td class="ta-r">${fmt.format(it.price * it.quantity)}</td>
+      </tr>`
+    )
+    .join("");
+
+  const html = `
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Invoice ${sale.invoiceNumber || ""}</title>
+  <style>
+    /* ===== Print Styles (A4 + 80mm thermal friendly) ===== */
+    :root{
+      --ink:#222;
+      --muted:#666;
+      --line:#e6eaef;
+      --brand:#0d6efd;
+      --radius:10px;
+    }
+    *{ box-sizing:border-box; }
+    body{
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
+      margin:0; color:var(--ink);
+    }
+    .sheet{
+      width: 210mm; /* A4 width */
+      max-width: 100%;
+      margin: 0 auto;
+      padding: 18mm 16mm;
+    }
+    .head{
+      display:flex; align-items:flex-start; justify-content:space-between; gap:10px; margin-bottom:14px;
+    }
+    .brand{
+      font-weight:800; font-size: 22px; line-height:1;
+    }
+    .brand .sub{ font-size:12px; color:var(--muted); font-weight:600; }
+    .meta{
+      text-align:right; font-size: 13px;
+    }
+    .h-line{ height:1px; background:var(--line); margin:12px 0; }
+
+    table{ width:100%; border-collapse:collapse; }
+    th, td{ padding: 8px 6px; font-size: 13px; }
+    thead th{
+      text-align:left; border-bottom:1px solid var(--line); color:#111; font-weight:700;
+    }
+    tbody td{ border-bottom:1px dashed #e9edf2; }
+    .ta-r{ text-align:right; }
+    .totals{
+      margin-top:10px; display:flex; justify-content:flex-end;
+    }
+    .totals table{ width:280px; }
+    .totals td{ padding:6px; }
+    .totals .label{ color:var(--muted); }
+    .grand td{ border-top:1px solid var(--line); font-weight:800; }
+
+    .foot{
+      margin-top:16px; font-size:12px; color:var(--muted);
+      display:flex; justify-content:space-between; align-items:center; gap:8px;
+    }
+
+    /* 80mm receipt simplification */
+    @media print {
+      body { background:#fff; }
+      .sheet{ padding:10mm 8mm; }
+    }
+  </style>
+</head>
+<body>
+  <div class="sheet">
+    <div class="head">
+      <div>
+        <div class="brand">DHL PHARMACY</div>
+        <div class="sub">Pharmacy Point of Sale</div>
+      </div>
+      <div class="meta">
+        <div><strong>Invoice #:</strong> ${escapeHtml(sale.invoiceNumber || "")}</div>
+        <div><strong>Date:</strong> ${formatDate(sale.date)}</div>
+        <div><strong>Cashier:</strong> ${escapeHtml(sale.cashier || "")}</div>
+      </div>
+    </div>
+
+    <div class="h-line"></div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Item</th>
+          <th class="ta-r">Qty</th>
+          <th class="ta-r">Price</th>
+          <th class="ta-r">Line</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rows || `<tr><td colspan="5" style="text-align:center;color:#777;padding:18px 6px;">No items</td></tr>`}
+      </tbody>
+    </table>
+
+    <div class="totals">
+      <table>
+        <tbody>
+          <tr>
+            <td class="label">Subtotal</td>
+            <td class="ta-r">${fmt.format(sumLines(sale.items || []))}</td>
+          </tr>
+          <tr class="grand">
+            <td>Total</td>
+            <td class="ta-r">${fmt.format(sale.total || 0)}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="foot">
+      <div>Thank you for your purchase!</div>
+      <div>Return policy: unopened meds within 48h with receipt.</div>
+    </div>
+  </div>
+
+  <script>
+    // auto print, then close if the user confirms
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        window.print();
+        // Optional: close after print on some browsers
+        setTimeout(() => { window.close(); }, 300);
+      }, 200);
+    });
+  </script>
+</body>
+</html>
+`;
+
+  const w = window.open("", "_blank", "noopener,noreferrer,width=900,height=700");
+  if (!w) {
+    alert("Please allow popups to print the invoice.");
+    return;
+  }
+  w.document.open();
+  w.document.write(html);
+  w.document.close();
+}
+
+function sumLines(items) {
+  return (items || []).reduce((s, it) => s + (Number(it.price || 0) * Number(it.quantity || 0)), 0);
+}
+
+function formatDate(d) {
+  try {
+    return new Date(d).toLocaleString();
+  } catch {
+    return "";
+  }
+}
+
+function escapeHtml(str) {
+  return String(str)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+export default function InvoiceModal({ isOpen, onClose, sale }) {
+  if (!isOpen) return null;
 
   return (
     <div
       style={{
         position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        background: "rgba(0,0,0,0.5)",
+        inset: 0,
+        background: "rgba(0,0,0,0.35)",
         display: "flex",
-        justifyContent: "center",
         alignItems: "center",
-        zIndex: 1000,
+        justifyContent: "center",
+        zIndex: 10000,
       }}
+      onClick={onClose}
     >
       <div
-        style={{
-          background: "#fff",
-          padding: "20px",
-          borderRadius: "8px",
-          maxWidth: "600px",
-          width: "100%",
-          boxShadow: "0 2px 10px rgba(0,0,0,0.2)",
-        }}
+        className="card shadow"
+        style={{ width: 520, maxWidth: "90%", borderRadius: 12 }}
+        onClick={(e) => e.stopPropagation()}
       >
-        <h3 className="fw-bold text-center mb-3">🧾 Sale Completed</h3>
-        <p><strong>Invoice #:</strong> {sale.invoiceNumber}</p>
-        <p><strong>Date:</strong> {new Date(sale.date).toLocaleString()}</p>
-        <p><strong>Cashier:</strong> {sale.cashier || "Cashier 1"}</p>
-        <hr />
-        <div style={{ textAlign: "right", fontSize: "1.1em" }}>
-          <strong>Total: ${sale.total.toFixed(2)}</strong>
-        </div>
+        <div className="card-body">
+          <div className="d-flex align-items-center gap-2 mb-2">
+            <span style={{ fontSize: 22 }}>🧾</span>
+            <h4 className="m-0">Sale Completed</h4>
+          </div>
 
-        <div style={{ marginTop: "20px", textAlign: "right" }}>
-          <button
-            onClick={handlePrint}
-            style={{
-              background: "#0d6efd",
-              color: "#fff",
-              padding: "8px 12px",
-              border: "none",
-              borderRadius: "4px",
-              marginRight: "10px",
-              cursor: "pointer",
-            }}
-          >
-            🖨️ Print / PDF
-          </button>
-          <button
-            onClick={onClose}
-            style={{
-              background: "#6c757d",
-              color: "#fff",
-              padding: "8px 12px",
-              border: "none",
-              borderRadius: "4px",
-              cursor: "pointer",
-            }}
-          >
-            Close
-          </button>
+          <div className="mb-2 small">
+            <div><strong>Invoice #:</strong> {sale?.invoiceNumber}</div>
+            <div><strong>Date:</strong> {formatDate(sale?.date)}</div>
+            <div><strong>Cashier:</strong> {sale?.cashier}</div>
+          </div>
+
+          <hr />
+
+          <div className="d-flex justify-content-between align-items-center">
+            <div className="fw-bold">Total:</div>
+            <div className="fw-bold">
+              {new Intl.NumberFormat(undefined, { style: "currency", currency: "USD" }).format(
+                Number(sale?.total || 0)
+              )}
+            </div>
+          </div>
+
+          <div className="d-flex justify-content-end gap-2 mt-3">
+            <button
+              className="btn btn-primary"
+              onClick={() => printInvoice(sale)}
+              title="Print or save as PDF"
+            >
+              🖨️ Print / PDF
+            </button>
+            <button className="btn btn-secondary" onClick={onClose}>
+              Close
+            </button>
+          </div>
         </div>
       </div>
     </div>

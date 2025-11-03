@@ -25,8 +25,6 @@ import AdminAnalytics from "./pages/AdminAnalytics";
 import LiveAnalytics from "./pages/LiveAnalytics.jsx";
 import ExpensesPage from "./pages/ExpensesPage.jsx";
 import ReportsPage from "./pages/ReportsPage.jsx";
-
-// Inside your <Routes>
 import EmployeesPage from "./pages/EmployeesPage";
 import PayrollPage from "./pages/PayrollPage";
 
@@ -86,7 +84,6 @@ function App() {
             </RoleProtectedRoute>
           }
         />
-
         <Route
           path="/admin/users"
           element={
@@ -154,7 +151,7 @@ function App() {
           }
         />
 
-        {/* ================== NEW: EMPLOYEES (Admin or Finance) ================== */}
+        {/* Employees (Admin/Finance) */}
         <Route
           path="/admin/employees"
           element={

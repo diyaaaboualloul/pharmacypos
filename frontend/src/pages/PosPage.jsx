@@ -110,7 +110,6 @@ export default function PosPage() {
   }, [authHeaders, user]);
 
   // ---------- Effects ----------
-  // Debounced product search (500ms) with spinner & cancel
   useEffect(() => {
     if (search.trim().length < 2) {
       setProducts([]);
@@ -140,7 +139,6 @@ export default function PosPage() {
     };
   }, [search, authHeaders]);
 
-  // Single polling loop (every 5s) for totals + status
   useEffect(() => {
     let mounted = true;
 
@@ -153,7 +151,6 @@ export default function PosPage() {
       ]);
     };
 
-    // initial load
     tick();
     const id = setInterval(tick, 5000);
 
@@ -163,7 +160,6 @@ export default function PosPage() {
     };
   }, [fetchTodayTotal, fetchSessionTotal, fetchCashierStatus]);
 
-  // Global keyboard shortcuts
   useEffect(() => {
     const onKey = (e) => {
       if (e.key === "F2") {
@@ -172,9 +168,7 @@ export default function PosPage() {
       }
       if (e.key === "F4") {
         e.preventDefault();
-        if (!isClosed && cart.length) {
-          setShowCheckoutModal(true);
-        }
+        if (!isClosed && cart.length) setShowCheckoutModal(true);
       }
     };
     window.addEventListener("keydown", onKey);
@@ -184,8 +178,8 @@ export default function PosPage() {
   // ---------- Sorting ----------
   const sortedProducts = useMemo(() => {
     const copy = [...products];
+    const dir = sortDir === "asc" ? 1 : -1;
     copy.sort((a, b) => {
-      const dir = sortDir === "asc" ? 1 : -1;
       if (sortBy === "name") return a.name.localeCompare(b.name) * dir;
       if (sortBy === "price") return (a.price - b.price) * dir;
       if (sortBy === "qty")
@@ -218,12 +212,12 @@ export default function PosPage() {
       setCart((prev) => {
         const existing = prev.find((i) => i._id === product._id);
         if (existing) {
-          if (existing.quantity >= max) return prev; // cannot exceed stock
+          if (existing.quantity >= max) return prev;
           return prev.map((i) =>
             i._id === product._id ? { ...i, quantity: i.quantity + 1 } : i
           );
         }
-        if (max <= 0) return prev; // out of stock
+        if (max <= 0) return prev;
         return [...prev, { ...product, quantity: 1 }];
       });
     },
@@ -256,9 +250,10 @@ export default function PosPage() {
             productId: item._id,
             name: item.name,
             quantity: item.quantity,
-            price: item.price,
+            price: item.price, // USD unit price
           })),
-          total: cartTotal,
+          totalUSD: cartTotal,
+          totalLBP: Math.round(cartTotal * (paymentData?.rate || 0)),
           payment: paymentData,
           cashier: user?.name || "Cashier",
         };
@@ -274,14 +269,14 @@ export default function PosPage() {
           date: data.createdAt,
           cashier: user?.name || "Cashier",
           items: cart,
-          total: data.total,
+          total: data.totalUSD ?? data.total ?? cartTotal,
+          payment: paymentData,
         });
 
         setShowCheckoutModal(false);
         setShowInvoiceModal(true);
         setCart([]);
 
-        // refresh
         fetchTodayTotal();
         fetchCashierStatus();
         fetchSessionTotal();
@@ -310,97 +305,94 @@ export default function PosPage() {
 
   // ---------- Render ----------
   return (
-    <div className="container p-4">
-      {/* Header: user/status on left, Logout alone on right */}
-      <div className="d-flex align-items-center justify-content-between mb-2">
-        <div className="small">
-          <span className="me-3 d-none d-sm-inline">
-            👤 <strong>{user?.name}</strong> ({user?.role}){" "}
-            {isClosed ? (
-              <span className="badge bg-danger ms-2">🔴 Closed</span>
-            ) : (
-              <span className="badge bg-success ms-2">🟢 Open</span>
-            )}
-          </span>
-        </div>
-        <button onClick={logout} className="btn btn-danger btn-sm">
-          Logout
-        </button>
-      </div>
-
-      {/* Toolbar row: Search on the left; Session Total + My Invoices on the right */}
-      <div className="d-flex align-items-center justify-content-between gap-3 mb-3">
-        <input
-          ref={searchRef}
-          type="text"
-          placeholder="Search product… (F2 to focus)"
-          className="form-control"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          disabled={isClosed}
-          aria-label="Search product"
-          style={{ flex: 1 }}
-        />
-
-        <div className="d-flex align-items-center gap-2">
-          <div className="bg-primary text-white rounded-3 px-3 py-2 shadow-sm">
-            <span className="fw-semibold">
-              🕓 Session Total: <strong>{currency.format(sessionTotal)}</strong>
-            </span>
+    <div className="pos-wrap">
+      <div className="pos-container">
+        {/* Header (Admin look) */}
+        <div className="page-head">
+          <div>
+            <div className="page-title">Cashier POS</div>
+            <div className="page-sub">Process sales with the Admin theme.</div>
           </div>
-          <button
-            className="btn btn-outline-primary"
-            onClick={() => navigate("/cashier/invoices")}
-          >
-            My Invoices
-          </button>
+          <div className="right-actions">
+            <span className="badge-chip" title="Cashier status">
+              <span
+                style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: 999,
+                  background: isClosed ? "#ef4444" : "var(--primary)",
+                  boxShadow: isClosed
+                    ? "0 0 0 3px rgba(239,68,68,.25)"
+                    : "0 0 0 3px rgba(16,185,129,.25)",
+                }}
+              />
+              {isClosed ? "Closed" : "Open"}
+            </span>
+            <span className="badge-role">
+              {user?.name || user?.username || "cashier"} ({user?.role || "cashier"})
+            </span>
+            <button onClick={logout} className="btn-logout">Logout</button>
+          </div>
         </div>
-      </div>
 
-      <div className="d-flex flex-column flex-md-row gap-3">
-        {/* Products */}
-        <section className="flex-grow-1" style={{ minWidth: 0 }}>
-          <div className="card mb-3">
-            <div className="card-header bg-primary text-white">
-              <h5 className="mb-0">🛍️ Products</h5>
+        {/* Toolbar row */}
+        <div className="row gap-3 mb-3" style={{ display: "flex", alignItems: "center" }}>
+          <input
+            ref={searchRef}
+            type="text"
+            placeholder="Search product… (F2 to focus)"
+            className="searchbar"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            disabled={isClosed}
+            aria-label="Search product"
+            style={{ flex: 1 }}
+          />
+          <div className="right-actions">
+            <span className="badge-chip" title="Session total">
+              🕓 Session Total:&nbsp;<strong>{currency.format(sessionTotal)}</strong>
+            </span>
+            <button
+              className="btn-primary"
+              onClick={() => navigate("/cashier/invoices")}
+            >
+              My Invoices
+            </button>
+          </div>
+        </div>
+
+        {/* Main grid */}
+        <div className="grid">
+          {/* PRODUCTS */}
+          <section className="panel">
+            <div className="panel-head">
+              <div className="head-left">
+                <span className="head-accent" />
+                <span>Products</span>
+              </div>
+              <span className="section-title">Browse & add to cart</span>
             </div>
-            <div className="card-body">
+            <div className="panel-body">
               {loadingProducts ? (
-                <div className="text-center py-4">
-                  <div className="spinner-border" role="status" />
-                  <div className="small text-muted mt-2">Loading…</div>
+                <div className="products-empty">
+                  Loading…
                 </div>
               ) : products.length > 0 ? (
                 <div className="table-responsive">
                   <table className="table table-bordered table-hover align-middle">
                     <thead className="table-secondary">
                       <tr>
-                        <th
-                          role="button"
-                          onClick={() => toggleSort("name")}
-                          title="Sort by Name"
-                        >
+                        <th role="button" onClick={() => toggleSort("name")} title="Sort by Name">
                           Name {sortBy === "name" ? (sortDir === "asc" ? "▲" : "▼") : ""}
                         </th>
                         <th>Category</th>
-                        <th
-                          className="text-end"
-                          role="button"
-                          onClick={() => toggleSort("price")}
-                          title="Sort by Price"
-                        >
+                        <th className="text-end" role="button" onClick={() => toggleSort("price")} title="Sort by Price">
                           Price {sortBy === "price" ? (sortDir === "asc" ? "▲" : "▼") : ""}
                         </th>
-                        <th
-                          className="text-end"
-                          role="button"
-                          onClick={() => toggleSort("qty")}
-                          title="Sort by Quantity"
-                        >
-                          Available Qty{" "}
-                          {sortBy === "qty" ? (sortDir === "asc" ? "▲" : "▼") : ""}
+                        <th className="text-end" role="button" onClick={() => toggleSort("qty")} title="Sort by Quantity">
+                          Available Qty {sortBy === "qty" ? (sortDir === "asc" ? "▲" : "▼") : ""}
                         </th>
-                        <th style={{ width: 90 }}></th>
+                        <th style={{ width: 90 }} />
                       </tr>
                     </thead>
                     <tbody>
@@ -408,8 +400,7 @@ export default function PosPage() {
                         const inCart = cart.find((i) => i._id === product._id);
                         const stock = product.totalSellableQty || 0;
                         const atMax = inCart && inCart.quantity >= stock;
-                        const addDisabled =
-                          isClosed || stock === 0 || Boolean(atMax);
+                        const addDisabled = isClosed || stock === 0 || Boolean(atMax);
                         const qtyBadgeClass =
                           stock <= 5
                             ? "bg-danger"
@@ -419,29 +410,18 @@ export default function PosPage() {
 
                         return (
                           <tr key={product._id}>
-                            <td className="text-truncate" title={product.name}>
-                              {product.name}
-                            </td>
+                            <td className="text-truncate" title={product.name}>{product.name}</td>
                             <td>{product.category}</td>
-                            <td className="text-end">
-                              {currency.format(product.price)}
-                            </td>
-                            <td className="text-end">
-                              <span className={`badge ${qtyBadgeClass}`}>
-                                {stock}
-                              </span>
-                            </td>
+                            <td className="text-end">{currency.format(product.price)}</td>
+                            <td className="text-end"><span className={`badge ${qtyBadgeClass}`}>{stock}</span></td>
                             <td className="text-center">
                               <button
-                                className="btn btn-success btn-sm w-100"
+                                className="btn-primary"
+                                style={{ width: "100%" }}
                                 onClick={() => handleAddToCart(product)}
                                 disabled={addDisabled}
                               >
-                                {stock === 0
-                                  ? "Out"
-                                  : atMax
-                                  ? "Max"
-                                  : "+ Add"}
+                                {stock === 0 ? "Out" : atMax ? "Max" : "+ Add"}
                               </button>
                             </td>
                           </tr>
@@ -451,31 +431,30 @@ export default function PosPage() {
                   </table>
                 </div>
               ) : (
-                <p className="text-center text-muted mb-0">
+                <p className="products-empty">
                   {search.trim().length < 2
                     ? "Start typing (min 2 chars) to search…"
                     : "No products found."}
                 </p>
               )}
             </div>
-          </div>
-        </section>
+          </section>
 
-        {/* Cart */}
-        <aside className="flex-grow-1" style={{ minWidth: 0 }}>
-          <div className="card">
-            <div className="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
-              <h5 className="mb-0">🛒 Your Cart</h5>
-              <button
-                className="btn btn-outline-secondary btn-sm"
-                disabled={!cart.length}
-                onClick={clearCart}
-                title="Clear all items"
-              >
-                Clear Cart
-              </button>
+          {/* CART */}
+          <aside className="panel">
+            <div className="panel-head">
+              <div className="head-left">
+                <span className="head-accent" />
+                <span>Your Cart</span>
+              </div>
+              <div className="cart-head-actions">
+                <button className="btn-clear" disabled={!cart.length} onClick={clearCart} title="Clear all items">
+                  Clear Cart
+                </button>
+              </div>
             </div>
-            <div className="card-body">
+
+            <div className="panel-body">
               {cart.length > 0 ? (
                 <>
                   <div className="table-responsive">
@@ -483,14 +462,10 @@ export default function PosPage() {
                       <thead className="table-light">
                         <tr>
                           <th>Item</th>
-                          <th style={{ width: 90 }} className="text-center">
-                            Qty
-                          </th>
+                          <th style={{ width: 90 }} className="text-center">Qty</th>
                           <th className="text-end">Price</th>
                           <th className="text-end">Total</th>
-                          <th style={{ width: 70 }} className="text-center">
-                            Action
-                          </th>
+                          <th style={{ width: 70 }} className="text-center">Action</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -498,9 +473,7 @@ export default function PosPage() {
                           const stock = item.totalSellableQty ?? Infinity;
                           return (
                             <tr key={item._id}>
-                              <td className="text-truncate" title={item.name}>
-                                {item.name}
-                              </td>
+                              <td className="text-truncate" title={item.name}>{item.name}</td>
                               <td className="text-center">
                                 <input
                                   type="number"
@@ -508,9 +481,7 @@ export default function PosPage() {
                                   max={Number.isFinite(stock) ? stock : undefined}
                                   className="form-control form-control-sm text-center"
                                   value={item.quantity}
-                                  onChange={(e) =>
-                                    handleQtyChange(item._id, e.target.value)
-                                  }
+                                  onChange={(e) => handleQtyChange(item._id, e.target.value)}
                                   disabled={isClosed}
                                   aria-label={`Quantity for ${item.name}`}
                                 />
@@ -518,15 +489,11 @@ export default function PosPage() {
                                   <small className="text-danger">Max stock</small>
                                 ) : null}
                               </td>
-                              <td className="text-end">
-                                {currency.format(item.price)}
-                              </td>
-                              <td className="text-end">
-                                {currency.format(item.price * item.quantity)}
-                              </td>
+                              <td className="text-end">{currency.format(item.price)}</td>
+                              <td className="text-end">{currency.format(item.price * item.quantity)}</td>
                               <td className="text-center">
                                 <button
-                                  className="btn btn-outline-danger btn-sm"
+                                  className="btn-clear"
                                   title="Remove item"
                                   onClick={() => handleRemoveFromCart(item._id)}
                                   disabled={isClosed}
@@ -541,24 +508,37 @@ export default function PosPage() {
                     </table>
                   </div>
 
-                  <div className="text-end">
-                    <h6 className="fw-bold">Total: {currency.format(cartTotal)}</h6>
+                  <div className="row" style={{ justifyContent: "space-between", alignItems: "center" }}>
+                    <span className="total-chip">Total</span>
+                    <div style={{ fontWeight: 800, fontSize: 20 }}>{currency.format(cartTotal)}</div>
+                  </div>
+
+                  <div className="row" style={{ justifyContent: "space-between", alignItems: "center", marginTop: 12 }}>
+                    <span className="page-sub">Session Total:</span>
+                    <span className="badge-chip" title="Today’s sales">
+                      {currency.format(todayTotal)}
+                    </span>
+                  </div>
+
+                  <div className="actions-row">
                     <button
-                      className="btn btn-primary w-100 mt-2"
+                      className="btn-primary"
                       onClick={() => setShowCheckoutModal(true)}
                       disabled={isClosed}
                       title="Open checkout (F4)"
+                      style={{ flex: 1 }}
                     >
-                      Checkout 💰
+                      Confirm Sale
                     </button>
+                    <button className="btn-clear" onClick={clearCart}>Cancel</button>
                   </div>
                 </>
               ) : (
-                <p className="text-center text-muted mb-0">Cart is empty.</p>
+                <p className="cart-empty">Cart is empty.</p>
               )}
             </div>
-          </div>
-        </aside>
+          </aside>
+        </div>
       </div>
 
       {/* Modals */}
