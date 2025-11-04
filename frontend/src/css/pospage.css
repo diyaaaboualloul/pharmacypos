@@ -14,11 +14,7 @@
 }
 
 /* ===== Layout ===== */
-.pos-wrap{
-  background:var(--bg);
-  min-height:calc(100vh - 60px);
-  padding:24px;
-}
+.pos-wrap{ background:var(--bg); min-height:calc(100vh - 60px); padding:24px; }
 .pos-container{ max-width:1280px; margin:0 auto; }
 
 .page-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; }
@@ -44,12 +40,7 @@
 .btn-logout:hover{ filter:brightness(.95); }
 
 /* Panels */
-.panel{
-  background:var(--surface);
-  border-radius:var(--radius);
-  box-shadow:var(--shadow);
-  overflow:hidden;
-}
+.panel{ background:var(--surface); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden; }
 .panel-head{
   display:flex; align-items:center; justify-content:space-between;
   padding:12px 16px;
@@ -93,3 +84,44 @@
 /* Totals */
 .total-chip{ background:var(--primary); color:#fff; font-weight:800; padding:10px 12px; border-radius:10px; }
 .actions-row{ margin-top:16px; display:flex; gap:10px; }
+
+/* ===== Logout confirmation modal (Admin-like) ===== */
+.logout-overlay{
+  position:fixed; inset:0;
+  background:rgba(0,0,0,.55);
+  display:flex; align-items:center; justify-content:center;
+  z-index: 9999;
+  animation: fadeIn .18s ease-out;
+}
+.logout-modal{
+  width: min(92vw, 420px);
+  background: radial-gradient(120% 120% at 0% 0%, #0b1723 0%, #0d1b2a 45%, #0b1220 100%);
+  color:#e2e8f0;
+  border-radius:20px;
+  padding:24px 20px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.45), inset 0 0 0 1px rgba(148,163,184,.12);
+  animation: scaleIn .22s ease-out;
+}
+.logout-icon{
+  width:34px; height:34px; border-radius:10px;
+  display:inline-flex; align-items:center; justify-content:center;
+  margin:0 auto 10px; background:rgba(248,113,113,.18); color:#f87171;
+  box-shadow: 0 0 0 6px rgba(248,113,113,.08);
+  font-weight:900; transform: rotate(180deg); /* ▲ icon style */
+}
+.logout-title{
+  text-align:center; font-weight:800; letter-spacing:.2px;
+  color:#f8fafc; margin:4px 0 6px; font-size:18px;
+}
+.logout-text{ text-align:center; color:#cbd5e1; font-size:14px; line-height:1.5; }
+.logout-tip{
+  margin:10px auto 18px; padding:8px 12px; border-radius:12px; width:100%;
+  background:rgba(148,163,184,.12); color:#9fb0c0; font-size:13px; text-align:center;
+}
+.logout-actions{ display:flex; gap:10px; }
+.logout-actions .btn-clear{ flex:1; }
+.logout-actions .btn-primary{ flex:1; }
+
+/* Animations */
+@keyframes fadeIn{ from{opacity:0} to{opacity:1} }
+@keyframes scaleIn{ from{opacity:0; transform:scale(.96)} to{opacity:1; transform:scale(1)} }

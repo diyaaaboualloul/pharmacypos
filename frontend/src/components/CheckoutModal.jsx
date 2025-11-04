@@ -1,42 +1,43 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 
 /**
- * Checkout modal with currency toggle (USD/LBP) and automatic change calc.
+ * Checkout modal with multi-currency (USD / LBP) support.
  * Props:
  *  - isOpen: bool
  *  - onClose: fn()
- *  - total: number (USD)
+ *  - total: number  (USD)
  *  - onConfirm: fn(paymentObject)
  */
-const FALLBACK_RATE = 89000; // 1 USD -> 89,000 LBP (example default)
+const DEFAULT_LBP_RATE = Number(localStorage.getItem("lbpRate") || 89000); // example: 1 USD = 89,000 LBP
 
 export default function CheckoutModal({ isOpen, onClose, total, onConfirm }) {
-  const [method, setMethod] = useState("cash");   // "cash" | "card" | "bank" | "insurance"
-  const [currency, setCurrency] = useState("USD"); // "USD" | "LBP"
-  const [rate, setRate] = useState(FALLBACK_RATE);
-  const [received, setReceived] = useState("");    // number in selected currency
+  const [paymentType, setPaymentType] = useState("cash");   // cash | card | bank | insurance
+  const [currency, setCurrency] = useState("USD");          // USD | LBP
+  const [rate, setRate] = useState(DEFAULT_LBP_RATE);
+  const [received, setReceived] = useState("");             // amount entered by cashier (in selected currency)
 
   useEffect(() => {
-    if (!isOpen) return;
-    setMethod("cash");
-    setCurrency("USD");
-    setRate(Number(localStorage.getItem("lbpRate") || FALLBACK_RATE));
-    setReceived("");
+    if (isOpen) {
+      setPaymentType("cash");
+      setCurrency("USD");
+      setRate(Number(localStorage.getItem("lbpRate") || DEFAULT_LBP_RATE));
+      setReceived("");
+    }
   }, [isOpen]);
 
-  // --- derived amounts ---
-  const usdTotal = Number(total || 0);
-  const lbpTotal = useMemo(
-    () => Math.round(usdTotal * (Number(rate) || 0)),
-    [usdTotal, rate]
-  );
+  if (!isOpen) return null;
 
+  const usdTotal = Number(total || 0);
+  const lbpTotal = Math.round(usdTotal * (Number(rate) || 0));
   const rec = Number(received || 0);
-  const changeUSD = method === "cash" && currency === "USD" ? Math.max(0, rec - usdTotal) : 0;
-  const changeLBP = method === "cash" && currency === "LBP" ? Math.max(0, rec - lbpTotal) : 0;
+
+  const changeUSD =
+    currency === "USD" && paymentType === "cash" ? Math.max(0, rec - usdTotal) : 0;
+  const changeLBP =
+    currency === "LBP" && paymentType === "cash" ? Math.max(0, rec - lbpTotal) : 0;
 
   const handleConfirm = () => {
-    if (method === "cash") {
+    if (paymentType === "cash") {
       if (currency === "USD" && rec < usdTotal) {
         alert("Received (USD) is less than total.");
         return;
@@ -47,25 +48,30 @@ export default function CheckoutModal({ isOpen, onClose, total, onConfirm }) {
       }
     }
 
+    // remember last used LBP rate
     if (currency === "LBP" && Number(rate) > 0) {
       localStorage.setItem("lbpRate", String(rate));
     }
 
     onConfirm({
-      method,
-      currency,
+      paymentType,          // "cash" | "card" | "bank" | "insurance"
+      currency,             // "USD" | "LBP"
       rate: Number(rate) || 0,
       totals: { usd: usdTotal, lbp: lbpTotal },
-      received: rec, // in selected currency
+      received: rec,
       changeUSD,
       changeLBP,
     });
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="modal d-block" role="dialog" style={{ background: "rgba(0,0,0,0.35)" }} onClick={onClose}>
+    <div
+      className="modal d-block"
+      tabIndex="-1"
+      role="dialog"
+      style={{ background: "rgba(0,0,0,0.35)" }}
+      onClick={onClose}
+    >
       <div className="modal-dialog" role="document" onClick={(e) => e.stopPropagation()}>
         <div className="modal-content">
           <div className="modal-header">
@@ -74,10 +80,14 @@ export default function CheckoutModal({ isOpen, onClose, total, onConfirm }) {
           </div>
 
           <div className="modal-body">
-            {/* Payment method */}
+            {/* Payment type */}
             <div className="mb-3">
               <label className="form-label fw-semibold">Payment Type</label>
-              <select className="form-select" value={method} onChange={(e) => setMethod(e.target.value)}>
+              <select
+                className="form-select"
+                value={paymentType}
+                onChange={(e) => setPaymentType(e.target.value)}
+              >
                 <option value="cash">Cash</option>
                 <option value="card">Card</option>
                 <option value="bank">Bank</option>
@@ -85,9 +95,9 @@ export default function CheckoutModal({ isOpen, onClose, total, onConfirm }) {
               </select>
             </div>
 
-            {/* Purchase currency */}
+            {/* Currency */}
             <div className="mb-3">
-              <label className="form-label fw-semibold">Purchase Currency</label>
+              <label className="form-label fw-semibold">Currency</label>
               <select
                 className="form-select"
                 value={currency}
@@ -101,7 +111,7 @@ export default function CheckoutModal({ isOpen, onClose, total, onConfirm }) {
               </select>
             </div>
 
-            {/* LBP rate input only when LBP */}
+            {/* Exchange rate when LBP */}
             {currency === "LBP" && (
               <div className="mb-3">
                 <label className="form-label fw-semibold">Exchange Rate (1 USD → LBP)</label>
@@ -112,15 +122,15 @@ export default function CheckoutModal({ isOpen, onClose, total, onConfirm }) {
                   value={rate}
                   onChange={(e) => setRate(e.target.value)}
                 />
-                <div className="form-text">Saved locally for next time.</div>
+                <div className="form-text">This is saved locally for convenience.</div>
               </div>
             )}
 
-            {/* Cash received (only for cash method) */}
-            {method === "cash" && (
+            {/* Cash received (only for cash payment type) */}
+            {paymentType === "cash" && (
               <div className="mb-3">
                 <label className="form-label fw-semibold">
-                  Cash Received {currency === "USD" ? "(USD)" : "(LBP)"}
+                  {currency === "USD" ? "Cash Received (USD)" : "Cash Received (LBP)"}
                 </label>
                 <input
                   type="number"
@@ -134,9 +144,8 @@ export default function CheckoutModal({ isOpen, onClose, total, onConfirm }) {
               </div>
             )}
 
+            {/* Totals & change */}
             <hr />
-
-            {/* Totals */}
             <div className="d-flex justify-content-between">
               <span className="fw-semibold">Total (USD)</span>
               <span className="fw-bold">${usdTotal.toFixed(2)}</span>
@@ -146,14 +155,13 @@ export default function CheckoutModal({ isOpen, onClose, total, onConfirm }) {
               <span className="fw-bold">{lbpTotal.toLocaleString()} ل.ل</span>
             </div>
 
-            {/* Change */}
-            {method === "cash" && currency === "USD" && (
+            {paymentType === "cash" && currency === "USD" && (
               <div className="d-flex justify-content-between mt-2">
                 <span className="fw-semibold">Change (USD)</span>
                 <span className="fw-bold">${changeUSD.toFixed(2)}</span>
               </div>
             )}
-            {method === "cash" && currency === "LBP" && (
+            {paymentType === "cash" && currency === "LBP" && (
               <>
                 <div className="d-flex justify-content-between mt-2">
                   <span className="fw-semibold">Change (LBP)</span>
@@ -168,8 +176,12 @@ export default function CheckoutModal({ isOpen, onClose, total, onConfirm }) {
           </div>
 
           <div className="modal-footer">
-            <button type="button" className="btn btn-outline-secondary" onClick={onClose}>Cancel</button>
-            <button type="button" className="btn btn-primary" onClick={handleConfirm}>Confirm Sale</button>
+            <button type="button" className="btn btn-outline-secondary" onClick={onClose}>
+              Cancel
+            </button>
+            <button type="button" className="btn btn-primary" onClick={handleConfirm}>
+              Confirm Sale
+            </button>
           </div>
         </div>
       </div>

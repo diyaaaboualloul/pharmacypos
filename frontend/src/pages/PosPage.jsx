@@ -30,6 +30,9 @@ export default function PosPage() {
   const [sortBy, setSortBy] = useState("name"); // "name" | "price" | "qty"
   const [sortDir, setSortDir] = useState("asc"); // "asc" | "desc"
 
+  // NEW: logout confirm modal
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+
   const user = useMemo(() => {
     try {
       return JSON.parse(localStorage.getItem("user"));
@@ -64,8 +67,10 @@ export default function PosPage() {
 
   const isClosed = cashierStatus === "closed";
 
+  // NEW: logout with custom confirmation modal
+  const openLogoutConfirm = () => setShowLogoutConfirm(true);
+  const cancelLogout = () => setShowLogoutConfirm(false);
   const logout = useCallback(() => {
-    if (!window.confirm("Logout from cashier?")) return;
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     navigate("/login");
@@ -168,7 +173,9 @@ export default function PosPage() {
       }
       if (e.key === "F4") {
         e.preventDefault();
-        if (!isClosed && cart.length) setShowCheckoutModal(true);
+        if (!isClosed && cart.length) {
+          setShowCheckoutModal(true);
+        }
       }
     };
     window.addEventListener("keydown", onKey);
@@ -254,7 +261,19 @@ export default function PosPage() {
           })),
           totalUSD: cartTotal,
           totalLBP: Math.round(cartTotal * (paymentData?.rate || 0)),
-          payment: paymentData,
+
+          // Send paymentType both top-level and inside payment for compatibility
+          paymentType: paymentData?.paymentType,
+          payment: {
+            type: paymentData?.paymentType,         // backward-compat for server expecting payment.type
+            paymentType: paymentData?.paymentType,  // modern shape
+            currency: paymentData?.currency,
+            rate: paymentData?.rate,
+            received: paymentData?.received,
+            cashReceived:
+              paymentData?.paymentType === "cash" ? paymentData?.received : 0,
+          },
+
           cashier: user?.name || "Cashier",
         };
 
@@ -331,7 +350,7 @@ export default function PosPage() {
             <span className="badge-role">
               {user?.name || user?.username || "cashier"} ({user?.role || "cashier"})
             </span>
-            <button onClick={logout} className="btn-logout">Logout</button>
+            <button onClick={openLogoutConfirm} className="btn-logout">Logout</button>
           </div>
         </div>
 
@@ -374,9 +393,7 @@ export default function PosPage() {
             </div>
             <div className="panel-body">
               {loadingProducts ? (
-                <div className="products-empty">
-                  Loading…
-                </div>
+                <div className="products-empty">Loading…</div>
               ) : products.length > 0 ? (
                 <div className="table-responsive">
                   <table className="table table-bordered table-hover align-middle">
@@ -554,6 +571,26 @@ export default function PosPage() {
         onClose={handleCloseInvoice}
         sale={lastSale}
       />
+
+      {/* Logout Confirm Modal */}
+      {showLogoutConfirm && (
+        <div className="logout-overlay" role="dialog" aria-modal="true">
+          <div className="logout-modal">
+            <div className="logout-icon">▲</div>
+            <h5 className="logout-title">Confirm Logout</h5>
+            <p className="logout-text">
+              You’re about to sign out of <strong>Pharmacy POS</strong>.<br />
+              Any unsaved changes will be lost.
+            </p>
+            <div className="logout-tip">Tip&nbsp; You can always sign back in with your credentials.</div>
+
+            <div className="logout-actions">
+              <button className="btn-clear" onClick={cancelLogout}>Cancel</button>
+              <button className="btn-primary" onClick={logout}>Logout</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
