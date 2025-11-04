@@ -1,6 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import LoginPage from "./pages/LoginPage";
-import RegisterPage from "./pages/RegisterPage";
 import AdminDashboardPage from "./pages/AdminDashboardPage";
 import CashierDashboardPage from "./pages/CashierDashboardPage";
 import FinanceDashboardPage from "./pages/FinanceDashboardPage";
@@ -65,14 +64,14 @@ function App() {
             </GuestRoute>
           }
         />
-        <Route
+        {/* <Route
           path="/register"
           element={
             <GuestRoute>
               <RegisterPage />
             </GuestRoute>
           }
-        />
+        /> */}
         <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
         {/* ================== ADMIN ROUTES ================== */}
