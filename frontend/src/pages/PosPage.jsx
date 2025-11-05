@@ -329,7 +329,7 @@ export default function PosPage() {
         {/* Header (Admin look) */}
         <div className="page-head">
           <div>
-            <div className="page-title">Cashier POS</div>
+            <div className="page-title">Cashier Page</div>
             <div className="page-sub">Process sales with the Admin theme.</div>
           </div>
           <div className="right-actions">

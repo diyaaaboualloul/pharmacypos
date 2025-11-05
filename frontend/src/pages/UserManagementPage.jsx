@@ -16,6 +16,11 @@ export default function UserManagementPage() {
   const itemsPerPage = 8;
   const navigate = useNavigate();
 
+  // ✅ added: confirm modal + toast states
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [targetUser, setTargetUser] = useState(null);
+  const [deleteMessage, setDeleteMessage] = useState("");
+
   // ✅ logged-in user (from localStorage)
   const loggedInUser = getUser(); // should return the user object { _id, name, email, role }
   const loggedInUserId = loggedInUser?._id;
@@ -23,6 +28,13 @@ export default function UserManagementPage() {
   useEffect(() => {
     fetchUsers();
   }, []);
+
+  // ✅ optional: close confirm on ESC
+  useEffect(() => {
+    const onKey = (e) => e.key === "Escape" && setConfirmOpen(false);
+    if (confirmOpen) window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [confirmOpen]);
 
   const fetchUsers = async () => {
     try {
@@ -54,16 +66,24 @@ export default function UserManagementPage() {
     }
   };
 
+  // ✅ updated: no window.confirm here; this actually performs deletion (called from modal)
   const handleDeleteUser = async (id) => {
-    if (!window.confirm("Are you sure?")) return;
     try {
       const token = getToken();
       await axios.delete(`http://localhost:5000/api/admin/users/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      fetchUsers();
+      await fetchUsers();
+      setConfirmOpen(false);
+      setTargetUser(null);
+
+      // centered success toast
+      setDeleteMessage("✅ User deleted successfully");
+      setTimeout(() => setDeleteMessage(""), 2000);
     } catch (err) {
       console.error("Failed to delete user", err);
+      setConfirmOpen(false);
+      setTargetUser(null);
     }
   };
 
@@ -164,6 +184,22 @@ export default function UserManagementPage() {
         {/* Message */}
         {message && <div className="alert alert-info text-center py-2">{message}</div>}
 
+        {/* ✅ centered success toast after deletion */}
+        <AnimatePresence>
+          {deleteMessage && (
+            <motion.div
+              className="position-fixed top-50 start-50 translate-middle bg-success text-white px-4 py-2 rounded shadow"
+              style={{ zIndex: 2000, fontWeight: 500 }}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{ duration: 0.25 }}
+            >
+              {deleteMessage}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Table */}
         <div className="table-responsive shadow-sm rounded">
           <table className="table table-hover align-middle">
@@ -203,11 +239,14 @@ export default function UserManagementPage() {
                       </span>
                     </td>
                     <td>
-                      {/* ✅ Hide delete button for logged-in admin */}
+                      {/* ✅ Hide delete button for logged-in admin; open custom confirm */}
                       {u._id !== loggedInUserId && (
                         <button
                           className="btn btn-sm btn-danger"
-                          onClick={() => handleDeleteUser(u._id)}
+                          onClick={() => {
+                            setTargetUser(u);
+                            setConfirmOpen(true);
+                          }}
                         >
                           🗑️
                         </button>
@@ -306,6 +345,55 @@ export default function UserManagementPage() {
                     </button>
                   </div>
                 </form>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ✅ Custom Confirm Delete Modal */}
+        <AnimatePresence>
+          {confirmOpen && (
+            <motion.div
+              className="position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-50 d-flex justify-content-center align-items-center"
+              style={{ zIndex: 1999 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <motion.div
+                className="card p-4 shadow-lg"
+                style={{ width: 420, borderRadius: 16 }}
+                initial={{ scale: 0.9, y: -10 }}
+                animate={{ scale: 1, y: 0 }}
+                exit={{ scale: 0.9, y: 10 }}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="confirm-delete-title"
+              >
+                <h5 id="confirm-delete-title" className="mb-2">Delete user?</h5>
+                <p className="text-muted mb-4">
+                  This will permanently remove{" "}
+                  <strong>{targetUser?.name}</strong> ({targetUser?.email}).
+                </p>
+
+                <div className="d-flex gap-2">
+                  <button
+                    className="btn btn-secondary w-50"
+                    onClick={() => {
+                      setConfirmOpen(false);
+                      setTargetUser(null);
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    className="btn btn-danger w-50"
+                    onClick={() => handleDeleteUser(targetUser?._id)}
+                    autoFocus
+                  >
+                    Delete
+                  </button>
+                </div>
               </motion.div>
             </motion.div>
           )}
