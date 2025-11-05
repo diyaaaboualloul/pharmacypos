@@ -1,0 +1,122 @@
+/* ===== Sidebar Layout ===== */
+.sidebar-custom {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  width: 230px;
+  background-color: #111827; /* Dark navy */
+  color: #f3f4f6;
+  padding-top: 1rem;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.4);
+  overflow-y: auto;
+  z-index: 1000;
+}
+
+/* ===== Logo / Title ===== */
+.sidebar-logo {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #fff;
+  padding: 1rem 1.5rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* ===== Menu Links ===== */
+.sidebar-menu .nav-link {
+  color: #cbd5e1;
+  font-size: 0.95rem;
+  padding: 0.8rem 1.5rem;
+  border-radius: 6px;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.sidebar-menu .nav-link:hover {
+  background-color: #1f2937;
+  color: #fff;
+  transform: translateX(5px);
+}
+
+.sidebar-menu .nav-link.active {
+  background-color: #2563eb; /* blue highlight */
+  color: #fff;
+  font-weight: 600;
+}
+
+/* ===== Dropdown Section ===== */
+.sidebar-dropdown {
+  display: none;
+  flex-direction: column;
+  background-color: #1e293b;
+  margin: 0.3rem 1.2rem;
+  border-radius: 6px;
+  padding: 0.3rem 0;
+  transition: all 0.3s ease;
+}
+
+.sidebar-dropdown.show {
+  display: flex;
+  animation: fadeIn 0.2s ease;
+}
+
+/* Dropdown links */
+.sidebar-dropdown .nav-link.sub-link {
+  padding: 0.6rem 1.5rem;
+  font-size: 0.9rem;
+  color: #cbd5e1;
+}
+
+.sidebar-dropdown .nav-link.sub-link:hover {
+  background-color: #334155;
+  color: #fff;
+}
+
+/* Dropdown toggle arrow */
+.nav-link.dropdown-toggle::after {
+  content: "▼";
+  float: right;
+  font-size: 0.6rem;
+  margin-top: 5px;
+  transition: transform 0.3s ease;
+}
+.nav-link.dropdown-toggle.open::after {
+  transform: rotate(180deg);
+}
+
+/* ===== Scrollbar ===== */
+.sidebar-custom::-webkit-scrollbar {
+  width: 6px;
+}
+.sidebar-custom::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+/* ===== Main Content Adjustment ===== */
+.main-content {
+  margin-left: 230px;
+  padding: 2rem;
+}
+
+@media (max-width: 992px) {
+  .sidebar-custom {
+    display: none;
+  }
+  .main-content {
+    margin-left: 0;
+  }
+}
+
+/* ===== Animation ===== */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
