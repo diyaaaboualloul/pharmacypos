@@ -1,6 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import LoginPage from "./pages/LoginPage";
-import RegisterPage from "./pages/RegisterPage";
 import AdminDashboardPage from "./pages/AdminDashboardPage";
 import CashierDashboardPage from "./pages/CashierDashboardPage";
 import FinanceDashboardPage from "./pages/FinanceDashboardPage";
@@ -25,8 +24,6 @@ import AdminAnalytics from "./pages/AdminAnalytics";
 import LiveAnalytics from "./pages/LiveAnalytics.jsx";
 import ExpensesPage from "./pages/ExpensesPage.jsx";
 import ReportsPage from "./pages/ReportsPage.jsx";
-
-// Inside your <Routes>
 import EmployeesPage from "./pages/EmployeesPage";
 import PayrollPage from "./pages/PayrollPage";
 
@@ -67,14 +64,14 @@ function App() {
             </GuestRoute>
           }
         />
-        <Route
+        {/* <Route
           path="/register"
           element={
             <GuestRoute>
               <RegisterPage />
             </GuestRoute>
           }
-        />
+        /> */}
         <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
         {/* ================== ADMIN ROUTES ================== */}
@@ -86,7 +83,6 @@ function App() {
             </RoleProtectedRoute>
           }
         />
-
         <Route
           path="/admin/users"
           element={
@@ -154,7 +150,7 @@ function App() {
           }
         />
 
-        {/* ================== NEW: EMPLOYEES (Admin or Finance) ================== */}
+        {/* Employees (Admin/Finance) */}
         <Route
           path="/admin/employees"
           element={

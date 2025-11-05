@@ -1,18 +1,22 @@
-import Sidebar from "./Sidebar";
+// src/components/Layout.jsx
 import TopHeader from "./TopHeader";
-import "../css/Layout.css";
+import Sidebar, { SIDEBAR_WIDTH, TOPBAR_HEIGHT } from "./Sidebar";
 
-export default function Layout({ children }) {
+export default function Layout({ title, children }) {
   return (
     <>
       <TopHeader />
+      <Sidebar />
 
-      <div className="d-flex flex-wrap">
-        <Sidebar />
-        <div className="container-fluid mt-4 bigcont">
-          {children}
+      {/* Main area under topbar, beside sidebar */}
+      <main className="app-main" style={{ minHeight: `calc(100vh - ${TOPBAR_HEIGHT}px)` }}>
+        <div className="content-shell">
+          <div className="content-sheet">
+            {title ? <h1 className="page-title">{title}</h1> : null}
+            {children}
+          </div>
         </div>
-      </div>
+      </main>
     </>
   );
 }

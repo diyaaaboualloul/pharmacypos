@@ -10,11 +10,95 @@ function currentPeriod() {
   return `${d.getFullYear()}-${mm}`;
 }
 
+/** Lightweight modal dialog (no jQuery) */
+function PaymentDialog({ open, defaultMethod = "cash", onCancel, onConfirm }) {
+  const [method, setMethod] = useState(defaultMethod);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (open) {
+      setMethod(defaultMethod || "cash");
+      setError("");
+    }
+  }, [open, defaultMethod]);
+
+  // Keyboard: Enter confirms, Esc cancels
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        if (!method) return setError("Please choose a payment method.");
+        onConfirm(method);
+      } else if (e.key === "Escape") {
+        onCancel();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, method, onCancel, onConfirm]);
+
+  if (!open) return null;
+
+  return (
+    <div
+      className="position-fixed top-0 start-0 w-100 h-100"
+      style={{ background: "rgba(0,0,0,0.4)", zIndex: 1050 }}
+      onMouseDown={onCancel}
+    >
+      <div
+        className="card shadow"
+        style={{
+          maxWidth: 420,
+          width: "92%",
+          margin: "10vh auto",
+          borderRadius: 12,
+        }}
+        // stop clicks inside from closing
+        onMouseDown={(e) => e.stopPropagation()}
+      >
+        <div className="card-header fw-semibold">Mark as Paid</div>
+        <div className="card-body">
+          <label className="form-label">Payment method</label>
+          <select
+            className="form-select"
+            value={method}
+            onChange={(e) => setMethod(e.target.value)}
+          >
+            <option value="cash">Cash</option>
+            <option value="card">Card</option>
+            <option value="bank">Bank</option>
+          </select>
+          {error && <div className="text-danger small mt-2">{error}</div>}
+          <div className="d-flex justify-content-end gap-2 mt-4">
+            <button className="btn btn-light" onClick={onCancel}>
+              Cancel
+            </button>
+            <button
+              className="btn btn-primary"
+              onClick={() => {
+                if (!method) return setError("Please choose a payment method.");
+                onConfirm(method);
+              }}
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function PayrollPage() {
   const [period, setPeriod] = useState(currentPeriod());
-  const [rows, setRows] = useState([]);           
+  const [rows, setRows] = useState([]);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // modal state
+  const [payDialogOpen, setPayDialogOpen] = useState(false);
+  const [payTarget, setPayTarget] = useState(null); // row object
 
   const api = useMemo(
     () =>
@@ -45,12 +129,13 @@ export default function PayrollPage() {
 
   useEffect(() => {
     loadPayroll();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ✅ Local field change with live netPay recalculation
   const updateLocal = (id, patch) => {
-    setRows(prev =>
-      prev.map(r => {
+    setRows((prev) =>
+      prev.map((r) => {
         if (r._id !== id) return r;
         const updated = { ...r, ...patch };
 
@@ -79,23 +164,46 @@ export default function PayrollPage() {
     }
   };
 
+  // Called when the user clicks the "Mark Paid"/"Unpay" button
   const togglePaid = async (row) => {
     try {
+      // always persist current numbers first
       await api.put(`/api/payroll/${row._id}`, {
         baseSalary: Number(row.baseSalary ?? 0),
         advances: Number(row.advances ?? 0),
         deductions: Number(row.deductions ?? 0),
       });
 
-      let body = { paid: !row.paid };
-      if (!row.paid) {
-        const method = prompt("Payment method? (cash / card / bank)", "cash");
-        if (!method) return;
-        body.paymentMethod = method;
-        body.paidDate = new Date().toISOString();
+      if (row.paid) {
+        // Unpay immediately
+        const { data } = await api.patch(`/api/payroll/${row._id}/pay`, {
+          paid: false,
+        });
+        setMessage(data.message || "Payment updated");
+        await loadPayroll();
+      } else {
+        // Open dialog to choose method before paying
+        setPayTarget(row);
+        setPayDialogOpen(true);
       }
-      const { data } = await api.patch(`/api/payroll/${row._id}/pay`, body);
+    } catch (err) {
+      setMessage(err.response?.data?.message || "Failed to update payment");
+    }
+  };
+
+  // Confirm from dialog
+  const confirmPay = async (method) => {
+    if (!payTarget) return;
+    try {
+      const body = {
+        paid: true,
+        paymentMethod: method,
+        paidDate: new Date().toISOString(),
+      };
+      const { data } = await api.patch(`/api/payroll/${payTarget._id}/pay`, body);
       setMessage(data.message || "Payment updated");
+      setPayDialogOpen(false);
+      setPayTarget(null);
       await loadPayroll();
     } catch (err) {
       setMessage(err.response?.data?.message || "Failed to update payment");
@@ -279,6 +387,17 @@ export default function PayrollPage() {
           </div>
         </div>
       </div>
+
+      {/* Payment dialog */}
+      <PaymentDialog
+        open={payDialogOpen}
+        defaultMethod="cash"
+        onCancel={() => {
+          setPayDialogOpen(false);
+          setPayTarget(null);
+        }}
+        onConfirm={confirmPay}
+      />
     </Layout>
   );
 }

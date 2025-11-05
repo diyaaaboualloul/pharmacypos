@@ -1,0 +1,31 @@
+/* Make the WHOLE invoice page pure white (kills the bottom black strip) */
+.invoice-page-shell {
+  background: #fff !important;
+  min-height: 100vh;
+}
+
+/* In case a global dark theme is applied on <html> or #root */
+html, body, #root {
+  background: #fff !important;
+}
+
+/* Table/card look to match your new POS styling */
+.invoice-table thead th {
+  background: #fff8e1;            /* soft warm header */
+  border-bottom: 1px solid #f0e6c8;
+}
+.invoice-table tbody tr:nth-child(even) {
+  background: #fafafa;
+}
+.invoice-table .badge-original {
+  background: #e7f7ef;
+  color: #127c58;
+}
+.invoice-table .badge-partial {
+  background: #fff1d6;
+  color: #9a6b00;
+}
+.invoice-table .badge-refunded {
+  background: #ffe2e6;
+  color: #b4232c;
+}

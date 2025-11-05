@@ -13,6 +13,11 @@ export default function ProductManagementPage() {
   const [showForm, setShowForm] = useState(false);
   const [message, setMessage] = useState("");
 
+  // ✅ added: confirm modal + centered toast states
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [targetProduct, setTargetProduct] = useState(null);
+  const [deleteMessage, setDeleteMessage] = useState("");
+
   // Filters & pagination
   const [filterName, setFilterName] = useState("");
   const [filterCategory, setFilterCategory] = useState("");
@@ -108,18 +113,61 @@ export default function ProductManagementPage() {
     setShowForm(true);
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Delete this product?")) return;
-    const token = getToken();
-    await axios.delete(`http://localhost:5000/api/admin/products/${id}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    fetchProducts();
+  // ✅ changed minimal behavior: open custom confirm modal instead of window.confirm
+  const handleDelete = (id) => {
+    const prod = products.find((p) => p._id === id);
+    setTargetProduct(prod || { _id: id });
+    setConfirmOpen(true);
   };
+
+  // ✅ actual deletion after user confirms
+  const confirmDeleteProduct = async () => {
+    if (!targetProduct?._id) return;
+    try {
+      const token = getToken();
+      await axios.delete(`http://localhost:5000/api/admin/products/${targetProduct._id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setConfirmOpen(false);
+      setTargetProduct(null);
+      fetchProducts();
+
+      // centered success toast
+      setDeleteMessage("✅ Product deleted successfully");
+      setTimeout(() => setDeleteMessage(""), 2000);
+    } catch (err) {
+      setConfirmOpen(false);
+      setTargetProduct(null);
+      setMessage("Delete failed");
+    }
+  };
+
+  // ✅ optional: close confirm on ESC
+  useEffect(() => {
+    const onKey = (e) => e.key === "Escape" && setConfirmOpen(false);
+    if (confirmOpen) window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [confirmOpen]);
 
   return (
     <Layout>
       <div className="container py-4">
+        {/* ✅ centered success toast */}
+        <AnimatePresence>
+          {deleteMessage && (
+            <motion.div
+              className="position-fixed top-50 start-50 translate-middle bg-success text-white px-4 py-2 rounded shadow"
+              style={{ zIndex: 2000, fontWeight: 500 }}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{ duration: 0.25 }}
+            >
+              {deleteMessage}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Header */}
         <div className="d-flex justify-content-between align-items-center mb-4">
           <h3 className="fw-bold text-primary">📦 Product Dashboard</h3>
@@ -260,7 +308,7 @@ export default function ProductManagementPage() {
                       </button>
                       <button
                         className="btn btn-sm btn-danger"
-                        onClick={() => handleDelete(p._id)}
+                        onClick={() => handleDelete(p._id)} // ✅ open modal
                       >
                         🗑️
                       </button>
@@ -365,6 +413,50 @@ export default function ProductManagementPage() {
                     </button>
                   </div>
                 </form>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ✅ Custom Confirm Delete Modal */}
+        <AnimatePresence>
+          {confirmOpen && (
+            <motion.div
+              className="position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-50 d-flex justify-content-center align-items-center"
+              style={{ zIndex: 1999 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <motion.div
+                className="card p-4 shadow-lg"
+                style={{ width: 420, borderRadius: 16 }}
+                initial={{ scale: 0.9, y: -10 }}
+                animate={{ scale: 1, y: 0 }}
+                exit={{ scale: 0.9, y: 10 }}
+                role="dialog"
+                aria-modal="true"
+              >
+                <h5 className="mb-2">Delete Product?</h5>
+                <p className="text-muted mb-4">
+                  This will permanently remove{" "}
+                  <strong>{targetProduct?.name || "this product"}</strong>.
+                </p>
+                <div className="d-flex gap-2">
+                  <button
+                    className="btn btn-secondary w-50"
+                    onClick={() => setConfirmOpen(false)}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    className="btn btn-danger w-50"
+                    onClick={confirmDeleteProduct}
+                    autoFocus
+                  >
+                    Delete
+                  </button>
+                </div>
               </motion.div>
             </motion.div>
           )}

@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { getUser } from "../utils/auth";
-import { Menu, Bell, LogOut, User as UserIcon } from "lucide-react";
+import { Menu, LogOut, User as UserIcon, AlertTriangle } from "lucide-react";
 
 export const TOPBAR_HEIGHT = 60;
 
@@ -14,69 +14,120 @@ export default function TopHeader() {
     return user.role.charAt(0).toUpperCase() + user.role.slice(1);
   }, [user]);
 
-  const handleLogout = () => {
+  const roleColor = useMemo(() => {
+    switch (user?.role) {
+      case "admin": return "#00d4b0";
+      case "finance": return "#6cb6ff";
+      case "cashier": return "#f5b342";
+      default: return "#ccc";
+    }
+  }, [user]);
+
+  const doLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     navigate("/login");
   };
 
   return (
-    <header
-      className="topbar position-fixed w-100 top-0 start-0 shadow-sm bg-white border-bottom"
-      style={{ height: TOPBAR_HEIGHT, zIndex: 1040 }}
-    >
-      <div className="container-fluid px-4 d-flex justify-content-between align-items-center h-100">
-        {/* Left: Burger + Brand */}
-        <div className="d-flex align-items-center gap-3">
-          <button
-            className="btn btn-light d-lg-none rounded-circle p-2 shadow-sm"
-            type="button"
-            data-bs-toggle="offcanvas"
-            data-bs-target="#sidebarMenu"
-            aria-controls="sidebarMenu"
-          >
-            <Menu size={20} />
-          </button>
+    <>
+      <header
+        className="topbar navbar navbar-dark position-fixed w-100 top-0 start-0 shadow-sm"
+        style={{ height: TOPBAR_HEIGHT, zIndex: 1040 }}
+      >
+        <div className="container-fluid px-3">
+          {/* Left: Burger + Brand */}
+          <div className="d-flex align-items-center gap-2">
+            <button
+              className="btn btn-icon d-lg-none"
+              type="button"
+              data-bs-toggle="offcanvas"
+              data-bs-target="#sidebarMenu"
+              aria-controls="sidebarMenu"
+              aria-label="Open Menu"
+            >
+              <Menu size={20} />
+            </button>
 
-          <div className="topbar-brand d-flex align-items-center gap-2 fw-semibold text-primary">
-            <span style={{ fontSize: 20 }}>💊</span>
-            <span className="brand-text">Pharmacy POS</span>
+            <div className="topbar-brand d-flex align-items-center gap-2">
+              <img
+                src="/logo-pharmacy.png"
+                alt="DHL Pharmacy Logo"
+                width={24}
+                height={24}
+                style={{ borderRadius: 6, objectFit: "contain" }}
+              />
+              <span className="brand-text glow-text">DHL PHARMACY</span>
+            </div>
+          </div>
+
+          {/* Right: User + Logout */}
+          <div className="topbar-actions d-flex align-items-center gap-2">
+            <span className="topbar-chip d-none d-sm-inline-flex" style={{ color: roleColor }}>
+              <UserIcon size={14} style={{ color: roleColor }} />
+              {user?.name || "User"}
+            </span>
+            <span className="topbar-chip alt d-none d-md-inline-flex" style={{ color: roleColor }}>
+              {roleLabel}
+            </span>
+
+            {/* Fancy modal trigger (NOT window.confirm) */}
+            <button
+              className="btn btn-logout"
+              type="button"
+              data-bs-toggle="modal"
+              data-bs-target="#logoutConfirmModal"
+            >
+              <LogOut size={18} />
+              <span className="d-none d-sm-inline">Logout</span>
+            </button>
           </div>
         </div>
+      </header>
 
-        {/* Right: User / Alerts / Logout */}
-        <div className="d-flex align-items-center gap-3">
-          <div className="d-none d-sm-flex align-items-center gap-2 px-3 py-1 bg-light rounded-pill text-secondary small fw-medium shadow-sm">
-            <UserIcon size={14} />
-            <span>{user?.name || "User"}</span>
+      {/* Logout Confirmation Modal */}
+      <div
+        className="modal fade"
+        id="logoutConfirmModal"
+        tabIndex={-1}
+        aria-labelledby="logoutConfirmLabel"
+        aria-hidden="true"
+        data-bs-backdrop="true"
+      >
+        <div className="modal-dialog modal-dialog-centered">
+          <div className="modal-content modal-glass">
+            <div className="modal-hero">
+              <div className="hero-icon">
+                <AlertTriangle size={18} />
+              </div>
+              <h5 className="modal-title" id="logoutConfirmLabel">Confirm Logout</h5>
+            </div>
+
+            <div className="modal-body">
+              You’re about to sign out of <strong style={{ color: "var(--fg)" }}>Pharmacy POS</strong>.<br />
+              Any unsaved changes will be lost.
+              <div className="modal-tip mt-3">
+                <span style={{ fontWeight: 600, color: "var(--fg)" }}>Tip</span>
+                You can always sign back in with your credentials.
+              </div>
+            </div>
+
+            <div className="modal-footer">
+              <button type="button" className="btn-secondary-ghost" data-bs-dismiss="modal">
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn-danger-gradient"
+                onClick={doLogout}
+                data-bs-dismiss="modal"
+              >
+                Logout
+              </button>
+            </div>
           </div>
-
-          <div className="d-none d-md-flex align-items-center px-3 py-1 bg-primary text-white rounded-pill small shadow-sm">
-            {roleLabel}
-          </div>
-
-          <button
-            className="btn btn-light rounded-circle p-2 shadow-sm position-relative"
-            type="button"
-            aria-label="Alerts"
-          >
-            <Bell size={18} />
-            <span
-              className="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle"
-              style={{ width: 8, height: 8 }}
-            ></span>
-          </button>
-
-          <button
-            className="btn btn-outline-danger d-flex align-items-center gap-1 px-3 py-1 rounded-pill shadow-sm"
-            type="button"
-            onClick={handleLogout}
-          >
-            <LogOut size={18} />
-            <span className="d-none d-sm-inline">Logout</span>
-          </button>
         </div>
       </div>
-    </header>
+    </>
   );
 }

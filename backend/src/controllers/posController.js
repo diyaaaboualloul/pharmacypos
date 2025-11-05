@@ -12,6 +12,7 @@ function todayUtc() {
   const d = new Date();
   return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
 }
+
 export const getTodayTotalSales = async (req, res) => {
   try {
     const userId = req.user._id;
@@ -55,9 +56,6 @@ export const getTodayTotalSales = async (req, res) => {
   }
 };
 
-
-
-
 // ✅ Fetch all cashiers with their current day status
 export const getCashiersDayStatus = async (req, res) => {
   try {
@@ -91,8 +89,6 @@ export const getCashiersDayStatus = async (req, res) => {
   }
 };
 
-
-
 // === Helper: Asia/Beirut invoice prefix (YYYYMMDD) ===
 function beirutInvoicePrefix() {
   const fmt = new Intl.DateTimeFormat("en-GB", {
@@ -115,7 +111,6 @@ async function nextInvoiceNumber(session) {
   );
   return `${prefix}-${String(ctr.seq).padStart(4, "0")}`;
 }
-
 
 export const closeCashierDay = async (req, res) => {
   const session = await mongoose.startSession();
@@ -200,63 +195,6 @@ export const closeCashierDay = async (req, res) => {
   }
 };
 
-
-
-
-// === PUT /api/pos/sales/:id ===
-// export const updateSale = async (req, res) => {
-//   try {
-//     const sale = await Sale.findById(req.params.id);
-//     if (!sale) return res.status(404).json({ message: "Sale not found" });
-
-//     const { items, notes } = req.body;
-
-//     for (const item of sale.items) {
-//       await Batch.updateOne({ _id: item.batch }, { $inc: { quantity: item.quantity } });
-//     }
-
-//     const updatedItems = [];
-//     let newTotal = 0;
-
-//     for (const i of items) {
-//       const product = await Product.findById(i.productId);
-//       if (!product) throw new Error("Product not found");
-
-//       const batch = await Batch.findOne({ product: product._id, quantity: { $gt: 0 } });
-//       if (!batch) throw new Error("No available stock");
-
-//       await Batch.updateOne({ _id: batch._id }, { $inc: { quantity: -i.quantity } });
-
-//       const lineTotal = i.price * i.quantity;
-//       updatedItems.push({
-//         product: product._id,
-//         batch: batch._id,
-//         quantity: i.quantity,
-//         unitPrice: i.price,
-//         lineTotal,
-//       });
-//       newTotal += lineTotal;
-//     }
-
-//     sale.items = updatedItems;
-//     sale.total = newTotal;
-//     sale.subTotal = newTotal;
-//     sale.isEdited = true;
-//     sale.notes = notes;
-//     sale.editHistory = [
-//       ...(sale.editHistory || []),
-//       { editedAt: new Date(), editor: req.user?._id },
-//     ];
-
-//     await sale.save();
-
-//     res.json({ message: "Invoice updated successfully", sale });
-//   } catch (err) {
-//     console.error(err);
-//     res.status(400).json({ message: err.message || "Update failed" });
-//   }
-// };
-
 // === GET /api/pos/search?q=... ===
 export const searchSellable = async (req, res) => {
   try {
@@ -306,13 +244,38 @@ export const searchSellable = async (req, res) => {
 };
 
 // === POST /api/pos/checkout ===
+// ✨ UPDATED: accept paymentType from multiple shapes (new & legacy) and support cash/card/bank/insurance
 export const checkout = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
-    const { items = [], payment = {}, notes } = req.body || {};
+    const body = req.body || {};
+    const { items = [] } = body;
     if (!Array.isArray(items) || items.length === 0) throw new Error("No items provided");
-    if (!payment?.type || !["cash", "card"].includes(payment.type)) throw new Error("Invalid payment type");
+
+    // Accept payment type from different shapes (legacy + new)
+    const paymentTypeRaw =
+      body.payment?.type ??
+      body.paymentType ??
+      body.payment?.paymentType ??
+      body.method ??
+      null;
+
+    const paymentType = (paymentTypeRaw || "").toString().trim().toLowerCase();
+
+    const ALLOWED = new Set(["cash", "card", "bank", "insurance"]);
+    if (!ALLOWED.has(paymentType)) throw new Error("Invalid payment type");
+
+    // Other payment fields (read flexibly)
+    const currency = body.payment?.currency ?? body.currency ?? "USD";
+    const rate = Number(body.payment?.rate ?? body.rate ?? 0) || 0;
+    const received = Number(
+      body.payment?.cashReceived ??
+      body.payment?.received ??
+      body.cashReceived ??
+      body.received ??
+      0
+    );
 
     const today = todayUtc();
     const saleItems = [];
@@ -321,7 +284,9 @@ export const checkout = async (req, res) => {
     for (const line of items) {
       const product = await Product.findById(line.productId).session(session);
       if (!product) throw new Error("Product not found");
-      const unitPrice = Number(line.unitPrice ?? product.price);
+
+      // accept either frontend `price` or legacy `unitPrice`
+      const unitPrice = Number(line.price ?? line.unitPrice ?? product.price);
 
       const batches = await Batch.find({
         product: product._id,
@@ -338,6 +303,7 @@ export const checkout = async (req, res) => {
       for (const b of batches) {
         if (remaining <= 0) break;
         const take = Math.min(remaining, b.quantity);
+
         const upd = await Batch.updateOne(
           { _id: b._id, quantity: { $gte: take } },
           { $inc: { quantity: -take } },
@@ -353,11 +319,13 @@ export const checkout = async (req, res) => {
     }
 
     const total = subTotal;
-    let paymentRecord = { type: payment.type };
-    if (payment.type === "cash") {
-      if (Number(payment.cashReceived) < total) throw new Error("Cash received is less than total");
-      paymentRecord.cashReceived = Number(payment.cashReceived);
-      paymentRecord.change = Number((paymentRecord.cashReceived - total).toFixed(2));
+
+    // Build payment record saved on the Sale
+    const paymentRecord = { type: paymentType, currency, rate };
+    if (paymentType === "cash") {
+      if (received < total) throw new Error("Cash received is less than total");
+      paymentRecord.cashReceived = received;
+      paymentRecord.change = Number((received - total).toFixed(2));
     }
 
     const invoiceNumber = await nextInvoiceNumber(session);
@@ -371,7 +339,7 @@ export const checkout = async (req, res) => {
           total: Number(total.toFixed(2)),
           payment: paymentRecord,
           cashier: req.user?._id || req.user?.id,
-          notes,
+          notes: body.notes,
         },
       ],
       { session }
@@ -389,6 +357,7 @@ export const checkout = async (req, res) => {
   } catch (err) {
     await session.abortTransaction();
     session.endSession();
+    console.error("Checkout failed:", err);
     res.status(400).json({ message: err.message || "Checkout failed" });
   }
 };
@@ -419,8 +388,6 @@ export const listMySales = async (req, res) => {
   }
 };
 
-
-
 // === GET /api/pos/sales ===
 export const listSales = async (req, res) => {
   try {
@@ -449,7 +416,7 @@ export const listSales = async (req, res) => {
   }
 };
 
-// === POST /api/pos/replacement-item/:saleId ===
+// === POST /api/pos/replace-item/:saleId ===
 export const replaceItem = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -530,9 +497,6 @@ export const replaceItem = async (req, res) => {
 };
 
 // === POST /api/pos/refund-item/:saleId ===
-
-
-// === POST /api/pos/refund-item/:saleId ===
 export const refundItem = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -606,7 +570,6 @@ export const refundItem = async (req, res) => {
       .json({ message: err.message || "Partial refund failed" });
   }
 };
-
 
 // === GET /api/pos/sales/:id ===
 export const getSaleById = async (req, res) => {
@@ -696,6 +659,7 @@ export const openCashierDay = async (req, res) => {
     res.status(400).json({ message: err.message || "Failed to open day" });
   }
 };
+
 // === GET /api/pos/cashier-sessions/:cashierId ===
 // ✅ Get sessions with sales & refund totals between open/close times
 export const getCashierSessions = async (req, res) => {
@@ -819,8 +783,3 @@ export const getCurrentSessionTotal = async (req, res) => {
     res.status(500).json({ message: "Failed to fetch session total" });
   }
 };
-
-
-
-
-

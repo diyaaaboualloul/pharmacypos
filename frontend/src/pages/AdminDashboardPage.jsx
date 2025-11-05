@@ -1,18 +1,11 @@
-import React from "react";
-import TopHeader from "../components/TopHeader";
-import Sidebar from "../components/Sidebar";
+// src/pages/AdminDashboardPage.jsx
+import Layout from "../components/Layout";
 
 export default function AdminDashboardPage() {
   return (
-    <div className="d-flex">
-      <Sidebar />
-      <div className="flex-grow-1" style={{ marginLeft: "220px", marginTop: "56px" }}>
-        <TopHeader />
-        <div className="p-4">
-          <h1>📊 Admin Dashboard</h1>
-          <p>Welcome to the admin panel.</p>
-        </div>
-      </div>
-    </div>
+    <Layout title="Admin Dashboard">
+      <p>Welcome to the admin panel.</p>
+      {/* put the rest of your content here */}
+    </Layout>
   );
 }

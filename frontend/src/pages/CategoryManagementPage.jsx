@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import Layout from "../components/Layout";
 import { getToken } from "../utils/auth";
+import { motion, AnimatePresence } from "framer-motion"; // ✅ added
 
 export default function CategoryManagementPage() {
   const [categories, setCategories] = useState([]);
@@ -10,7 +11,11 @@ export default function CategoryManagementPage() {
   const [message, setMessage] = useState("");
   const navigate = useNavigate();
 
-  // ✅ Fetch all categories with product counts
+  // ✅ Added confirm & toast states
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [targetCategory, setTargetCategory] = useState(null);
+  const [deleteMessage, setDeleteMessage] = useState("");
+
   const fetchCategories = async () => {
     try {
       const token = getToken();
@@ -28,7 +33,6 @@ export default function CategoryManagementPage() {
     fetchCategories();
   }, []);
 
-  // ✅ Create new category
   const handleCreateCategory = async (e) => {
     e.preventDefault();
     try {
@@ -46,17 +50,21 @@ export default function CategoryManagementPage() {
     }
   };
 
-  // ✅ Delete category
-  const handleDeleteCategory = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this category?")) return;
+  // ✅ New delete function (called when confirmed)
+  const confirmDeleteCategory = async () => {
+    if (!targetCategory?._id) return;
     try {
       const token = getToken();
       const { data } = await axios.delete(
-        `http://localhost:5000/api/admin/categories/${id}`,
+        `http://localhost:5000/api/admin/categories/${targetCategory._id}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setMessage(data.message);
+      setConfirmOpen(false);
+      setTargetCategory(null);
       fetchCategories();
+
+      setDeleteMessage("✅ Category deleted successfully");
+      setTimeout(() => setDeleteMessage(""), 2000);
     } catch (err) {
       setMessage(err.response?.data?.message || "Failed to delete category");
     }
@@ -66,17 +74,34 @@ export default function CategoryManagementPage() {
     <Layout>
       <div className="card shadow-sm">
         <div className="card-body">
-          {/* 🧭 Page Header */}
+
+          {/* ✅ Centered delete alert */}
+          <AnimatePresence>
+            {deleteMessage && (
+              <motion.div
+                className="position-fixed top-50 start-50 translate-middle bg-success text-white px-4 py-2 rounded shadow"
+                style={{ zIndex: 2000, fontWeight: 500 }}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                transition={{ duration: 0.25 }}
+              >
+                {deleteMessage}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Page Header */}
           <div className="d-flex flex-wrap justify-content-between align-items-center mb-3">
             <h3 className="page-title mb-3 mb-md-0">📂 Category Management</h3>
           </div>
 
-          {/* 📨 Message Box */}
+          {/* Message */}
           {message && (
             <div className="alert alert-info py-2 text-center">{message}</div>
           )}
 
-          {/* 📝 Create Category Form */}
+          {/* Create Category Form */}
           <form onSubmit={handleCreateCategory} className="row g-2 g-md-3 mb-4">
             <div className="col-12 col-md-10">
               <input
@@ -95,7 +120,7 @@ export default function CategoryManagementPage() {
             </div>
           </form>
 
-          {/* 📋 Categories Table */}
+          {/* Categories Table */}
           <div className="table-responsive">
             <table className="table table-striped table-bordered align-middle">
               <thead className="table-dark">
@@ -129,7 +154,10 @@ export default function CategoryManagementPage() {
                       <td>
                         <button
                           className="btn btn-danger btn-sm"
-                          onClick={() => handleDeleteCategory(c._id)}
+                          onClick={() => {
+                            setTargetCategory(c);
+                            setConfirmOpen(true);
+                          }}
                         >
                           🗑️
                         </button>
@@ -142,6 +170,48 @@ export default function CategoryManagementPage() {
           </div>
         </div>
       </div>
+
+      {/* ✅ Custom Confirm Delete Modal */}
+      <AnimatePresence>
+        {confirmOpen && (
+          <motion.div
+            className="position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-50 d-flex justify-content-center align-items-center"
+            style={{ zIndex: 1999 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+              className="card p-4 shadow-lg"
+              style={{ width: 420, borderRadius: 16 }}
+              initial={{ scale: 0.9, y: -10 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 10 }}
+            >
+              <h5 className="mb-2">Delete Category?</h5>
+              <p className="text-muted mb-4">
+                This will permanently remove <strong>{targetCategory?.name}</strong>.
+              </p>
+
+              <div className="d-flex gap-2">
+                <button
+                  className="btn btn-secondary w-50"
+                  onClick={() => setConfirmOpen(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="btn btn-danger w-50"
+                  onClick={confirmDeleteCategory}
+                  autoFocus
+                >
+                  Delete
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </Layout>
   );
 }

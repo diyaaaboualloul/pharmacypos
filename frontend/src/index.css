@@ -33,3 +33,6 @@ body {
   line-height: 1.5;
 }
 
+/* put at end of App.css */
+body, #root, .app-main--full, .content-shell, .content-sheet { background:#fff !important; }
+
