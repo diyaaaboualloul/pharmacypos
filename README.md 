@@ -1,0 +1,40 @@
+# 💊 DHL Pharmacy - POS & Management System
+
+DHL Pharmacy is a full-featured **Pharmacy Point of Sale and Management System** built using the **MERN Stack (MongoDB, Express, React, Node.js)**.  
+It helps pharmacies manage daily operations including products, stock batches, sales, employee payrolls, and expiration alerts — all in one system.
+
+---
+
+## ⭐ Key Features
+
+| Area | Features |
+|------|----------|
+| **Authentication & Roles** | Secure login with Admin, Cashier, and Finance roles |
+| **Product Management** | Add, edit, delete products and assign categories |
+| **Batch & Inventory Control** | Track quantities, expiry dates, and auto-alerts |
+| **POS System** | Smooth transaction process for cashiers with invoice generation |
+| **Alerts Dashboard** | Alerts for **low stock**, **expired**, and **soon-to-expire** meds |
+| **Payroll System** | Manage employee salaries, deductions, and payments |
+| **Reports & Insights** | View daily sales and business summaries |
+
+---
+
+## 🛠️ Tech Stack
+
+### Frontend
+- React.js
+- React Router
+- Axios
+- **Bootstrap** + Custom CSS
+
+### Backend
+- Node.js
+- Express.js
+- MongoDB & Mongoose
+- JSON Web Token (JWT) Authentication
+- bcrypt (secure password hashing)
+
+---
+
+## 📂 Project Structure
+
