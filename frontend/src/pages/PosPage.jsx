@@ -33,6 +33,9 @@ export default function PosPage() {
   // NEW: logout confirm modal
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
+  // NEW: prevent double clicks while toggling session
+  const [updatingStatus, setUpdatingStatus] = useState(false);
+
   const user = useMemo(() => {
     try {
       return JSON.parse(localStorage.getItem("user"));
@@ -114,6 +117,47 @@ export default function PosPage() {
     }
   }, [authHeaders, user]);
 
+  // ---------- Cashier self-toggle (NEW) ----------
+  // These expect backend routes that toggle the authenticated user's session:
+  //   POST /api/pos/session/open  -> { status: "open" }
+  //   POST /api/pos/session/close -> { status: "closed" }
+  const openMySession = useCallback(async () => {
+    if (updatingStatus) return;
+    setUpdatingStatus(true);
+    try {
+      await axios.post("http://localhost:5000/api/pos/session/open", {}, authHeaders);
+      await fetchCashierStatus();
+    } catch (err) {
+      console.error("Open session failed:", err);
+      alert(err?.response?.data?.message || "Failed to open session");
+    } finally {
+      setUpdatingStatus(false);
+    }
+  }, [updatingStatus, authHeaders, fetchCashierStatus]);
+
+  const clearCart = useCallback(() => setCart([]), []);
+
+  const closeMySession = useCallback(async () => {
+    if (updatingStatus) return;
+
+    // Optional safety: warn if cart not empty
+    if (cart.length && !window.confirm("Your cart has items. Close session and clear cart?")) {
+      return;
+    }
+    if (cart.length) clearCart();
+
+    setUpdatingStatus(true);
+    try {
+      await axios.post("http://localhost:5000/api/pos/session/close", {}, authHeaders);
+      await fetchCashierStatus();
+    } catch (err) {
+      console.error("Close session failed:", err);
+      alert(err?.response?.data?.message || "Failed to close session");
+    } finally {
+      setUpdatingStatus(false);
+    }
+  }, [updatingStatus, cart.length, clearCart, authHeaders, fetchCashierStatus]);
+
   // ---------- Effects ----------
   useEffect(() => {
     if (search.trim().length < 2) {
@@ -177,10 +221,18 @@ export default function PosPage() {
           setShowCheckoutModal(true);
         }
       }
+      // NEW: F6 to toggle my session (cashier only)
+      if (e.key === "F6") {
+        e.preventDefault();
+        if (user?.role === "cashier") {
+          if (isClosed) openMySession();
+          else closeMySession();
+        }
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [cart.length, isClosed]);
+  }, [cart.length, isClosed, user?.role, openMySession, closeMySession]);
 
   // ---------- Sorting ----------
   const sortedProducts = useMemo(() => {
@@ -242,8 +294,6 @@ export default function PosPage() {
     );
   }, []);
 
-  const clearCart = useCallback(() => setCart([]), []);
-
   // ---------- Checkout ----------
   const handleConfirmSale = useCallback(
     async (paymentData) => {
@@ -265,7 +315,7 @@ export default function PosPage() {
           // Send paymentType both top-level and inside payment for compatibility
           paymentType: paymentData?.paymentType,
           payment: {
-            type: paymentData?.paymentType,         // backward-compat for server expecting payment.type
+            type: paymentData?.paymentType,         // backward-compat
             paymentType: paymentData?.paymentType,  // modern shape
             currency: paymentData?.currency,
             rate: paymentData?.rate,
@@ -347,6 +397,24 @@ export default function PosPage() {
               />
               {isClosed ? "Closed" : "Open"}
             </span>
+
+            {/* NEW: Cashier self-toggle button */}
+            {user?.role === "cashier" && (
+              <button
+                className={isClosed ? "btn-primary" : "btn-clear"}
+                onClick={isClosed ? openMySession : closeMySession}
+                disabled={updatingStatus}
+                title={isClosed ? "Open my session (F6)" : "Close my session (F6)"}
+                style={{ minWidth: 140 }}
+              >
+                {updatingStatus
+                  ? "Please wait…"
+                  : isClosed
+                    ? "Open My Session"
+                    : "Close My Session"}
+              </button>
+            )}
+
             <span className="badge-role">
               {user?.name || user?.username || "cashier"} ({user?.role || "cashier"})
             </span>

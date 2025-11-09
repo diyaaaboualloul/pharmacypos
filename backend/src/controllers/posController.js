@@ -783,3 +783,33 @@ export const getCurrentSessionTotal = async (req, res) => {
     res.status(500).json({ message: "Failed to fetch session total" });
   }
 };
+
+/* ===========================
+   🔹 NEW: Cashier self-toggle
+   =========================== */
+
+// POST /api/pos/session/open  -> open current user's day
+export const openMySession = async (req, res, next) => {
+  try {
+    const cashierId = String(req.user?._id || req.user?.id || "");
+    if (!cashierId) return res.status(401).json({ message: "No authenticated user" });
+    req.params.cashierId = cashierId; // reuse existing handler
+    return openCashierDay(req, res, next);
+  } catch (e) {
+    console.error("openMySession error:", e);
+    return res.status(500).json({ message: "Failed to open session" });
+  }
+};
+
+// POST /api/pos/session/close -> close current user's day
+export const closeMySession = async (req, res, next) => {
+  try {
+    const cashierId = String(req.user?._id || req.user?.id || "");
+    if (!cashierId) return res.status(401).json({ message: "No authenticated user" });
+    req.params.cashierId = cashierId; // reuse existing handler
+    return closeCashierDay(req, res, next);
+  } catch (e) {
+    console.error("closeMySession error:", e);
+    return res.status(500).json({ message: "Failed to close session" });
+  }
+};
