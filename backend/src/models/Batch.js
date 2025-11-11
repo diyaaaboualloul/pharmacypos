@@ -1,3 +1,4 @@
+// backend/src/models/Batch.js
 import mongoose from "mongoose";
 
 const batchSchema = new mongoose.Schema(
@@ -6,6 +7,7 @@ const batchSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Product",
       required: true,
+      index: true,                      // ✅ lookups by product
     },
     batchNumber: {
       type: Number,
@@ -20,11 +22,13 @@ const batchSchema = new mongoose.Schema(
     expiryDate: {
       type: Date,
       required: true,
+      index: true,                      // ✅ range queries (expired / soon)
     },
     quantity: {
       type: Number,
       required: true,
       min: 0,
+      index: true,                      // ✅ low stock queries
     },
     costPrice: {
       type: Number,
@@ -34,10 +38,10 @@ const batchSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// ✅ Auto-increment batchNumber before savinggg
+// ✅ Auto-increment batchNumber before saving
 batchSchema.pre("validate", async function (next) {
   if (this.isNew) {
-    const lastBatch = await this.constructor.findOne().sort({ batchNumber: -1 });
+    const lastBatch = await this.constructor.findOne().sort({ batchNumber: -1 }).lean();
     this.batchNumber = lastBatch ? lastBatch.batchNumber + 1 : 1;
   }
   next();

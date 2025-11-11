@@ -85,3 +85,5 @@ router.post("/replace-item/:saleId", replaceItem);
 router.get("/current-session-total", getCurrentSessionTotal);
 
 export default router;
+
+

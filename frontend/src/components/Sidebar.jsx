@@ -54,8 +54,9 @@ export default function Sidebar() {
     }
   }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // NOTE: Dashboard is now a title (not a link)
   const menuSections = [
-    { label: "Dashboard", icon: <LayoutDashboard size={18} />, to: "/dashboard" },
+    { label: "Dashboard", icon: <LayoutDashboard size={18} />, isTitle: true },
     { label: "Alerts", icon: <Bell size={18} />, to: "/admin/alerts", isAlert: true },
     {
       label: "Analytics",
@@ -106,6 +107,7 @@ export default function Sidebar() {
     }
 
     if (user?.role === "cashier") {
+      // Cashier keeps the "Dashboard" title (non-clickable) and "Invoices"
       return ["Dashboard", "Invoices"].includes(section.label);
     }
 
@@ -146,6 +148,23 @@ export default function Sidebar() {
         <ul className="nav flex-column px-2 mb-4">
           {filteredSections.map((item) => {
             const isSectionOpen = openDropdown === item.label;
+
+            // New: Title-only rendering (non-clickable)
+            if (item.isTitle) {
+              return (
+                <li key={item.label} className="nav-item mt-2 mb-1">
+                  <div
+                    className="nav-title d-flex align-items-center py-2 px-3 rounded-3 text-secondary fw-semibold"
+                    style={{ opacity: 0.9, letterSpacing: "0.3px" }}
+                    aria-current="false"
+                    aria-disabled="true"
+                  >
+                    <span className="me-2">{item.icon}</span>
+                    <span>{item.label}</span>
+                  </div>
+                </li>
+              );
+            }
 
             if (item.subItems) {
               const sectionActive = item.subItems.some((s) =>
@@ -238,6 +257,23 @@ export default function Sidebar() {
           <ul className="nav flex-column">
             {filteredSections.map((item) => {
               const isOpen = openDropdown === item.label;
+
+              // Mobile: Title-only, non-clickable
+              if (item.isTitle) {
+                return (
+                  <li key={item.label} className="nav-item mt-2 mb-1">
+                    <div
+                      className="nav-title d-flex align-items-center py-2 px-3 rounded-3 text-secondary fw-semibold"
+                      style={{ opacity: 0.9, letterSpacing: "0.3px" }}
+                      aria-current="false"
+                      aria-disabled="true"
+                    >
+                      <span className="me-2">{item.icon}</span>
+                      <span>{item.label}</span>
+                    </div>
+                  </li>
+                );
+              }
 
               if (item.subItems) {
                 return (

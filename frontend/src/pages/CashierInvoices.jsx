@@ -18,6 +18,15 @@ export default function CashierInvoices() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
+  // modals (new)
+  const [confirmInfo, setConfirmInfo] = useState({
+    open: false,
+    id: null,
+    invoiceNumber: null,
+  });
+  const [successMsg, setSuccessMsg] = useState(""); // when non-empty, show success modal
+  const [submitting, setSubmitting] = useState(false);
+
   const navigate = useNavigate();
 
   // ---- API ----
@@ -57,20 +66,32 @@ export default function CashierInvoices() {
   }, [fetchSales, fetchCashierStatus]);
 
   // ---- Refund ----
-  const handleRefund = async (id) => {
-    if (!window.confirm("Refund this entire invoice?")) return;
+  // open confirm modal (instead of window.confirm)
+  const requestRefund = (id, invoiceNumber) => {
+    setConfirmInfo({ open: true, id, invoiceNumber });
+  };
+
+  // confirm button inside modal
+  const confirmRefundNow = async () => {
+    if (!confirmInfo.id) return;
     try {
+      setSubmitting(true);
       const token = getToken();
       await axios.post(
-        `http://localhost:5000/api/pos/refund/${id}`,
+        `http://localhost:5000/api/pos/refund/${confirmInfo.id}`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      alert("Refund processed successfully!");
+      setConfirmInfo({ open: false, id: null, invoiceNumber: null });
+      setSuccessMsg("Refund processed successfully!");
       fetchSales();
     } catch (err) {
       console.error(err);
-      alert("Refund failed: " + (err.response?.data?.message || err.message));
+      setConfirmInfo({ open: false, id: null, invoiceNumber: null });
+      // show an error-looking success modal to keep the UI pattern consistent
+      setSuccessMsg(err.response?.data?.message || "Refund failed.");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -166,6 +187,75 @@ export default function CashierInvoices() {
   return (
     // Force a pure-white page under/around the card (kills the dark strip)
     <div className="invoice-page-shell">
+      {/* tiny local styles for the modals (kept here so you don't have to edit other files) */}
+      <style>{`
+        .overlay-ask,
+        .overlay-ok {
+          position: fixed;
+          inset: 0;
+          background: rgba(15, 23, 42, 0.5); /* slate-900/50 */
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 1050;
+        }
+        .modal-card {
+          background: #fff;
+          width: min(560px, 92vw);
+          border-radius: 14px;
+          box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+          overflow: hidden;
+          animation: pop .12s ease-out;
+        }
+        @keyframes pop { from { transform: scale(.98); opacity:.6 } to { transform: scale(1); opacity:1 } }
+        .modal-head {
+          padding: 18px 22px 0 22px;
+        }
+        .modal-title {
+          font-weight: 700;
+          font-size: 1.1rem;
+          margin: 0 0 8px 0;
+        }
+        .modal-body {
+          padding: 0 22px 6px 22px;
+          color: #334155; /* slate-600 */
+        }
+        .modal-actions {
+          display: flex;
+          gap: 12px;
+          justify-content: flex-end;
+          padding: 16px 22px 20px 22px;
+          background: #f8fafc; /* slate-50 */
+          border-top: 1px solid #eef2f7;
+        }
+        .btn-cancel {
+          background: #6c757d; /* bootstrap secondary */
+          border: none;
+          color: #fff;
+          padding: 8px 18px;
+          border-radius: 10px;
+          font-weight: 600;
+        }
+        .btn-cancel:disabled { opacity: .7; }
+        .btn-danger-soft {
+          background: #dc3545; /* bootstrap danger */
+          border: none;
+          color: #fff;
+          padding: 8px 18px;
+          border-radius: 10px;
+          font-weight: 700;
+        }
+        .btn-danger-soft:disabled { opacity: .7; }
+        .btn-ok {
+          background: #0d6efd; /* bootstrap primary */
+          border: none;
+          color: #fff;
+          padding: 8px 18px;
+          border-radius: 10px;
+          font-weight: 700;
+        }
+      `}</style>
+
       <div className="container py-4">
         {/* Page header */}
         <div className="d-flex justify-content-between align-items-center mb-3">
@@ -322,7 +412,9 @@ export default function CashierInvoices() {
                                 {s._status === "original" && (
                                   <button
                                     className="btn btn-danger btn-sm"
-                                    onClick={() => handleRefund(s._id)}
+                                    onClick={() =>
+                                      requestRefund(s._id, s.invoiceNumber)
+                                    }
                                   >
                                     Refund All
                                   </button>
@@ -364,6 +456,64 @@ export default function CashierInvoices() {
           </>
         )}
       </div>
+
+      {/* --- Confirm Modal (matches your screenshot style/colors) --- */}
+      {confirmInfo.open && (
+        <div className="overlay-ask" role="dialog" aria-modal="true">
+          <div className="modal-card">
+            <div className="modal-head">
+              <div className="modal-title">Refund Invoice?</div>
+            </div>
+            <div className="modal-body">
+              <p className="mb-2">
+                This will <strong>refund the entire invoice</strong>
+                {confirmInfo.invoiceNumber ? (
+                  <> <span className="text-nowrap">#{confirmInfo.invoiceNumber}</span></>
+                ) : null}
+                .
+              </p>
+              <p className="mb-0">This action cannot be undone.</p>
+            </div>
+            <div className="modal-actions">
+              <button
+                className="btn-cancel"
+                onClick={() =>
+                  setConfirmInfo({ open: false, id: null, invoiceNumber: null })
+                }
+                disabled={submitting}
+              >
+                Cancel
+              </button>
+              <button
+                className="btn-danger-soft"
+                onClick={confirmRefundNow}
+                disabled={submitting}
+              >
+                {submitting ? "Processing…" : "Refund"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* --- Success / Error Modal (simple OK) --- */}
+      {successMsg && (
+        <div className="overlay-ok" role="dialog" aria-modal="true">
+          <div className="modal-card">
+            <div className="modal-head">
+              <div className="modal-title">localhost:5173 says</div>
+            </div>
+            <div className="modal-body">
+              <p className="mb-0">{successMsg}</p>
+            </div>
+            <div className="modal-actions" style={{ justifyContent: "center" }}>
+              <button className="btn-ok" onClick={() => setSuccessMsg("")}>
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

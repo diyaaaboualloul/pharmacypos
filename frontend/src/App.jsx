@@ -31,7 +31,16 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/admin/cashiers" element={<AdminCashiers />} />
+        {/* Admin-only (cashiers list) */}
+        <Route
+          path="/admin/cashiers"
+          element={
+            <RoleProtectedRoute allowedRoles={["admin"]}>
+              <AdminCashiers />
+            </RoleProtectedRoute>
+          }
+        />
+
         <Route
           path="/finance/expenses"
           element={
@@ -51,9 +60,34 @@ function App() {
 
         {/* Redirect root to /login */}
         <Route path="/" element={<Navigate to="/login" replace />} />
-        <Route path="/admin/cashiers/:cashierId/sessions" element={<CashierSessions />} />
-        <Route path="/admin/analytics" element={<AdminAnalytics />} />
-        <Route path="/admin/live" element={<LiveAnalytics />} />
+
+        {/* Admin-only (cashier sessions) */}
+        <Route
+          path="/admin/cashiers/:cashierId/sessions"
+          element={
+            <RoleProtectedRoute allowedRoles={["admin"]}>
+              <CashierSessions />
+            </RoleProtectedRoute>
+          }
+        />
+
+        {/* Admin-only analytics */}
+        <Route
+          path="/admin/analytics"
+          element={
+            <RoleProtectedRoute allowedRoles={["admin"]}>
+              <AdminAnalytics />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/live"
+          element={
+            <RoleProtectedRoute allowedRoles={["admin"]}>
+              <LiveAnalytics />
+            </RoleProtectedRoute>
+          }
+        />
 
         {/* Public Routes */}
         <Route
@@ -74,15 +108,17 @@ function App() {
         /> */}
         <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
-        {/* ================== ADMIN ROUTES ================== */}
+        {/* ================== ADMIN + FINANCE DASHBOARD ACCESS ================== */}
         <Route
           path="/dashboard"
           element={
-            <RoleProtectedRoute allowedRoles={["admin"]}>
+            <RoleProtectedRoute allowedRoles={["admin", "finance"]}>
               <AdminDashboardPage />
             </RoleProtectedRoute>
           }
         />
+
+        {/* ================== ADMIN ROUTES ================== */}
         <Route
           path="/admin/users"
           element={
@@ -126,17 +162,17 @@ function App() {
         <Route
           path="/admin/products/:productId/batches"
           element={
-            <RoleProtectedRoute allowedRoles={["admin","finance"]}>
+            <RoleProtectedRoute allowedRoles={["admin", "finance"]}>
               <BatchManagementPage />
             </RoleProtectedRoute>
           }
         />
 
-        {/* Invoices (Admin) */}
+        {/* Invoices (Admin/Finance) */}
         <Route
           path="/admin/invoices"
           element={
-            <RoleProtectedRoute allowedRoles={["admin","finance"]}>
+            <RoleProtectedRoute allowedRoles={["admin", "finance"]}>
               <AdminInvoices />
             </RoleProtectedRoute>
           }
@@ -144,7 +180,7 @@ function App() {
         <Route
           path="/admin/invoices/:id"
           element={
-            <RoleProtectedRoute allowedRoles={["admin","finance"]}>
+            <RoleProtectedRoute allowedRoles={["admin", "finance"]}>
               <InvoiceView />
             </RoleProtectedRoute>
           }
